@@ -1,6 +1,11 @@
-import './bootstrap';
+// import './bootstrap';
 import '../css/app.css';
-import "bootstrap"
+import 'bootstrap/dist/css/bootstrap.css'
+import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.js'
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
 
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
@@ -15,6 +20,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(bootstrap)
             .use(ZiggyVue)
             .mount(el);
     },
