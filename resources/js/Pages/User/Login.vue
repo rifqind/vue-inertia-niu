@@ -1,4 +1,18 @@
+<script setup>
+import { Head, useForm, Link } from '@inertiajs/vue3';
+
+const form = useForm({
+    username: '',
+    password: ''
+})
+
+const submit = function () {
+    form.post(route('login'))
+}
+
+</script>
 <template>
+    <Head title="Login" />
     <div class="container vh-100">
         <div class="flex-column d-flex justify-content-center align-items-center h-100">
             <div class="card shadow login-card" id="card-login">
@@ -9,26 +23,31 @@
                     <div class="col-md-7 d-flex align-items-center">
                         <div class="card-body">
                             <div class="brand-wrapper text-center">
-                                <img src="../../../images/Logo Tryhard.png" class="" id="logo-login"
-                                    alt="logo-login">
+                                <img src="../../../images/Logo Tryhard.png" class="" id="logo-login" alt="logo-login">
                             </div>
-                            <form action="{{ route('users.attemptLogin') }}" method="POST" id="formUser">
+                            <form @submit.prevent="submit" id="formUser">
                                 <div class="form-group">
                                     <div class="row mx-2 mb-2">
-                                        <input type="username" id="username" name="username" class="form-control form-login"
-                                            placeholder="Username">
+                                        <input v-model="form.username" type="username" id="username" name="username"
+                                            class="form-control form-login" placeholder="Username">
                                     </div>
                                     <div class="row mx-2 mb-2">
-                                        <input type="password" id="password" name="password" class="form-control form-login"
-                                            placeholder="Password">
+                                        <input v-model="form.password" type="password" id="password" name="password"
+                                            class="form-control form-login" placeholder="Password">
                                     </div>
                                 </div>
                                 <div class="mx-2">
                                     <!-- <button id="login" class="btn bg-success-fordone form-login"><i
                                             class="fa-solid fa-right-to-bracket"></i> Masuk</button> -->
-                                    <button id="login" class="btn btn-success form-login"><i
+                                    <button id="login" class="mb-2 btn bg-success-fordone form-login"><i
                                             class="fa-solid fa-right-to-bracket"></i> Masuk</button>
+                                    <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')"><i
+                                        class="fa-solid fa-rotate-left"></i> Kembali ke Beranda</Link>
                                 </div>
+                                <!-- <div class="mx-2">
+                                    <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')"><i
+                                            class="fa-solid fa-right-to-bracket"></i> Masuk</Link>
+                                </div> -->
                             </form>
                         </div>
                     </div>
@@ -38,9 +57,19 @@
     </div>
 </template>
 <style scoped>
+.bg-info-fordone {
+    background-color: #3d3b8e;
+    color: whitesmoke;
+}
+
+.bg-success-fordone {
+    background-color: #1D845B;
+    color: whitesmoke;
+}
+
 .login-card .card-body {
     padding: 85px 60px 60px;
-    padding-top: 85px;
+    padding-top: 10px;
     padding-right: 60px;
     padding-bottom: 60px;
     padding-left: 60px;
@@ -130,6 +159,7 @@
 .form-login {
     width: 20rem;
 }
+
 .bg {
     animation: slide 3s ease-in-out infinite alternate;
     background-image: linear-gradient(-60deg, #6c3 50%, #09f 50%);
@@ -160,5 +190,4 @@
         transform: translateX(25%);
     }
 }
-
 </style>

@@ -1,7 +1,8 @@
-// import './bootstrap';
+import './bootstrap';
+import './fontawesome'
 import '../css/app.css';
 import 'bootstrap/dist/css/bootstrap.css'
-import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.js'
+import 'admin-lte/dist/css/adminlte.css'
 import '@fontsource/poppins/400.css';
 import '@fontsource/poppins/500.css';
 import '@fontsource/poppins/600.css';
@@ -20,7 +21,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(bootstrap)
+            // .use(bootstrap)
             .use(ZiggyVue)
             .mount(el);
     },
