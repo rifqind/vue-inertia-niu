@@ -19,7 +19,10 @@
     },
     "dependencies": {
         "@fontsource/poppins": "^5.0.12",
+        "@vueform/multiselect": "^2.6.6",
         "admin-lte": "^3.2.0",
-        "bootstrap": "^5.3.3"
+        "bootstrap": "^5.3.3",
+        "vue-multiselect": "^3.0.0-beta.3",
+        "vuetify": "^3.5.7"
     }
 }

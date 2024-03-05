@@ -3,6 +3,11 @@ import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
+    // resolve: {
+    //     alias: {
+    //         vue: '@vue/compat'
+    //     }
+    // },
     plugins: [
         laravel({
             input: 'resources/js/app.js',
@@ -14,6 +19,11 @@ export default defineConfig({
                     base: null,
                     includeAbsolute: false,
                 },
+                // compilerOptions: {
+                //     compatConfig: {
+                //         MODE: 3
+                //     }
+                // }
             },
         }),
     ],

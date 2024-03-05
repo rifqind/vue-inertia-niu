@@ -1,7 +1,7 @@
 <script setup>
 import Footer from '@/Components/Footer.vue';
 import Navbar from '@/Components/Navbar.vue';
-import Sidebar from '@/Components/Sidebar.vue';
+import Sidebar from '@/Layouts/Sidebar.vue';
 // import 'admin-lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css';
 </script>
 <template>
@@ -63,3 +63,91 @@ import Sidebar from '@/Components/Sidebar.vue';
         <!-- jQuery -->
     </body>
 </template>
+<style>
+
+.table-sorted th {
+    cursor: pointer;
+}
+
+.table-sorted .th-sort-asc::after {
+    content: "\25b4";
+}
+
+.table-sorted .th-sort-desc::after {
+    content: "\25be";
+}
+
+.table-sorted .th-sort-asc::after,
+.table-sorted .th-sort-desc::after {
+    margin-left: 5px;
+}
+
+.table-sorted .th-sort-asc,
+.table-sorted .th-sort-desc {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.pagination>li {
+    padding-top: 6px;
+    padding-right: 12px;
+    padding-bottom: 6px;
+    padding-left: 12px;
+}
+
+.pagination>li.active {
+    color: whitesmoke;
+    background-color: #17a2b8;
+}
+
+.pagination>li:hover {
+    cursor: pointer;
+}
+
+.bg-success-fordone {
+    background-color: #1D845B;
+    color: whitesmoke;
+}
+
+.bg-info-fordone {
+    background-color: #3d3b8e;
+    color: whitesmoke;
+}
+
+.bg-info-fordone:hover{
+    background-color: #4b4a8c;
+    color: whitesmoke;
+}
+
+.bg-primary-fordone {
+    background-color: #2E7AE6;
+    color: whitesmoke;
+}
+
+.badge-status-satu {
+    background-color: #7286a0;
+    color: whitesmoke;
+}
+
+.badge-status-dua {
+    background-color: #03254e;
+    color: whitesmoke;
+}
+
+.badge-status-tiga {
+    background-color: #f18f01;
+    color: whitesmoke;
+}
+
+.badge-status-empat {
+    background-color: #8B1E3F;
+    color: whitesmoke;
+}
+
+.badge-status-lima {
+    background-color: green;
+    color: whitesmoke;
+}
+.icon-trash-color {
+    color: #9a091f;
+}
+</style>

@@ -18,10 +18,18 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'username',
         'name',
         'email',
         'password',
+        'noHp',
+        'id_dinas',
+        'role'
     ];
+
+    public function dinas(){
+        return $this->belongsTo(Dinas::class, 'id_dinas', 'id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

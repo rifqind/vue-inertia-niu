@@ -8,8 +8,8 @@ import axios from 'axios';
 window.axios = axios;
 import 'admin-lte'
 import 'bootstrap'
-// import 'admin-lte/plugins/jquery/jquery'
 
+// import 'admin-lte/plugins/jquery/jquery'
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 /**

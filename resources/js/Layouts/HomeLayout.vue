@@ -5,7 +5,6 @@ const page = usePage()
 const navbarStatus = ref(true);
 if (page.props.auth.user) {
     navbarStatus.value = false;
-    console.log('wasu');
 }
 </script>
 <template>
