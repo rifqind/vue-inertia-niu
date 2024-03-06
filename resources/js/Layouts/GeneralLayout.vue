@@ -108,13 +108,18 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     color: whitesmoke;
 }
 
+.bg-success-fordone:hover {
+    background-color: #385d4e;
+    color: whitesmoke;
+}
+
 .bg-info-fordone {
     background-color: #3d3b8e;
     color: whitesmoke;
 }
 
 .bg-info-fordone:hover{
-    background-color: #4b4a8c;
+    background-color: #434272;
     color: whitesmoke;
 }
 

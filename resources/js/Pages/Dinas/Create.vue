@@ -27,6 +27,7 @@ const kabsDrop = ref({
     value: null,
     options: kabsUsed
 })
+const response = await axios.get('/master/wilayah/kecamatan/' + 7101000000)
 </script>
 
 <template>
