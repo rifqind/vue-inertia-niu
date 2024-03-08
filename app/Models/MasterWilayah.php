@@ -16,27 +16,27 @@ class MasterWilayah extends Model
         if (auth()->user()->dinas->wilayah_fullcode == "7100000000") {
             # code...
             $kabs = MasterWilayah::where('kec', 'like', '000')
-                ->get();
+                ->get(['label', 'wilayah_fullcode as value']);
             $kecs = MasterWilayah::where('kab', 'not like', '00')
                 ->where('kec', 'not like', '000')
                 ->where('desa', 'like', '000')
-                ->get();
+                ->get(['label', 'wilayah_fullcode as value']);
             $desa = MasterWilayah::where('kab', 'not like', '00')
                 ->where('kec', 'not like', '000')
                 ->where('desa', 'not like', '000')
-                ->get();
+                ->get(['label', 'wilayah_fullcode as value']);
         } else {
             $kabs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
                 ->where('kec', 'like', '000')
-                ->get();
+                ->get(['label', 'wilayah_fullcode as value']);
             $kecs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
                 ->where('kec', 'not like', '000')
                 ->where('desa', 'like', '000')
-                ->get();
+                ->get(['label', 'wilayah_fullcode as value']);
             $desa = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
                 ->where('kec', 'not like', '000')
                 ->where('desa', 'not like', '000')
-                ->get();
+                ->get(['label', 'wilayah_fullcode as value']);
         }
         $wilayah = [
             'kabs' => $kabs,

@@ -12,7 +12,6 @@ const form = useForm({})
 const submit = function() {
     form.post(route('logout'))
 }
-console.log(page.props.auth.user.role);
 </script>
 <template>
     <nav class="main-header navbar navbar-expand navbar-white navbar-light">

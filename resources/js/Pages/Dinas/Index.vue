@@ -1,12 +1,39 @@
 <script setup>
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
 import { Link, usePage } from '@inertiajs/vue3'
+import { getPagination } from '@/pagination';
+import { ref, onMounted, onUpdated } from 'vue'
+import ModalBs from '@/Components/ModalBs.vue';
+import Modal from '@/Components/Modal.vue';
 
-const page = usePage()
-// const Dinas = page.props.dinas
+const tabelDinas = ref(null)
+const currentPagination = ref(null)
+const maxRows = ref(null)
+const statusText = ref(null)
+const updateModalStatus = ref(false)
+const DOMLoaded = ref(false)
+const dialog = ref(false)
+
+const toggleUpdateModal = function () {
+    updateModalStatus.value = !updateModalStatus.value
+}
+
+onMounted(() => {
+    let currentStatusText = statusText.value
+    var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
+    getPagination(tabelDinas, currentPagination, 10, statusText,
+        currentStatusText, rowsTabel)
+    maxRows.value.addEventListener("change", function (e) {
+        let valueChanged = this.value
+        getPagination(tabelDinas, currentPagination, valueChanged, statusText,
+            currentStatusText, rowsTabel)
+    })
+    DOMLoaded.value = true
+})
 defineProps({
     dinas: Object,
 })
+const showModal = ref(false)
 </script>
 
 <template>
@@ -21,7 +48,7 @@ defineProps({
                 <Link :href="route('dinas.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                 Tambah Produsen Data Baru</Link>
             </div>
-            <table class="table table-sorted table-hover table-bordered table-search" id="tabel-dinas">
+            <table class="table table-sorted table-hover table-bordered table-search" ref="tabelDinas" id="tabel-dinas">
                 <thead>
                     <tr class="bg-info-fordone">
                         <th class="first-column">No.</th>
@@ -44,9 +71,9 @@ defineProps({
                         <td>{{ din.nama }}</td>
                         <td class="">{{ din.wilayah.label }}</td>
                         <td class="text-center deleted">
-                            <a href="" class="update-pen"
-                                data-dinas="{{ din.id . ';' . din.nama . ';' . din.wilayah_fullcode }}"
-                                data-toggle="modal" data-target="#updateModal">
+                            <a @click.prevent="toggleUpdateModal" class="update-pen"
+                                data-dinas="din.id . ';' . din.nama . ';' . din.wilayah_fullcode" data-bs-toggle="modal"
+                                data-bs-target="#updateModal">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
                         </td>
@@ -61,12 +88,15 @@ defineProps({
                 </tbody>
             </table>
         </div>
-        @include('dinas.modal')
-        <div class="row d-flex justify-content-end align-items-center">
-            <div class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari <span id="showTotal"></span>
+        <ModalBs v-if="DOMLoaded" :updateModalStatus="updateModalStatus" :toggleModalClose="toggleUpdateModal"
+            :title="'Update Produsen Data'"></ModalBs>
+        <button id="show-modal" @click="showModal = true">Show Modal</button>
+        <div class="d-flex justify-content-end align-items-center">
+            <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
+                <span id="showTotal"></span>
             </div>
             <div class="form-group"> <!--		Show Numbers Of Rows 		-->
-                <select class="form-control" name="state" id="maxRows">
+                <select class="form-control" ref="maxRows" name="state" id="maxRows">
                     <option value="10">10</option>
                     <option value="15">15</option>
                     <option value="20">20</option>
@@ -75,8 +105,8 @@ defineProps({
             </div>
             <div class="pagination-container">
                 <nav>
-                    <ul class="pagination">
-                        <li data-page="prev">
+                    <ul class="pagination" id="currentPagination" ref="currentPagination">
+                        <li data-page="prev" id="next">
                             <span>
                                 < <span class="sr-only">(current)
                             </span></span>

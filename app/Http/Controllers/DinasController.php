@@ -80,36 +80,37 @@ class DinasController extends Controller
     // /**
     //  * Store a newly created resource in storage.
     //  */
-    // public function store(Request $request)
-    // {
-    //     //
-    //     $levels = $request->tingkat;
-    //     switch ($levels) {
-    //         case 0:
-    //             # code...
-    //             $wilayah_fullcode = (auth()->user()->dinas->wilayah_fullcode = "7100000000") ? "7100000000" : "";
-    //             break;
-    //         case 1:
-    //             $wilayah_fullcode = $request->kab;
-    //             break;
-    //         case 2:
-    //             $wilayah_fullcode = $request->kec;
-    //             break;
-    //         case 3:
-    //             $wilayah_fullcode = $request->desa;
-    //             break;
-    //     }
-    //     $request->merge(['wilayah_fullcode' => $wilayah_fullcode]);
-    //     $request->validate([
-    //         'nama' => ['required', 'string', 'unique:'.Dinas::class],
-    //         'wilayah_fullcode' => ['required', 'string', 'max:10', 'min:10']
-    //     ]);
-    //     $dinas = Dinas::create([
-    //         'nama' => $request->nama,
-    //         'wilayah_fullcode' => $wilayah_fullcode,
-    //     ]);
-    //     return response()->json('Berhasil');
-    // }
+    public function store(Request $request)
+    {
+        //
+        $levels = $request->tingkat;
+        switch ($levels) {
+            case 0:
+                # code...
+                $wilayah_fullcode = (auth()->user()->dinas->wilayah_fullcode = "7100000000") ? "7100000000" : "";
+                break;
+            case 1:
+                $wilayah_fullcode = $request->kab;
+                break;
+            case 2:
+                $wilayah_fullcode = $request->kec;
+                break;
+            case 3:
+                $wilayah_fullcode = $request->desa;
+                break;
+        }
+        $request->merge(['wilayah_fullcode' => $wilayah_fullcode]);
+        $request->validate([
+            'nama' => ['required', 'string', 'unique:'.Dinas::class],
+            'wilayah_fullcode' => ['required', 'string', 'max:10', 'min:10']
+        ]);
+        $dinas = Dinas::create([
+            'nama' => $request->nama,
+            'wilayah_fullcode' => $wilayah_fullcode,
+        ]);
+        // return response()->json('Berhasil');
+        return redirect()->route('dinas.index')->with('message','Berhasil menambahkan produsen data baru');
+    }
 
     // /**
     //  * Display the specified resource.
