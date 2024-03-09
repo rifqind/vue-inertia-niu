@@ -34,27 +34,61 @@ const props = defineProps({
 </script>
 
 <template>
-    <div v-if="updateModalStatus" class="modal fade show d-block" data-bs-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="modalBs"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" :class="modalSize" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalBsTitle">{{ title }}</h5>
-                    <button type="button" class="close" @click="toggleModalClose" data-bs-dismiss="modal"
-                        aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <slot />
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-secondary" @click="toggleModalClose"
-                        data-bs-dismiss="modal">Tutup</button>
-                    <button id="" type="button" class="btn btn-sm" :class="inputClass" @click="inputFunction">{{
-                        functionLabel }}</button>
+    <Transition name="modal">
+        <div v-if="updateModalStatus" class="d-block overlay" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered" :class="modalSize" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalBsTitle">{{ title }}</h5>
+                        <button type="button" class="close" @click="$emit('close')" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <slot name="modalBody" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" @click="$emit('close')">Tutup</button>
+                        <slot name="modalFunction" />
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </Transition>
 </template>
+
+<style>
+.overlay {
+    position: fixed;
+    z-index: 9998;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    /* Center horizontally */
+    align-items: center;
+    transition: opacity 0.3s ease;
+}
+
+.modal-title {
+    margin-bottom: 0;
+    line-height: 1.5;
+}
+
+.modal-enter-from {
+    opacity: 0;
+}
+
+.modal-leave-to {
+    opacity: 0;
+}
+
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+    -webkit-transform: scale(1.1);
+    transform: scale(1.1);
+}
+</style>

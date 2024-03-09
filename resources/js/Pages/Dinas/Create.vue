@@ -1,6 +1,6 @@
 <script setup>
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage, Link } from '@inertiajs/vue3';
 import { defineComponent, ref } from 'vue';
 import Multiselect from '@vueform/multiselect';
 import VueMultiselect from 'vue-multiselect';
@@ -110,9 +110,8 @@ const submit = function () {
                     </form>
                 </div>
             </div>
+            <Link :href="route('dinas.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i> Kembali</Link>
         </div>
     </GeneralLayout>
 </template>
-
-<style src="@vueform/multiselect/themes/default.css"></style>
 <!-- <style src="vue-multiselect/dist/vue-multiselect.css"></style> -->

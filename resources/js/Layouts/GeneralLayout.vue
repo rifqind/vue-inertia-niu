@@ -63,6 +63,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
         <!-- jQuery -->
     </body>
 </template>
+<style src="@vueform/multiselect/themes/default.css"></style>
 <style>
 
 .table-sorted th {
@@ -154,5 +155,8 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 }
 .icon-trash-color {
     color: #9a091f;
+}
+.update-pen {
+    cursor: pointer;
 }
 </style>

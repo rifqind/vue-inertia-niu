@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('dinas/create', [DinasController::class, 'create'])->name('dinas.create');
     Route::get('dinas/index', [DinasController::class, 'index'])->name('dinas.index');
     Route::get('dinas/search', [DinasController::class, 'search'])->name('dinas.search');
+    Route::get('dinas/fetch/{id}', [DinasController::class, 'fetch'])->name('dinas.fetch');
     Route::post('dinas/store', [DinasController::class, 'store'])->name('dinas.store');
     Route::post('dinas/update', [DinasController::class, 'update'])->name('dinas.update');
     Route::post('dinas/delete', [DinasController::class, 'delete'])->name('dinas.delete');

@@ -22,17 +22,12 @@ class DinasController extends Controller
         $wilayah = MasterWilayah::getMyWilayah();
         $id_wilayah = MasterWilayah::getMyWilayahId();
         $kabs = $wilayah["kabs"];
-        // dd($id_wilayah["kabs"]);
         $dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->with('wilayah')->get();
         foreach ($dinas as $din) {
             $din->number = $number;
             $number++;
         }
 
-        // return view('dinas.index', [
-        //     'dinas' => $dinas,
-        //     'kabs' => $kabs
-        // ]);
         return Inertia::render('Dinas/Index', [
             'dinas' => $dinas,
             'kabs' => $kabs,
@@ -46,36 +41,37 @@ class DinasController extends Controller
     public function create()
     {
         //
-        // $regions = Region::all();
         $wilayah = MasterWilayah::getMyWilayah();
-        // $id_regions = Region::getRegionId();
-        // return view('dinas.create', [
-        //     'kabs' => $wilayah["kabs"]
-        // ]);
         return Inertia::render('Dinas/Create', [
             'kabs' => $wilayah["kabs"],
         ]);
     }
 
-    // public function search(Request $request)
-    // {
-    //     $searchQuery = $request->query('search');
-
-    //     $dinas = Dinas::when($searchQuery, function ($query) use ($searchQuery) {
-    //         return $query
-    //             ->where('dinas.nama', 'like', '%' . $searchQuery . '%')
-    //             ->orWhere('master_wilayah.label', 'like', '%' . $searchQuery . '%');
-    //     })
-    //         ->leftJoin('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
-    //         ->orderBy('dinas.nama')
-    //         ->get(['dinas.*', 'master_wilayah.label as region_nama']);
-
-    //     $dinas->each(function ($din, $key) {
-    //         $din->number = $key + 1;
-    //     });
-    //     // return view('dinas.index', compact('dinas'));
-    //     return response()->json(['dinas' => $dinas]);
-    // }
+    public function fetch(string $id){
+        $dinas = Dinas::where('id', $id)->with('wilayah')->first();
+        if ($dinas->wilayah->kab != '00') {
+            # code...
+            if ($dinas->wilayah->kec != '000') {
+                # code...
+                if ($dinas->wilayah->desa != '000') {
+                    # code...
+                    $dinas->tingkat = '3';
+                } else {
+                    $dinas->tingkat = '2';
+                }
+            } else {
+                $dinas->tingkat = '1';
+            }
+        } else {
+            $dinas->tingkat = '0';
+        }
+        $wilayah = MasterWilayah::getMyWilayah();
+        $kabs = $wilayah['kabs'];
+        return response()->json([
+            'data' => $dinas,
+            'kabs' => $kabs,
+        ]);
+    }
 
     // /**
     //  * Store a newly created resource in storage.
@@ -108,7 +104,6 @@ class DinasController extends Controller
             'nama' => $request->nama,
             'wilayah_fullcode' => $wilayah_fullcode,
         ]);
-        // return response()->json('Berhasil');
         return redirect()->route('dinas.index')->with('message','Berhasil menambahkan produsen data baru');
     }
 
@@ -131,38 +126,39 @@ class DinasController extends Controller
     // /**
     //  * Update the specified resource in storage.
     //  */
-    // public function update(Request $request)
-    // {
-    //     //
-    //     $id = $request->id;
-    //     $decryptedId = Crypt::decrypt($id);
-    //     $levels = $request->tingkat;
-    //     switch ($levels) {
-    //         case 0:
-    //             # code...
-    //             $wilayah_fullcode = (auth()->user()->dinas->wilayah_fullcode = "7100000000") ? "7100000000" : "";
-    //             break;
-    //         case 1:
-    //             $wilayah_fullcode = $request->kab;
-    //             break;
-    //         case 2:
-    //             $wilayah_fullcode = $request->kec;
-    //             break;
-    //         case 3:
-    //             $wilayah_fullcode = $request->desa;
-    //             break;
-    //     }
-    //     $request->merge(['wilayah_fullcode' => $wilayah_fullcode]);
-    //     $request->validate([
-    //         'nama' => ['required', 'string', Rule::unique('dinas')->ignore($decryptedId)],
-    //         'wilayah_fullcode' => ['required', 'string', 'max:10', 'min:10']
-    //     ]);
-    //     Dinas::where('id', $decryptedId)->update([
-    //         'nama' => $request->nama,
-    //         'wilayah_fullcode' => $wilayah_fullcode,
-    //     ]);
-    //     return response()->json('Berhasil');
-    // }
+    public function update(Request $request)
+    {
+        //
+        // dd($request->nama);
+        $id = $request->id;
+        $levels = $request->tingkat;
+        switch ($levels) {
+            case 0:
+                # code...
+                $wilayah_fullcode = (auth()->user()->dinas->wilayah_fullcode = "7100000000") ? "7100000000" : "";
+                break;
+            case 1:
+                $wilayah_fullcode = $request->kab;
+                break;
+            case 2:
+                $wilayah_fullcode = $request->kec;
+                break;
+            case 3:
+                $wilayah_fullcode = $request->desa;
+                break;
+        }
+        $request->merge(['wilayah_fullcode' => $wilayah_fullcode]);
+        $request->validate([
+            'nama' => ['required', 'string', Rule::unique('dinas')->ignore($id)],
+            'wilayah_fullcode' => ['required', 'string', 'max:10', 'min:10']
+        ]);
+        Dinas::where('id', $id)->update([
+            'nama' => $request->nama,
+            'wilayah_fullcode' => $wilayah_fullcode,
+        ]);
+        // return response()->json('Berhasil');
+        return redirect()->route('dinas.index')->with('message','Berhasil mengedit data');
+    }
 
     // /**
     //  * Remove the specified resource from storage.

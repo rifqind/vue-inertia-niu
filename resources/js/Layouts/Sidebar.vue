@@ -65,7 +65,7 @@ const toggleMenuOpen = function () {
 
                         <template v-slot:content>
                             <NavLinkSidebar :href="route('dinas.index')" :navIcon="'fa-solid fa-list-ol'"> Daftar Produsen</NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fa-plus'"> Tambah Produsen</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('dinas.create')" :navIcon="'fa-solid fa-plus'"> Tambah Produsen</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'">
