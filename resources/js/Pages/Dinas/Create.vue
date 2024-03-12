@@ -48,7 +48,7 @@ const loadDesa = async (valueKecs) => {
         let kecs = valueKecs.substring(4, 7)
         const response = await axios.get('/master/wilayah/desa/' + kabs + '/' + kecs);
         desa.value = response.data.data
-        
+
     } catch (error) {
         console.error('Error fetching desa:', error);
     }
@@ -72,6 +72,9 @@ const submit = function () {
 <template>
 
     <Head title="Tambah Produsen" />
+    <progress v-if="form.progress" :value="form.progress.percentage" max="100">
+        {{ form.progress.percentage }}%
+    </progress>
     <GeneralLayout>
         <div class="container-fluid">
             <div class="h4">
@@ -81,10 +84,12 @@ const submit = function () {
                 <div class="card-body">
                     <form @submit.prevent="submit" id="DinasForm" class="form-horizontal mb-3">
                         <label for="nama">Nama Produsen Data</label>
-                        <input class="form-control" name="nama" id="nama" v-model="form.nama" placeholder="Isi Nama Produsen Data">
-                        <div id="error-nama" class="text-danger mb-3"></div>
-                        <div name="wilayah_fullcode" class="d-none">x</div>
-                        <div class="mb-3">
+                        <input class="form-control" name="nama" id="nama" v-model="form.nama"
+                            placeholder="Isi Nama Produsen Data">
+                        <div id="error-nama" v-if="form.errors.nama" class="text-danger">{{ form.errors.nama }}
+                        </div>
+                        <div name="wilayah_fullcode" class="d-none ">x</div>
+                        <div class="mb-3 mt-3">
                             <label for="tingkat-label">Tingkatan Wilayah</label>
                             <Multiselect v-model="form.tingkat" :options="tingkatan.options"
                                 placeholder="-- Pilih Tingkatan --" />
@@ -97,7 +102,7 @@ const submit = function () {
                         <div v-if="form.tingkat > 1" class="mb-3" id="kecamatan-group">
                             <label for="kec-label">Kecamatan</label>
                             <Multiselect v-model="form.kec" :options="kecsDrop.options"
-                                placeholder="-- Pilih Kecamatan --" :searchable="true" @change="loadDesa"/>
+                                placeholder="-- Pilih Kecamatan --" :searchable="true" @change="loadDesa" />
                         </div>
                         <div v-if="form.tingkat > 2" class="mb-3" id="desa-group">
                             <label for="desa-label">Desa</label>
@@ -110,7 +115,8 @@ const submit = function () {
                     </form>
                 </div>
             </div>
-            <Link :href="route('dinas.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i> Kembali</Link>
+            <Link :href="route('dinas.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i> Kembali
+            </Link>
         </div>
     </GeneralLayout>
 </template>

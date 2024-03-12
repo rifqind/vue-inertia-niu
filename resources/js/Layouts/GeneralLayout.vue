@@ -2,6 +2,8 @@
 import Footer from '@/Components/Footer.vue';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
+
+
 // import 'admin-lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css';
 </script>
 <template>
@@ -158,5 +160,12 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 }
 .update-pen {
     cursor: pointer;
+}
+.delete-trash {
+    cursor: pointer;
+}
+.table thead tr th {
+    background-color: #3d3b8e;
+    color: whitesmoke;
 }
 </style>

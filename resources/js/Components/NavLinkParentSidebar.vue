@@ -8,12 +8,16 @@ const props = defineProps({
     role: {
         type: Boolean,
         default: true,
+    },
+    menuOpen: {
+        type: Boolean,
+        default: false,
+    },
+    toggleMenuOpen: {
+        type: Function,
+        required: true,
     }
 })
-const menuOpen = ref(false)
-const toggleMenuOpen = function () {
-    menuOpen.value = !menuOpen.value
-}
 </script>
 
 <template>

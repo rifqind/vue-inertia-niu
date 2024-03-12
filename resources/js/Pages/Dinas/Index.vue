@@ -1,8 +1,8 @@
 <script setup>
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3'
+import { Link, useForm, usePage, Head } from '@inertiajs/vue3'
 import { getPagination } from '@/pagination';
-import { ref, onMounted, onUpdated, defineComponent } from 'vue'
+import { ref, onMounted, onUpdated, defineComponent, watch } from 'vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import Multiselect from '@vueform/multiselect';
 
@@ -12,8 +12,11 @@ const currentPagination = ref(null)
 const maxRows = ref(null)
 const statusText = ref(null)
 const updateModalStatus = ref(false)
+const deleteModalStatus = ref(false)
 const DOMLoaded = ref(false)
 const toggleFlash = ref(false)
+const searchNama = ref(null)
+const searchWilayah = ref(null)
 const produsenFetched = ref({
     data: [],
     kabs: [],
@@ -29,6 +32,7 @@ const tingkatan = ref({
         { label: "Desa/Kelurahan", value: 3 },
     ]
 })
+const d = page.props.dinas
 const kabsDrop = ref({
     value: null,
     options: null,
@@ -55,6 +59,10 @@ const toggleUpdateModal = function (id) {
     if (id) {
         fetchProdusen(id)
     }
+}
+const toggleDeleteModal = function (id) {
+    deleteModalStatus.value = true
+    form.id = id
 }
 
 const fetchProdusen = async function (id) {
@@ -118,6 +126,44 @@ const hideFlashMessage = function () {
     }, 2000);
 }
 
+var sortOrder = 1
+const sortByProperty = function (x) {
+    return function (a, b) {
+        const aValue = isNaN(a[x]) ? a[x] : parseFloat(a[x])
+        const bValue = isNaN(b[x]) ? b[x] : parseFloat(b[x])
+        if (aValue < bValue) {
+            return -1 * sortOrder
+        }
+        if (aValue > bValue) {
+            return 1 * sortOrder
+        }
+        return 0
+    }
+}
+
+const clickSortProperties = function (x) {
+    sortOrder *= -1
+    d.sort(sortByProperty(x))
+}
+
+watch([searchNama, searchWilayah], function () {
+    if (searchNama.value && !searchWilayah.value) {
+        d.value = d.filter(x =>
+            x.nama.toLowerCase().includes(searchNama.value.toLowerCase()))
+    } else if (searchWilayah.value && !searchNama.value) {
+        d.value = d.filter(x =>
+            x.wilayah.label.toLowerCase().includes(searchWilayah.value.toLowerCase())
+        )
+    } else if (searchNama.value && searchWilayah.value) {
+        d.value = d.filter(x =>
+            x.nama.toLowerCase().includes(searchNama.value.toLowerCase()) &&
+            x.wilayah.label.toLowerCase().includes(searchWilayah.value.toLowerCase())
+        )
+    } else {
+        d.value = d
+    }
+})
+
 onMounted(() => {
     let currentStatusText = statusText.value
     var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
@@ -130,9 +176,6 @@ onMounted(() => {
     })
     DOMLoaded.value = true
 })
-defineProps({
-    dinas: Object,
-})
 defineComponent({
     Multiselect
 })
@@ -142,12 +185,25 @@ const submit = function () {
             updateModalStatus.value = false
             if (page.props.flash.message) toggleFlash.value = true
             hideFlashMessage()
+            form.reset()
+        }
+    })
+}
+const deleteForm = function () {
+    form.post(route('dinas.delete'), {
+        onSuccess: function () {
+            deleteModalStatus.value = false
+            if (page.props.flash.message) toggleFlash.value = true
+            hideFlashMessage()
+            form.reset()
         }
     })
 }
 </script>
 
 <template>
+
+    <Head title="Daftar Produsen Data" />
     <GeneralLayout>
         <div class="container-fluid">
             <div class="mb-2 d-flex">
@@ -162,25 +218,28 @@ const submit = function () {
             <div class="alert alert-success" v-if="toggleFlash" role="alert">
                 {{ page.props.flash.message }}
             </div>
-            <table class="table table-sorted table-hover table-bordered table-search" ref="tabelDinas" id="tabel-dinas">
+            <table class="table table-sorted table-hover table-bordered" ref="tabelDinas" id="tabel-dinas">
                 <thead>
-                    <tr class="bg-info-fordone">
-                        <th class="first-column">No.</th>
-                        <th class="text-center tabel-width-50">Nama Produsen Data</th>
-                        <th class="text-center">Wilayah Kerja</th>
+                    <tr>
+                        <th class="first-column" @click="clickSortProperties('number')">No.</th>
+                        <th class="text-center tabel-width-50" @click="clickSortProperties('nama')">Nama Produsen Data
+                        </th>
+                        <th class="text-center" @click="clickSortProperties('')">Wilayah Kerja</th>
                         <th class="text-center deleted">Edit</th>
                         <th class="text-center deleted">Hapus</th>
                     </tr>
                     <tr class="">
                         <td class="search-header"></td>
-                        <td class="search-header"><input type="text" class="search-input form-control"></td>
-                        <td class="search-header"><input type="text" class="search-input form-control"></td>
+                        <td class="search-header"><input v-model.trim="searchNama" type="text"
+                                class="search-input form-control"></td>
+                        <td class="search-header"><input v-model.trim="searchWilayah" type="text"
+                                class="search-input form-control"></td>
                         <td class="search-header"></td>
                         <td class="search-header"></td>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="din in dinas" :key="din.id">
+                    <tr v-for="din in d" :key="din.id">
                         <td>{{ din.number }}</td>
                         <td>{{ din.nama }}</td>
                         <td class="">{{ din.wilayah.label }}</td>
@@ -190,9 +249,7 @@ const submit = function () {
                             </a>
                         </td>
                         <td class="text-center deleted">
-                            <a href="" class="delete-trash" data-dinas="{{ json_encode([
-                                    'id' => din.id,
-                                ]) }}" data-toggle="modal" data-target="#deleteModal">
+                            <a @click.prevent="toggleDeleteModal(din.id)" class="delete-trash">
                                 <i class="fa-solid fa-trash-can icon-trash-color"></i>
                             </a>
                         </td>
@@ -201,7 +258,7 @@ const submit = function () {
             </table>
         </div>
         <Teleport to="body">
-            <ModalBs v-if="DOMLoaded" :updateModalStatus="updateModalStatus" @close="updateModalStatus = false"
+            <ModalBs v-if="DOMLoaded" :ModalStatus="updateModalStatus" @close="updateModalStatus = false"
                 :title="'Update Produsen Data'">
                 <template v-slot:modalBody>
                     <form id="DinasForm" class="form-horizontal mb-3">
@@ -209,9 +266,10 @@ const submit = function () {
                             <label for="nama">Nama Produsen Data</label>
                             <input class="form-control" name="nama" id="nama" v-model="form.nama"
                                 placeholder="Isi Nama Produsen Data">
-                            <div id="error-nama" class="text-danger mb-3"></div>
+                            <div id="error-nama" v-if="form.errors.nama" class="text-danger">{{ form.errors.nama }}
+                            </div>
                             <div name="wilayah_fullcode" class="d-none">x</div>
-                            <div class="mb-3">
+                            <div class="mb-3 mt-3">
                                 <label for="tingkat-label">Tingkatan Wilayah</label>
                                 <Multiselect v-model="form.tingkat" :options="tingkatan.options"
                                     placeholder="-- Pilih Tingkatan --" />
@@ -238,6 +296,15 @@ const submit = function () {
                 <template v-slot:modalFunction>
                     <button id="" type="button" class="btn btn-sm bg-success-fordone"
                         @click.prevent="submit">Simpan</button>
+                </template>
+            </ModalBs>
+            <ModalBs v-if="DOMLoaded" :ModalStatus="deleteModalStatus" @close="deleteModalStatus = false"
+                :title="'Hapus Produsen Data'">
+                <template v-slot:modalBody>
+                    <label>Apakah Anda yakin akan menghapus Produsen Data ini?</label>
+                </template>
+                <template v-slot:modalFunction>
+                    <button type="button" class="btn btn-sm badge-status-empat" @click.prevent="deleteForm">Hapus</button>
                 </template>
             </ModalBs>
         </Teleport>

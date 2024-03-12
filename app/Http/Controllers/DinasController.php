@@ -159,16 +159,16 @@ class DinasController extends Controller
         // return response()->json('Berhasil');
         return redirect()->route('dinas.index')->with('message','Berhasil mengedit data');
     }
-
+    
     // /**
     //  * Remove the specified resource from storage.
     //  */
-    // public function delete(Request $request)
-    // {
-    //     //
-    //     $id = $request->id;
-    //     $decryptedId = Crypt::decrypt($id);
-    //     Dinas::destroy($decryptedId);
-    //     return response()->json('Berhasil Hapus');
-    // }
+    public function delete(Request $request)
+    {
+        //
+        $id = $request->id;
+        Dinas::destroy($id);
+        return redirect()->route('dinas.index')->with('message','Berhasil menghapus data');
+        // return response()->json('Berhasil Hapus');
+    }
 }

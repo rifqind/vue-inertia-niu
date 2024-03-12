@@ -12,29 +12,30 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    // public function index()
-    // {
-    //     //
-    //     $number = 1;
-    //     $id_wilayah = MasterWilayah::getDinasWilayah();
-    //     $users = User::orderBy('dinas.nama')
-    //         ->leftJoin('dinas', 'users.id_dinas', '=', 'dinas.id')
-    //         ->whereIn('dinas.wilayah_fullcode', $id_wilayah)->get(['users.*']);
-    //     foreach ($users as $user) {
-    //         $user->number = $number;
-    //         $number++;
-    //     }
+    public function index()
+    {
+        //
+        $number = 1;
+        $id_wilayah = MasterWilayah::getDinasWilayah();
+        $users = User::orderBy('dinas.nama')
+            ->leftJoin('dinas', 'users.id_dinas', '=', 'dinas.id')
+            ->whereIn('dinas.wilayah_fullcode', $id_wilayah)->get(['users.*']);
+        foreach ($users as $user) {
+            $user->number = $number;
+            $number++;
+        }
 
-    //     return view('user.index', [
-    //         'users' => $users,
-    //     ]);
-    // }
+        return Inertia::render('User/Index', [
+            'users' => $users,
+        ]);
+    }
 
     // /**
     //  * Show the form for creating a new resource.

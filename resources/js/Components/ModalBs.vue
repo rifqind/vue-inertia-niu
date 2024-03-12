@@ -10,7 +10,7 @@ const props = defineProps({
         type: String,
         default: null,
     },
-    updateModalStatus: {
+    ModalStatus: {
         type: Boolean,
         default: false
     },
@@ -26,16 +26,16 @@ const props = defineProps({
         type: String,
         default: 'bg-success-fordone'
     },
-    toggleModalClose: {
-        type: Function,
-        require: true,
-    }
+    // toggleModalClose: {
+    //     type: Function,
+    //     require: true,
+    // }
 })
 </script>
 
 <template>
     <Transition name="modal">
-        <div v-if="updateModalStatus" class="d-block overlay" tabindex="-1">
+        <div v-if="ModalStatus" class="d-block overlay" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered" :class="modalSize" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
