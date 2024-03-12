@@ -11,6 +11,7 @@ const menuOpen = ref(false);
 const toggleMenuOpen = function () {
     menuOpen.value = !menuOpen.value;
 }
+console.log(currentRoute == 'dinas.index');
 </script>
 
 <template>
@@ -57,15 +58,15 @@ const toggleMenuOpen = function () {
                             <NavLinkSidebar :navIcon="'fa-solid fa-list-ol'"> Variabel</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
-                    <NavLinkSidebar :href="route('users.index')" :role="role == 'admin'" :navIcon="'fa-solid fa-users'" :currentRoute="currentRoute"> Kelola Pengguna
+                    <NavLinkSidebar :href="route('users.index')" :role="role == 'admin'" :navIcon="'fa-solid fa-users'" :currentRoute="(currentRoute == 'users.index')"> Kelola Pengguna
                     </NavLinkSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'" :menuOpen="(currentRoute == 'dinas.index') || (currentRoute == 'dinas.create') || menuOpen" :toggleMenuOpen="toggleMenuOpen">
 
                         <template v-slot:label> Kelola Produsen</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :href="route('dinas.index')" :navIcon="'fa-solid fa-list-ol'" :currentRoute="currentRoute == 'dinas.index'"> Daftar Produsen</NavLinkSidebar>
-                            <NavLinkSidebar :href="route('dinas.create')" :navIcon="'fa-solid fa-plus'" :currentRoute="currentRoute == 'dinas.create'"> Tambah Produsen</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('dinas.index')" :navIcon="'fa-solid fa-list-ol'" :currentRoute="(currentRoute == 'dinas.index')"> Daftar Produsen</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('dinas.create')" :navIcon="'fa-solid fa-plus'" :currentRoute="(currentRoute == 'dinas.create')"> Tambah Produsen</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'" :toggleMenuOpen="toggleMenuOpen">

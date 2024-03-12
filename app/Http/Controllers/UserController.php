@@ -26,7 +26,8 @@ class UserController extends Controller
         $id_wilayah = MasterWilayah::getDinasWilayah();
         $users = User::orderBy('dinas.nama')
             ->leftJoin('dinas', 'users.id_dinas', '=', 'dinas.id')
-            ->whereIn('dinas.wilayah_fullcode', $id_wilayah)->get(['users.*']);
+            ->leftJoin('master_wilayah as w', 'w.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+            ->whereIn('dinas.wilayah_fullcode', $id_wilayah)->with('dinas')->get(['users.*', 'w.label as wilayah_label']);
         foreach ($users as $user) {
             $user->number = $number;
             $number++;
