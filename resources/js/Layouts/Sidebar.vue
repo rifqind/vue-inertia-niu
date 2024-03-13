@@ -11,7 +11,6 @@ const menuOpen = ref(false);
 const toggleMenuOpen = function () {
     menuOpen.value = !menuOpen.value;
 }
-console.log(currentRoute == 'dinas.index');
 </script>
 
 <template>

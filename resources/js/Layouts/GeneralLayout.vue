@@ -10,11 +10,6 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     <body class="hold-transition layout-fixed">
         <!-- Site wrapper -->
         <div class="wrapper">
-            <div class="text-center overlay d-none" id="spinner-border">
-                <div class="spinner-border text-info" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-            </div>
             <!-- Navbar -->
             <!-- @include('layouts.modal') -->
 
@@ -150,6 +145,11 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     background-color: #8B1E3F;
     color: whitesmoke;
 }
+.badge-status-empat:hover {
+    background-color: #724452;
+    color: whitesmoke;
+}
+
 
 .badge-status-lima {
     background-color: green;

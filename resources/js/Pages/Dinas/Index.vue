@@ -2,9 +2,10 @@
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
 import { Link, useForm, usePage, Head } from '@inertiajs/vue3'
 import { getPagination } from '@/pagination';
-import { ref, onMounted, onUpdated, defineComponent, watch } from 'vue'
+import { ref, onMounted, onUpdated, defineComponent, watch, computed, toRaw } from 'vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import Multiselect from '@vueform/multiselect';
+import SpinnerBorder from '@/Components/SpinnerBorder.vue';
 
 const page = usePage()
 const tabelDinas = ref(null)
@@ -17,6 +18,7 @@ const DOMLoaded = ref(false)
 const toggleFlash = ref(false)
 const searchNama = ref(null)
 const searchWilayah = ref(null)
+const triggerSpinner = ref(false)
 const produsenFetched = ref({
     data: [],
     kabs: [],
@@ -32,7 +34,10 @@ const tingkatan = ref({
         { label: "Desa/Kelurahan", value: 3 },
     ]
 })
-const d = page.props.dinas
+var dObject = page.props.dinas
+var d = ref(dObject)
+var isFetching = true
+
 const kabsDrop = ref({
     value: null,
     options: null,
@@ -55,9 +60,11 @@ const desaDrop = ref({
 })
 
 const toggleUpdateModal = function (id) {
-    updateModalStatus.value = true
     if (id) {
-        fetchProdusen(id)
+        fetchProdusen(id).then(function() {
+            triggerSpinner.value = false
+            if (isFetching == false) updateModalStatus.value = true
+        })
     }
 }
 const toggleDeleteModal = function (id) {
@@ -67,6 +74,9 @@ const toggleDeleteModal = function (id) {
 
 const fetchProdusen = async function (id) {
     try {
+        isFetching = true
+        triggerSpinner.value = true
+
         const response = await axios.get('/dinas/fetch/' + id)
         produsenFetched.value = response.data
         form.nama = produsenFetched.value.data.nama
@@ -92,6 +102,8 @@ const fetchProdusen = async function (id) {
             }
         }
         kabsDrop.value.options = produsenFetched.value.kabs.slice(1)
+
+        isFetching = false
     } catch (error) {
         console.error('Error fetching produsen: ', error)
     }
@@ -143,24 +155,24 @@ const sortByProperty = function (x) {
 
 const clickSortProperties = function (x) {
     sortOrder *= -1
-    d.sort(sortByProperty(x))
+    d.value.sort(sortByProperty(x))
 }
 
 watch([searchNama, searchWilayah], function () {
     if (searchNama.value && !searchWilayah.value) {
-        d.value = d.filter(x =>
+        d.value = dObject.filter(x =>
             x.nama.toLowerCase().includes(searchNama.value.toLowerCase()))
     } else if (searchWilayah.value && !searchNama.value) {
-        d.value = d.filter(x =>
-            x.wilayah.label.toLowerCase().includes(searchWilayah.value.toLowerCase())
+        d.value = dObject.filter(x =>
+            x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
         )
     } else if (searchNama.value && searchWilayah.value) {
-        d.value = d.filter(x =>
+        d.value = dObject.filter(x =>
             x.nama.toLowerCase().includes(searchNama.value.toLowerCase()) &&
-            x.wilayah.label.toLowerCase().includes(searchWilayah.value.toLowerCase())
+            x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
         )
     } else {
-        d.value = d
+        d.value = dObject
     }
 })
 
@@ -176,6 +188,11 @@ onMounted(() => {
     })
     DOMLoaded.value = true
 })
+
+onUpdated(() => {
+    dObject = page.props.dinas
+    d = ref(dObject)
+})
 defineComponent({
     Multiselect
 })
@@ -186,6 +203,12 @@ const submit = function () {
             if (page.props.flash.message) toggleFlash.value = true
             hideFlashMessage()
             form.reset()
+        },
+        onBefore: function () {
+            triggerSpinner.value = true
+        },
+        onFinish: function () {
+            triggerSpinner.value = false
         }
     })
 }
@@ -196,6 +219,12 @@ const deleteForm = function () {
             if (page.props.flash.message) toggleFlash.value = true
             hideFlashMessage()
             form.reset()
+        },
+        onBefore: function () {
+            triggerSpinner.value = true
+        },
+        onFinish: function () {
+            triggerSpinner.value = false
         }
     })
 }
@@ -204,7 +233,11 @@ const deleteForm = function () {
 <template>
 
     <Head title="Daftar Produsen Data" />
+    <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
+        <!-- <progress v-if="form.progress" :value="form.progress.percentage" max="100">
+            {{ form.progress.percentage }}%
+        </progress> -->
         <div class="container-fluid">
             <div class="mb-2 d-flex">
                 <div class="h4 flex-grow-1">
@@ -224,7 +257,7 @@ const deleteForm = function () {
                         <th class="first-column" @click="clickSortProperties('number')">No.</th>
                         <th class="text-center tabel-width-50" @click="clickSortProperties('nama')">Nama Produsen Data
                         </th>
-                        <th class="text-center" @click="clickSortProperties('')">Wilayah Kerja</th>
+                        <th class="text-center" @click="clickSortProperties('wilayah_label')">Wilayah Kerja</th>
                         <th class="text-center deleted">Edit</th>
                         <th class="text-center deleted">Hapus</th>
                     </tr>
@@ -242,7 +275,7 @@ const deleteForm = function () {
                     <tr v-for="din in d" :key="din.id">
                         <td>{{ din.number }}</td>
                         <td>{{ din.nama }}</td>
-                        <td class="">{{ din.wilayah.label }}</td>
+                        <td class="">{{ din.wilayah_label }}</td>
                         <td class="text-center deleted">
                             <a @click.prevent="toggleUpdateModal(din.id)" class="update-pen">
                                 <i class="fa-solid fa-pen"></i>
@@ -294,7 +327,7 @@ const deleteForm = function () {
                     </form>
                 </template>
                 <template v-slot:modalFunction>
-                    <button id="" type="button" class="btn btn-sm bg-success-fordone"
+                    <button id="" type="button" class="btn btn-sm bg-success-fordone" :disabled="form.processing"
                         @click.prevent="submit">Simpan</button>
                 </template>
             </ModalBs>
@@ -304,7 +337,8 @@ const deleteForm = function () {
                     <label>Apakah Anda yakin akan menghapus Produsen Data ini?</label>
                 </template>
                 <template v-slot:modalFunction>
-                    <button type="button" class="btn btn-sm badge-status-empat" @click.prevent="deleteForm">Hapus</button>
+                    <button type="button" class="btn btn-sm badge-status-empat" :disabled="form.processing"
+                        @click.prevent="deleteForm">Hapus</button>
                 </template>
             </ModalBs>
         </Teleport>

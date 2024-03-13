@@ -42,7 +42,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('user/role', [UserController::class, 'roleChange'])->name('users.roleChange');
     Route::post('user/default', [UserController::class, 'default'])->name('users.default');
     Route::post('user/delete', [UserController::class, 'delete'])->name('users.delete');
-    Route::post('user/add', [UserController::class, 'addUser'])->name('users.add');
+    Route::post('user/store', [UserController::class, 'store'])->name('users.store');
     Route::get('user/create', [UserController::class, 'create'])->name('users.create');
     Route::get('user/edit', [UserController::class, 'edit'])->name('users.edit');
 });
