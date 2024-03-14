@@ -16,13 +16,17 @@ const props = defineProps({
     toggleMenuOpen: {
         type: Function,
         required: true,
+    },
+    params: {
+        type: String,
+        default: null,
     }
 })
 </script>
 
 <template>
     <li v-if="role" class="nav-item" :class="{ 'menu-is-open menu-open': menuOpen }">
-        <div class="nav-link" @click="toggleMenuOpen">
+        <div class="nav-link" @click="function () { toggleMenuOpen(params) }">
             <i class="nav-icon" :class="navIcon"></i>
             <p>
                 <slot name="label" />

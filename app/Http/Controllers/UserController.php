@@ -148,53 +148,50 @@ class UserController extends Controller
     // /**
     //  * Show the form for editing the specified resource.
     //  */
-    // public function edit(Request $request)
-    // {
-    //     //
-    //     $id = $request->id;
-    //     if ($id) {
-    //         $decryptedId = Crypt::decrypt($id);
-    //         $user = User::find($decryptedId);
-    //     } else {
-    //         $user = auth()->user();
-    //     }
-    //     $id_wilayah = MasterWilayah::getMyWilayahId();
-    //     $dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->get();
-    //     return view('user.edit', [
-    //         'user' => $user,
-    //         'dinas' => $dinas,
-    //     ]);
-    // }
+    public function edit(Request $request)
+    {
+        //
+        $id = $request->id;
+        if ($id) {
+            $user = User::find($id);
+        } else {
+            $user = auth()->user();
+        }
+        $dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')
+            ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
+            ->get(['dinas.id as value', 'dinas.nama as label']);
+        return Inertia::render('User/Edit', [
+            'dinas' => $dinas,
+            'user' => $user,
+        ]);
+    }
 
-    // public function editProfile(Request $request)
-    // {
-    //     // $id = auth()->user()->id;
-    //     $id = $request->id;
-    //     $decryptedId = Crypt::decrypt($id);
-    //     $request->validate([
-    //         'username' => ['required', 'string', Rule::unique('users')->ignore($decryptedId)],
-    //         'name' => ['required', 'string', 'max:255'],
-    //         'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($decryptedId)],
-    //         'noHp' => ['required', 'string', 'max:13'],
-    //         'password' => $request->filled('password') ? ['confirmed', Rules\Password::defaults()] : [],
-    //     ]);
-    //     $user = User::where('id', $decryptedId)->update([
-    //         'username' => $request->username,
-    //         'name' => $request->name,
-    //         'email' => $request->email,
-    //         'noHp' => $request->noHp,
-    //         'id_dinas' => $request->id_dinas,
-    //     ]);
-    //     if ($request->filled('password')) {
-    //         $user = User::where('id', $decryptedId)->update([
-    //             'password' => Hash::make($request->password),
-    //         ]);
-    //     }
-    //     return response()->json([
-    //         "message" => "Berhasil",
-    //         "data" => $user,
-    //     ]);
-    // }
+    public function editProfile(Request $request)
+    {
+        // $id = auth()->user()->id;
+        $id = $request->id;
+        // $decryptedId = Crypt::decrypt($id);
+        $request->validate([
+            'username' => ['required', 'string', Rule::unique('users')->ignore($id)],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($id)],
+            'noHp' => ['required', 'string', 'max:13'],
+            'password' => $request->filled('password') ? ['confirmed', Rules\Password::defaults()] : [],
+        ]);
+        $user = User::where('id', $id)->update([
+            'username' => $request->username,
+            'name' => $request->name,
+            'email' => $request->email,
+            'noHp' => $request->noHp,
+            'id_dinas' => $request->id_dinas,
+        ]);
+        if ($request->filled('password')) {
+            $user = User::where('id', $id)->update([
+                'password' => Hash::make($request->password),
+            ]);
+        }
+        return back()->with('message', 'Berhasil edit profile');
+    }
 
     // /**
     //  * Update the specified resource in storage.
@@ -223,7 +220,7 @@ class UserController extends Controller
             ]);
         }
         $user = User::where('id', $id)->first();
-        return redirect()->route('users.index')->with('message', 'Berhasil mengubah role menjadi '. $user->role);
+        return redirect()->route('users.index')->with('message', 'Berhasil mengubah role menjadi ' . $user->role);
     }
 
     public function reset(Request $request)
@@ -247,14 +244,15 @@ class UserController extends Controller
     // /**
     //  * Remove the specified resource from storage.
     //  */
-    // public function delete(Request $request)
-    // {
-    //     //
-    //     $id = $request->id;
-    //     // dd($id);
-    //     User::destroy($id);
-    //     return response()->json('Berhasil Hapus');
-    // }
+    public function delete(Request $request)
+    {
+        //
+        $id = $request->id;
+        // dd($id);
+        User::destroy($id);
+        // return response()->json('Berhasil Hapus');
+        return redirect()->route('users.index')->with('message', 'Berhasil menghapus akun pengguna tersebut');
+    }
 
     // public function login()
     // {

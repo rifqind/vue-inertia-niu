@@ -12,6 +12,7 @@ const submit = function () {
 
 </script>
 <template>
+
     <Head title="Login" />
     <div class="container vh-100">
         <div class="flex-column d-flex justify-content-center align-items-center h-100">
@@ -34,20 +35,17 @@ const submit = function () {
                                     <div class="row mx-2 mb-2">
                                         <input v-model="form.password" type="password" id="password" name="password"
                                             class="form-control form-login" placeholder="Password">
+                                        <div class="text-danger text-left" v-if="form.errors.email"
+                                            id="error">{{ form.errors.email }}</div>
+
                                     </div>
                                 </div>
                                 <div class="mx-2">
-                                    <!-- <button id="login" class="btn bg-success-fordone form-login"><i
-                                            class="fa-solid fa-right-to-bracket"></i> Masuk</button> -->
                                     <button id="login" class="mb-2 btn bg-success-fordone form-login"><i
                                             class="fa-solid fa-right-to-bracket"></i> Masuk</button>
                                     <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')"><i
                                         class="fa-solid fa-rotate-left"></i> Kembali ke Beranda</Link>
                                 </div>
-                                <!-- <div class="mx-2">
-                                    <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')"><i
-                                            class="fa-solid fa-right-to-bracket"></i> Masuk</Link>
-                                </div> -->
                             </form>
                         </div>
                     </div>

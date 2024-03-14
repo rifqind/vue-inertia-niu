@@ -7,9 +7,20 @@ import NavLinkParentSidebar from '@/Components/NavLinkParentSidebar.vue';
 const page = usePage()
 const role = page.props.auth.user.role
 const currentRoute = page.props.route
-const menuOpen = ref(false);
-const toggleMenuOpen = function () {
-    menuOpen.value = !menuOpen.value;
+const menuOpenTabel = ref(false);
+const menuOpenMetadata = ref(false);
+const menuOpenPengguna = ref(false);
+const menuOpenProdusen = ref(false);
+const menuOpenMaster = ref(false);
+
+const toggleMenuOpen = function (x) {
+
+    if (x === 'tbl') menuOpenTabel.value = !menuOpenTabel.value
+    if (x === 'meta') menuOpenMetadata.value = !menuOpenMetadata.value
+    if (x === 'user') menuOpenPengguna.value = !menuOpenPengguna.value
+    if (x === 'prod') menuOpenProdusen.value = !menuOpenProdusen.value
+    if (x === 'master') menuOpenMaster.value = !menuOpenMaster.value
+    // menuOpen.value = !menuOpen.value;
 }
 </script>
 
@@ -39,7 +50,8 @@ const toggleMenuOpen = function () {
                     </li>
                     <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-display'"> Monitoring
                     </NavLinkSidebar>
-                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'" :toggleMenuOpen="toggleMenuOpen">
+                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
+                        :toggleMenuOpen="toggleMenuOpen" :params="'tbl'">
                         <template v-slot:label> Kelola Tabel</template>
 
                         <template v-slot:content>
@@ -57,18 +69,32 @@ const toggleMenuOpen = function () {
                             <NavLinkSidebar :navIcon="'fa-solid fa-list-ol'"> Variabel</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
-                    <NavLinkSidebar :href="route('users.index')" :role="role == 'admin'" :navIcon="'fa-solid fa-users'" :currentRoute="(currentRoute == 'users.index')"> Kelola Pengguna
-                    </NavLinkSidebar>
-                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'" :menuOpen="(currentRoute == 'dinas.index') || (currentRoute == 'dinas.create') || menuOpen" :toggleMenuOpen="toggleMenuOpen">
+                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-users'"
+                        :menuOpen="currentRoute == 'users.index' || currentRoute == 'users.create' || menuOpenPengguna"
+                        :toggleMenuOpen="toggleMenuOpen" :params="'user'">
+                        <template v-slot:label> Kelola Pengguna</template>
+                        <template v-slot:content>
+                            <NavLinkSidebar :href="route('users.index')" :navIcon="'fa-solid fa-list-ol'"
+                                :currentRoute="(currentRoute == 'users.index')"> Daftar Pengguna</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('users.create')" :navIcon="'fa-solid fa-plus'"
+                                :currentRoute="(currentRoute == 'users.create')"> Tambah Pengguna</NavLinkSidebar>
+                        </template>
+                    </NavLinkParentSidebar>
+                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
+                        :menuOpen="(currentRoute == 'dinas.index') || (currentRoute == 'dinas.create') || menuOpenProdusen"
+                        :toggleMenuOpen="toggleMenuOpen" :params="'prod'">
 
                         <template v-slot:label> Kelola Produsen</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :href="route('dinas.index')" :navIcon="'fa-solid fa-list-ol'" :currentRoute="(currentRoute == 'dinas.index')"> Daftar Produsen</NavLinkSidebar>
-                            <NavLinkSidebar :href="route('dinas.create')" :navIcon="'fa-solid fa-plus'" :currentRoute="(currentRoute == 'dinas.create')"> Tambah Produsen</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('dinas.index')" :navIcon="'fa-solid fa-list-ol'"
+                                :currentRoute="(currentRoute == 'dinas.index')"> Daftar Produsen</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('dinas.create')" :navIcon="'fa-solid fa-plus'"
+                                :currentRoute="(currentRoute == 'dinas.create')"> Tambah Produsen</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
-                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'" :toggleMenuOpen="toggleMenuOpen">
+                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
+                        :toggleMenuOpen="toggleMenuOpen" :params="'master'">
 
                         <template v-slot:label> Kelola Master</template>
 
@@ -81,7 +107,9 @@ const toggleMenuOpen = function () {
                             <NavLinkSidebar :navIcon="'fa-solid fas fa-th-list'"> Kolom</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
-                    <NavLinkSidebar :navIcon="'fas fa-user'"> Edit Profile</NavLinkSidebar>
+                    <NavLinkSidebar :navIcon="'fas fa-user'" :href="route('users.edit')"
+                        :currentRoute="currentRoute == 'users.edit'"> Edit
+                        Profile</NavLinkSidebar>
                     <li class="nav-item">
                         <Link :href="route('home')" class="nav-link">
                         <i class="nav-icon fa-solid fa-home"></i>

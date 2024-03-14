@@ -168,4 +168,44 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     background-color: #3d3b8e;
     color: whitesmoke;
 }
+
+.table thead tr th.tabel-width-5 {
+    width: 5%;
+}
+
+.table thead tr th.tabel-width-35 {
+    width: 35%;
+}
+
+.table thead tr th.tabel-width-8 {
+    width: 8%;
+}
+
+.table thead tr th.tabel-width-25 {
+    width: 25%;
+}
+
+.table thead tr th.tabel-width-50 {
+    width: 50%;
+}
+
+.table thead tr th.tabel-width-70 {
+    width: 70%;
+}
+
+.table thead tr th.tabel-width-20 {
+    width: 20%;
+}
+.table thead tr th.tabel-width-15 {
+    width: 15%;
+}
+.table thead tr th.tabel-width-10 {
+    width: 10%;
+}
+.table thead tr th.tabel-width-8 {
+    width: 8%;
+}
+.table thead tr th.tabel-width-45px {
+    width: 45px;
+}
 </style>

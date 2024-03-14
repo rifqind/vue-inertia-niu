@@ -2,11 +2,13 @@
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
 import { getPagination } from '@/pagination'
 import { Head, usePage, Link, useForm } from '@inertiajs/vue3'
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, onUpdated } from 'vue';
+import SpinnerBorder from '@/Components/SpinnerBorder.vue';
+import ModalBs from '@/Components/ModalBs.vue';
 
 const page = usePage()
 var uObject = page.props.users
-var users = ref(uObject) 
+var users = ref(uObject)
 const toggleFlash = ref(false)
 const searchUsername = ref(null)
 const searchNama = ref(null)
@@ -14,6 +16,8 @@ const searchInstansi = ref(null)
 const searchWilayah = ref(null)
 const searchNoHp = ref(null)
 const searchRole = ref(null)
+const triggerSpinner = ref(false)
+const deleteModalStatus = ref(false)
 
 //pagination
 const statusText = ref(false)
@@ -24,7 +28,7 @@ const currentPagination = ref(null)
 const hideFlashMessage = function () {
     setInterval(() => {
         toggleFlash.value = false
-    }, 2000);
+    }, 3000);
 }
 const form = useForm({
     id: null,
@@ -40,8 +44,27 @@ const resetPasswordLink = function (id) {
 const changeRolesLink = function (id) {
     form.id = id
     form.post(route('users.roleChange'), {
-        onSuccess: function () { form.reset }
+        onSuccess: function () {
+            if (page.props.flash.message) toggleFlash.value = true
+            hideFlashMessage()
+            form.reset
+        },
+        onBefore: function () { triggerSpinner.value = true },
+        onFinish: function () { triggerSpinner.value = false }
     })
+}
+
+const editUser = function (id) {
+    form.id = id
+    form.get(route('users.edit'), {
+        onBefore: function () { triggerSpinner.value = true },
+        onFinish: function () { triggerSpinner.value = false }
+    })
+}
+
+const toggleDeleteModal = function (id) {
+    deleteModalStatus.value = true
+    form.id = id
 }
 
 const changeRoles = function (roles) {
@@ -51,20 +74,45 @@ const changeRoles = function (roles) {
         return "fa-computer"
     } else return "fa-user-tie"
 }
-var watchArrays = [searchUsername, searchNama, searchInstansi, searchWilayah, searchNoHp, searchRole]
-watch(watchArrays, function(){
-    console.log(watchArrays);
-    let filters = watchArrays.filter(filter => filter.value)
+
+var sortOrder = 1
+const sortByProperty = function (x) {
+    return function (a, b) {
+        const aValue = isNaN(a[x]) ? a[x] : parseFloat(a[x])
+        const bValue = isNaN(b[x]) ? b[x] : parseFloat(b[x])
+        if (aValue < bValue) {
+            return -1 * sortOrder
+        }
+        if (aValue > bValue) {
+            return 1 * sortOrder
+        }
+        return 0
+    }
+}
+
+const clickSortProperties = function (x) {
+    sortOrder *= -1
+    users.value.sort(sortByProperty(x))
+}
+
+const ArrayBigObjects = [
+    { key: 'username', valueFilter: searchUsername },
+    { key: 'name', valueFilter: searchNama },
+    { key: 'nama_dinas', valueFilter: searchInstansi },
+    { key: 'wilayah_label', valueFilter: searchWilayah },
+    { key: 'noHp', valueFilter: searchNoHp },
+    { key: 'role', valueFilter: searchRole },
+]
+watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+    let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
     if (filters.length === 0) {
         users.value = uObject
         return
     }
-    
     users.value = uObject.filter(item => {
-        // console.log(item);
-        return filters.every(filter => {
-            // console.log(filters)
-            // return item[filter.property].toLowerCase().includes(filter.value.toLowerCase())
+        return filters.every(obj => {
+            const filterValue = obj.valueFilter.value.toLowerCase()
+            return item[obj.key].toLowerCase().includes(filterValue)
         })
     })
 })
@@ -80,14 +128,35 @@ onMounted(function () {
         currentStatusText, rowsTabel)
     maxRows.value.addEventListener("change", function (e) {
         let valueChanged = this.value
-        getPagination(tabelDinas, currentPagination, valueChanged, statusText,
+        getPagination(tabelUser, currentPagination, valueChanged, statusText,
             currentStatusText, rowsTabel)
     })
 })
+onUpdated(() => {
+    uObject = page.props.users
+    users = ref(uObject)
+})
+const deleteForm = function() {
+    form.post(route('users.delete'), {
+        onSuccess: function() {
+            deleteModalStatus.value = false
+            if (page.props.flash.message) toggleFlash.value = true
+            hideFlashMessage()
+            form.reset()
+        },
+        onBefore: function () {
+            triggerSpinner.value = true
+        },
+        onFinish: function () {
+            triggerSpinner.value = false
+        }
+    })
+}
 </script>
 <template>
 
     <Head title="Daftar Pengguna" />
+    <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
         <div class="container-fluid">
             <div class="mb-2 d-flex">
@@ -97,7 +166,7 @@ onMounted(function () {
                 <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
                     data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
                 <Link :href="route('users.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
-                Tambah Pengguna Baru (Belom)</Link>
+                Tambah Pengguna Baru</Link>
             </div>
         </div>
         <div class="alert alert-success" v-if="toggleFlash" role="alert">
@@ -106,24 +175,31 @@ onMounted(function () {
         <table class="table table-sorted table-hover table-bordered table-search" ref="tabelUser" id="tabel-user">
             <thead>
                 <tr class="bg-info-fordone">
-                    <th class="first-column">No.</th>
-                    <th class="text-center">Username</th>
-                    <th class="text-center tabel-width-15">Nama</th>
-                    <th class="text-center tabel-width-20">Nama Instansi</th>
-                    <th class="text-center tabel-width-20">Wilayah Kerja</th>
-                    <th class="text-center">No. HP</th>
-                    <th class="text-center">Peran</th>
-                    <th class="text-center deleted tabel-width-5">Edit</th>
+                    <th class="first-column" @click="clickSortProperties('number')">No.</th>
+                    <th class="text-center" @click="clickSortProperties('username')">Username</th>
+                    <th class="text-center tabel-width-15" @click="clickSortProperties('name')">Nama</th>
+                    <th class="text-center tabel-width-20" @click="clickSortProperties('nama_dinas')">Nama Instansi</th>
+                    <th class="text-center tabel-width-20" @click="clickSortProperties('wilayah_label')">Wilayah Kerja
+                    </th>
+                    <th class="text-center" @click="clickSortProperties('noHp')">No. HP</th>
+                    <th class="text-center" @click="clickSortProperties('role')">Peran</th>
+                    <th class="text-center deleted tabel-width-8">Edit</th>
                     <th class="text-center deleted">Hapus</th>
                 </tr>
                 <tr class="">
                     <td class="search-header"></td>
-                    <td class="search-header"><input v-model.trim="searchUsername" type="text" class="search-input form-control"></td>
-                    <td class="search-header"><input v-model.trim="searchNama" type="text" class="search-input form-control"></td>
-                    <td class="search-header"><input v-model.trim="searchInstansi" type="text" class="search-input form-control"></td>
-                    <td class="search-header"><input v-model.trim="searchWilayah" type="text" class="search-input form-control"></td>
-                    <td class="search-header"><input v-model.trim="searchNoHp" type="text" class="search-input form-control"></td>
-                    <td class="search-header"><input v-model.trim="searchRole" type="text" class="search-input form-control"></td>
+                    <td class="search-header"><input v-model.trim="searchUsername" type="text"
+                            class="search-input form-control"></td>
+                    <td class="search-header"><input v-model.trim="searchNama" type="text"
+                            class="search-input form-control"></td>
+                    <td class="search-header"><input v-model.trim="searchInstansi" type="text"
+                            class="search-input form-control"></td>
+                    <td class="search-header"><input v-model.trim="searchWilayah" type="text"
+                            class="search-input form-control"></td>
+                    <td class="search-header"><input v-model.trim="searchNoHp" type="text"
+                            class="search-input form-control"></td>
+                    <td class="search-header"><input v-model.trim="searchRole" type="text"
+                            class="search-input form-control"></td>
                     <td class="search-header deleted"></td>
                     <td class="search-header deleted"></td>
                 </tr>
@@ -141,19 +217,31 @@ onMounted(function () {
                         <a @click.prevent="resetPasswordLink(user.id)" class="update-pen mx-1">
                             <i class="fa-solid fa-lock" title="Reset Password"></i>
                         </a>
-                        <a @click.prevent="changeRolesLink(user.id)" class="mx-1 role-update"><i class="fa-solid" :class="changeRoles(user.role)" title="Ubah Role"></i></a>
-                        <a href="" class="edit-pen mx-1">
+                        <a @click.prevent="changeRolesLink(user.id)" class="mx-1 role-update"><i class="fa-solid"
+                                :class="changeRoles(user.role)" title="Ubah Role"></i></a>
+                        <a @click.prevent="editUser(user.id)" class="edit-pen mx-1">
                             <i class="fa-solid fa-pencil" title="Edit Pengguna"></i>
                         </a>
                     </td>
                     <td class="text-center deleted">
-                        <a href="" class="delete-trash">
+                        <a @click.prevent="toggleDeleteModal(user.id)" class="delete-trash">
                             <i class="fa-solid fa-trash-can icon-trash-color"></i>
                         </a>
                     </td>
                 </tr>
             </tbody>
         </table>
+        <Teleport to="body">
+            <ModalBs :ModalStatus="deleteModalStatus" @close="deleteModalStatus = false" :title="'Hapus Pengguna'">
+                <template v-slot:modalBody>
+                    <label>Apakah Anda yakin akan menghapus akun Pengguna ini?</label>
+                </template>
+                <template v-slot:modalFunction>
+                    <button type="button" class="btn btn-sm badge-status-empat" :disabled="form.processing"
+                        @click.prevent="deleteForm">Hapus</button>
+                </template>
+            </ModalBs>
+        </Teleport>
         <div class="d-flex justify-content-end align-items-center">
             <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
                 <span id="showTotal"></span>
@@ -184,3 +272,11 @@ onMounted(function () {
         </div>
     </GeneralLayout>
 </template>
+<style scoped>
+.role-update {
+    cursor: pointer;
+}
+.edit-pen {
+    cursor: pointer;
+}
+</style>
