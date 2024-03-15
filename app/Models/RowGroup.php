@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Rowlabel extends Model
+class RowGroup extends Model
 {
     use HasFactory;
     

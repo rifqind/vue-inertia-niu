@@ -16,7 +16,7 @@ export function getPagination(
             currentStatusText.querySelector("#showPage").textContent = currentMaxRows;
         }
         currentStatusText.querySelector('#showTotal').textContent = rowsTabel
-        if (rowsTabel > currentMaxRows) {
+        if (rowsTabel > 0) {
             var totalPageNum = Math.ceil(rowsTabel / currentMaxRows)
             for (let i = 1; i <= totalPageNum;) {
                 let li = document.createElement("li");
@@ -36,7 +36,6 @@ export function getPagination(
                 e.stopImmediatePropagation()
                 e.preventDefault()
                 let currentPageNum = this.getAttribute("data-page")
-                console.log(currentPageNum);
                 let currentRows = parseInt(currentMaxRows)
                 if (currentPageNum == 'prev') {
                     if (lastPage == 1) {

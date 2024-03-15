@@ -1,10 +1,12 @@
 <script setup>
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
+import SpinnerBorder from '@/Components/SpinnerBorder.vue';
+import ModalBs from '@/Components/ModalBs.vue';
+import FlashMessage from '@/Components/FlashMessage.vue';
 import { getPagination } from '@/pagination'
 import { Head, usePage, Link, useForm } from '@inertiajs/vue3'
 import { onMounted, ref, watch, onUpdated } from 'vue';
-import SpinnerBorder from '@/Components/SpinnerBorder.vue';
-import ModalBs from '@/Components/ModalBs.vue';
+import { clickSortProperties } from '@/sortAttribute';
 
 const page = usePage()
 var uObject = page.props.users
@@ -20,16 +22,11 @@ const triggerSpinner = ref(false)
 const deleteModalStatus = ref(false)
 
 //pagination
-const statusText = ref(false)
 const tabelUser = ref(null)
+const statusText = ref(false)
 const maxRows = ref(null)
 const currentPagination = ref(null)
 
-const hideFlashMessage = function () {
-    setInterval(() => {
-        toggleFlash.value = false
-    }, 3000);
-}
 const form = useForm({
     id: null,
 })
@@ -46,7 +43,6 @@ const changeRolesLink = function (id) {
     form.post(route('users.roleChange'), {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
-            hideFlashMessage()
             form.reset
         },
         onBefore: function () { triggerSpinner.value = true },
@@ -75,26 +71,6 @@ const changeRoles = function (roles) {
     } else return "fa-user-tie"
 }
 
-var sortOrder = 1
-const sortByProperty = function (x) {
-    return function (a, b) {
-        const aValue = isNaN(a[x]) ? a[x] : parseFloat(a[x])
-        const bValue = isNaN(b[x]) ? b[x] : parseFloat(b[x])
-        if (aValue < bValue) {
-            return -1 * sortOrder
-        }
-        if (aValue > bValue) {
-            return 1 * sortOrder
-        }
-        return 0
-    }
-}
-
-const clickSortProperties = function (x) {
-    sortOrder *= -1
-    users.value.sort(sortByProperty(x))
-}
-
 const ArrayBigObjects = [
     { key: 'username', valueFilter: searchUsername },
     { key: 'name', valueFilter: searchNama },
@@ -119,7 +95,6 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
 onMounted(function () {
     //flash
     if (page.props.flash.message) toggleFlash.value = true
-    hideFlashMessage()
 
     //pagination
     let currentStatusText = statusText.value
@@ -133,23 +108,26 @@ onMounted(function () {
     })
 })
 onUpdated(() => {
+    let currentStatusText = statusText.value
+    var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
+    currentStatusText.querySelector('#showTotal').textContent = rowsTabel
     uObject = page.props.users
     users = ref(uObject)
 })
-const deleteForm = function() {
+const deleteForm = function () {
     form.post(route('users.delete'), {
-        onSuccess: function() {
-            deleteModalStatus.value = false
+        onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
-            hideFlashMessage()
             form.reset()
         },
         onBefore: function () {
+            deleteModalStatus.value = false
             triggerSpinner.value = true
         },
         onFinish: function () {
             triggerSpinner.value = false
-        }
+        },
+        onError: function () { deleteModalStatus.value = true }
     })
 }
 </script>
@@ -169,20 +147,20 @@ const deleteForm = function() {
                 Tambah Pengguna Baru</Link>
             </div>
         </div>
-        <div class="alert alert-success" v-if="toggleFlash" role="alert">
-            {{ page.props.flash.message }}
-        </div>
+        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
         <table class="table table-sorted table-hover table-bordered table-search" ref="tabelUser" id="tabel-user">
             <thead>
                 <tr class="bg-info-fordone">
-                    <th class="first-column" @click="clickSortProperties('number')">No.</th>
-                    <th class="text-center" @click="clickSortProperties('username')">Username</th>
-                    <th class="text-center tabel-width-15" @click="clickSortProperties('name')">Nama</th>
-                    <th class="text-center tabel-width-20" @click="clickSortProperties('nama_dinas')">Nama Instansi</th>
-                    <th class="text-center tabel-width-20" @click="clickSortProperties('wilayah_label')">Wilayah Kerja
+                    <th class="first-column" @click="clickSortProperties(users, 'number')">No.</th>
+                    <th class="text-center" @click="clickSortProperties(users, 'username')">Username</th>
+                    <th class="text-center tabel-width-15" @click="clickSortProperties(users, 'name')">Nama</th>
+                    <th class="text-center tabel-width-20" @click="clickSortProperties(users, 'nama_dinas')">Nama
+                        Instansi</th>
+                    <th class="text-center tabel-width-20" @click="clickSortProperties(users, 'wilayah_label')">Wilayah
+                        Kerja
                     </th>
-                    <th class="text-center" @click="clickSortProperties('noHp')">No. HP</th>
-                    <th class="text-center" @click="clickSortProperties('role')">Peran</th>
+                    <th class="text-center" @click="clickSortProperties(users, 'noHp')">No. HP</th>
+                    <th class="text-center" @click="clickSortProperties(users, 'role')">Peran</th>
                     <th class="text-center deleted tabel-width-8">Edit</th>
                     <th class="text-center deleted">Hapus</th>
                 </tr>
@@ -276,6 +254,7 @@ const deleteForm = function() {
 .role-update {
     cursor: pointer;
 }
+
 .edit-pen {
     cursor: pointer;
 }

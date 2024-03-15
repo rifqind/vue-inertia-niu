@@ -5,6 +5,9 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MasterWilayahController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\ColumnGroupController;
+use App\Http\Controllers\RowGroupController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -37,7 +40,6 @@ Route::get('/dashboard', function () {
 //users
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('user/index', [UserController::class, 'index'])->name('users.index');
-    Route::get('user/search', [UserController::class, 'search'])->name('users.search');
     Route::get('user/reset', [UserController::class, 'reset'])->name('users.reset');
     Route::post('user/role', [UserController::class, 'roleChange'])->name('users.roleChange');
     Route::post('user/default', [UserController::class, 'default'])->name('users.default');
@@ -54,7 +56,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/dinas', [DinasController::class, 'index']);
     Route::get('dinas/create', [DinasController::class, 'create'])->name('dinas.create');
     Route::get('dinas/index', [DinasController::class, 'index'])->name('dinas.index');
-    Route::get('dinas/search', [DinasController::class, 'search'])->name('dinas.search');
     Route::get('dinas/fetch/{id}', [DinasController::class, 'fetch'])->name('dinas.fetch');
     Route::post('dinas/store', [DinasController::class, 'store'])->name('dinas.store');
     Route::post('dinas/update', [DinasController::class, 'update'])->name('dinas.update');
@@ -62,6 +63,24 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 });
 Route::get('master/wilayah/kecamatan/{kab}', [MasterWilayahController::class, 'fetchMasterKecamatan'])->name('master.wilayah.kecamatan');
 Route::get('master/wilayah/desa/{kab}/{kec}', [MasterWilayahController::class, 'fetchMasterDesa'])->name('master.wilayah.desa');
+
+//masters
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    Route::get('/subject/index', [SubjectController::class, 'index'])->name('subject.index');
+    Route::post('/subject/store', [SubjectController::class, 'store'])->name('subject.store');
+    Route::get('/subject/fetch/{id}', [SubjectController::class, 'fetch'])->name('subject.fetch');
+    Route::post('subject/destroy', [SubjectController::class, 'destroy'])->name('subject.destroy');
+
+    Route::get('/column-group/index', [ColumnGroupController::class, 'index'])->name('column_group.index');
+    Route::post('/column-group/store', [ColumnGroupController::class, 'store'])->name('column_group.store');
+    Route::get('/column-group/fetch/{id}', [ColumnGroupController::class, 'fetch'])->name('column_group.fetch');
+    Route::post('column-group/destroy', [ColumnGroupController::class, 'destroy'])->name('column_group.destroy');
+    
+    Route::get('/row-group/index', [RowGroupController::class, 'index'])->name('row_group.index');
+    Route::post('/row-group/store', [RowGroupController::class, 'store'])->name('row_group.store');
+    Route::get('/row-group/fetch/{id}', [RowGroupController::class, 'fetch'])->name('row_group.fetch');
+    Route::post('row-group/destroy', [RowGroupController::class, 'destroy'])->name('row_group.destroy');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

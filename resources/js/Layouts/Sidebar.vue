@@ -94,17 +94,23 @@ const toggleMenuOpen = function (x) {
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
-                        :toggleMenuOpen="toggleMenuOpen" :params="'master'">
+                        :toggleMenuOpen="toggleMenuOpen" :params="'master'"
+                        :menuOpen="currentRoute == 'subject.index' || currentRoute == 'column_group.index' || menuOpenMaster">
 
                         <template v-slot:label> Kelola Master</template>
 
                         <template v-slot:content>
                             <NavLinkSidebar :navIcon="'fas fa-table'"> Tabel</NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fa-tags'"> Subjek</NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fas fa-bars'"> Kelompok Kolom</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('subject.index')" :navIcon="'fa-solid fa-tags'"
+                                :currentRoute="currentRoute == 'subject.index'"> Subjek
+                            </NavLinkSidebar>
+                            <NavLinkSidebar :href="route('column_group.index')" :navIcon="'fa-solid fas fa-bars'"
+                                :currentRoute="currentRoute == 'column_group.index'"> Kelompok Kolom</NavLinkSidebar>
                             <NavLinkSidebar :navIcon="'fa-solid fas fa-bars'"> Kolom</NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fas fa-th-list'"> Kelompok Kolom</NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fas fa-th-list'"> Kolom</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('row_group.index')"
+                                :currentRoute="currentRoute == 'row_group.index'" :navIcon="'fa-solid fas fa-th-list'">
+                                Kelompok Baris</NavLinkSidebar>
+                            <NavLinkSidebar :navIcon="'fa-solid fas fa-th-list'"> Baris</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkSidebar :navIcon="'fas fa-user'" :href="route('users.edit')"

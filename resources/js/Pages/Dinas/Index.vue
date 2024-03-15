@@ -1,11 +1,13 @@
 <script setup>
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
-import { Link, useForm, usePage, Head } from '@inertiajs/vue3'
-import { getPagination } from '@/pagination';
-import { ref, onMounted, onUpdated, defineComponent, watch, computed, toRaw } from 'vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import Multiselect from '@vueform/multiselect';
 import SpinnerBorder from '@/Components/SpinnerBorder.vue';
+import FlashMessage from '@/Components/FlashMessage.vue';
+import { Link, useForm, usePage, Head } from '@inertiajs/vue3'
+import { getPagination } from '@/pagination';
+import { ref, onMounted, onUpdated, defineComponent, watch } from 'vue'
+import { clickSortProperties } from '@/sortAttribute';
 
 const page = usePage()
 const tabelDinas = ref(null)
@@ -36,8 +38,6 @@ const tingkatan = ref({
 })
 var dObject = page.props.dinas
 var d = ref(dObject)
-var isFetching = true
-
 const kabsDrop = ref({
     value: null,
     options: null,
@@ -61,9 +61,9 @@ const desaDrop = ref({
 
 const toggleUpdateModal = function (id) {
     if (id) {
-        fetchProdusen(id).then(function() {
+        fetchProdusen(id).then(function () {
             triggerSpinner.value = false
-            if (isFetching == false) updateModalStatus.value = true
+            updateModalStatus.value = true
         })
     }
 }
@@ -74,7 +74,6 @@ const toggleDeleteModal = function (id) {
 
 const fetchProdusen = async function (id) {
     try {
-        isFetching = true
         triggerSpinner.value = true
 
         const response = await axios.get('/dinas/fetch/' + id)
@@ -102,8 +101,6 @@ const fetchProdusen = async function (id) {
             }
         }
         kabsDrop.value.options = produsenFetched.value.kabs.slice(1)
-
-        isFetching = false
     } catch (error) {
         console.error('Error fetching produsen: ', error)
     }
@@ -130,32 +127,6 @@ const loadDesa = async (valueKecs) => {
     } catch (error) {
         console.error('Error fetching desa:', error);
     }
-}
-
-const hideFlashMessage = function () {
-    setInterval(() => {
-        toggleFlash.value = false
-    }, 2000);
-}
-
-var sortOrder = 1
-const sortByProperty = function (x) {
-    return function (a, b) {
-        const aValue = isNaN(a[x]) ? a[x] : parseFloat(a[x])
-        const bValue = isNaN(b[x]) ? b[x] : parseFloat(b[x])
-        if (aValue < bValue) {
-            return -1 * sortOrder
-        }
-        if (aValue > bValue) {
-            return 1 * sortOrder
-        }
-        return 0
-    }
-}
-
-const clickSortProperties = function (x) {
-    sortOrder *= -1
-    d.value.sort(sortByProperty(x))
 }
 
 watch([searchNama, searchWilayah], function () {
@@ -190,6 +161,9 @@ onMounted(() => {
 })
 
 onUpdated(() => {
+    let currentStatusText = statusText.value
+    var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
+    currentStatusText.querySelector('#showTotal').textContent = rowsTabel
     dObject = page.props.dinas
     d = ref(dObject)
 })
@@ -198,34 +172,34 @@ defineComponent({
 })
 const submit = function () {
     form.post(route('dinas.update'), {
-        onSuccess: function () {
-            updateModalStatus.value = false
-            if (page.props.flash.message) toggleFlash.value = true
-            hideFlashMessage()
-            form.reset()
-        },
         onBefore: function () {
             triggerSpinner.value = true
+            updateModalStatus.value = false
+        },
+        onSuccess: function () {
+            if (page.props.flash.message) toggleFlash.value = true
+            form.reset()
         },
         onFinish: function () {
             triggerSpinner.value = false
-        }
+        },
+        onError: function () { updateModalStatus.value = true }
     })
 }
 const deleteForm = function () {
     form.post(route('dinas.delete'), {
-        onSuccess: function () {
-            deleteModalStatus.value = false
-            if (page.props.flash.message) toggleFlash.value = true
-            hideFlashMessage()
-            form.reset()
-        },
         onBefore: function () {
             triggerSpinner.value = true
+            deleteModalStatus.value = false
+        },
+        onSuccess: function () {
+            if (page.props.flash.message) toggleFlash.value = true
+            form.reset()
         },
         onFinish: function () {
             triggerSpinner.value = false
-        }
+        },
+        onError: function () { deleteModalStatus.value = true }
     })
 }
 </script>
@@ -235,9 +209,6 @@ const deleteForm = function () {
     <Head title="Daftar Produsen Data" />
     <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
-        <!-- <progress v-if="form.progress" :value="form.progress.percentage" max="100">
-            {{ form.progress.percentage }}%
-        </progress> -->
         <div class="container-fluid">
             <div class="mb-2 d-flex">
                 <div class="h4 flex-grow-1">
@@ -248,16 +219,15 @@ const deleteForm = function () {
                 <Link :href="route('dinas.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                 Tambah Produsen Data Baru</Link>
             </div>
-            <div class="alert alert-success" v-if="toggleFlash" role="alert">
-                {{ page.props.flash.message }}
-            </div>
+            <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
             <table class="table table-sorted table-hover table-bordered" ref="tabelDinas" id="tabel-dinas">
                 <thead>
                     <tr>
-                        <th class="first-column" @click="clickSortProperties('number')">No.</th>
-                        <th class="text-center tabel-width-50" @click="clickSortProperties('nama')">Nama Produsen Data
+                        <th class="first-column" @click="clickSortProperties(d, 'number')">No.</th>
+                        <th class="text-center tabel-width-50" @click="clickSortProperties(d, 'nama')">Nama Produsen
+                            Data
                         </th>
-                        <th class="text-center" @click="clickSortProperties('wilayah_label')">Wilayah Kerja</th>
+                        <th class="text-center" @click="clickSortProperties(d, 'wilayah_label')">Wilayah Kerja</th>
                         <th class="text-center deleted">Edit</th>
                         <th class="text-center deleted">Hapus</th>
                     </tr>
