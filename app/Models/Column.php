@@ -12,6 +12,6 @@ class Column extends Model
     public $timestamps = false;
 
     public function columnGroups(){
-        return $this->belongsTo(ColumnGroup::class, 'id_column_group', 'id');
+        return $this->belongsTo(ColumnGroup::class, 'id_column_groups', 'id');
     }
 }

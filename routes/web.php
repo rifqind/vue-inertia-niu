@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\DinasController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
@@ -7,7 +8,9 @@ use App\Http\Controllers\MasterWilayahController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ColumnGroupController;
+use App\Http\Controllers\RowController;
 use App\Http\Controllers\RowGroupController;
+use App\Http\Controllers\TabelController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -75,11 +78,21 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/column-group/store', [ColumnGroupController::class, 'store'])->name('column_group.store');
     Route::get('/column-group/fetch/{id}', [ColumnGroupController::class, 'fetch'])->name('column_group.fetch');
     Route::post('column-group/destroy', [ColumnGroupController::class, 'destroy'])->name('column_group.destroy');
+
+    Route::get('/column/index', [ColumnController::class, 'index'])->name('columns.index');
+    Route::post('/column/store', [ColumnController::class, 'store'])->name('columns.store');
+    Route::get('/column/fetch/{id}', [ColumnController::class, 'fetchForUpdate'])->name('columns.fetchForUpdate');
+    Route::post('column/destroy', [ColumnController::class, 'destroy'])->name('columns.destroy');
     
     Route::get('/row-group/index', [RowGroupController::class, 'index'])->name('row_group.index');
     Route::post('/row-group/store', [RowGroupController::class, 'store'])->name('row_group.store');
     Route::get('/row-group/fetch/{id}', [RowGroupController::class, 'fetch'])->name('row_group.fetch');
     Route::post('row-group/destroy', [RowGroupController::class, 'destroy'])->name('row_group.destroy');
+    
+    Route::get('/row/index', [RowController::class, 'index'])->name('rows.index');
+    Route::post('/row/store', [RowController::class, 'store'])->name('rows.store');
+    Route::get('/row/fetch/{id}', [RowController::class, 'fetchForUpdate'])->name('rows.fetchForUpdate');
+    Route::post('row/destroy', [RowController::class, 'destroy'])->name('rows.destroy');
 });
 
 Route::middleware('auth')->group(function () {
@@ -87,5 +100,29 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+//tabel
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/tabel/index', [TabelController::class, 'index'])->name('tabel.index');
+    Route::get('/tabel/show/{id}', [TabelController::class, 'show'])->name('tabel.show');
+    Route::put('/tabel/update-content/{id}', [TabelController::class, 'update_content'])->name('tabel.update_content');
+});
+
+Route::post('/tabel/adminHandleData', [TabelController::class, 'adminHandleData'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('tabel.adminHandleData');
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    Route::get('/tabel/master', [TabelController::class, 'master'])->name('tabel.master');
+    Route::get('/tabel/create', [TabelController::class, 'create'])->name('tabel.create');
+    Route::post('/tabel/create', [TabelController::class, 'store'])->name('tabel.store');
+    Route::put('/tabel/update/{id}', [TabelController::class, 'update'])->name('tabel.update');
+    Route::get('/tabel/deletedList', [TabelController::class, 'index'])->name('tabel.deletedList');
+
+    Route::get('/tabel/master/copy/{id}', [TabelController::class, 'copy'])->name('tabel.copy');
+    Route::post('/tabel/copy/{id}', [TabelController::class, 'storeCopy'])->name('tabel.storeCopy');
+    Route::get('/tabel/edit/{id}', [TabelController::class, 'edit'])->name('tabel.edit');
+    Route::post('/tabel/statusDestroy', [TabelController::class, 'statusDestroy'])->name('tabel.statusDestroy');
+    Route::post('/tabel/destroy', [TabelController::class, 'destroy'])->name('tabel.destroy');
+});
+
+Route::get('fetch/data', [TabelController::class, 'getDatacontent'])->name('tabel.getDatacontent');
 
 require __DIR__.'/auth.php';

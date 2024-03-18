@@ -54,8 +54,12 @@ onMounted(() => {
 onUpdated(() => {
     let currentStatusText = statusText.value
     var rowsTabel = tabelColumnGroup.value.querySelectorAll('tbody tr').length
-    getPagination(tabelColumnGroup, currentPagination, 10, statusText,
-        currentStatusText, rowsTabel)
+    currentStatusText.querySelector('#showTotal').textContent = rowsTabel
+    if (maxRows.value.value > rowsTabel) {
+        currentStatusText.querySelector('#showPage').textContent = rowsTabel
+    } else {
+        currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
+    }
     cGObject = page.props.columnGroup
     columnGroup = ref(cGObject)
 })
@@ -132,11 +136,13 @@ const deleteForm = function () {
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelColumnGroup" id="tabel-kelompok-kolom">
+        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelColumnGroup"
+            id="tabel-kelompok-kolom">
             <thead>
                 <tr class="bg-info-fordone">
                     <th class="first-column tabel-width-10" @click="clickSortProperties(columnGroup, 'number')">No.</th>
-                    <th class="text-center tabel-width-70" @click="clickSortProperties(columnGroup, 'label')">Nama Kelompok Kolom
+                    <th class="text-center tabel-width-70" @click="clickSortProperties(columnGroup, 'label')">Nama
+                        Kelompok Kolom
                     </th>
                     <th class="text-center deleted tabel-width-8">Edit</th>
                     <th class="text-center deleted">Hapus</th>
@@ -167,7 +173,10 @@ const deleteForm = function () {
             </tbody>
         </table>
         <Teleport to="body">
-            <ModalBs :ModalStatus="createModalStatus" @close="createModalStatus = false" :title="'Tambah Kelompok Kolom Baru'">
+            <ModalBs :ModalStatus="createModalStatus" @close="function () {
+        createModalStatus = false
+        form.reset()
+    }" :title="'Tambah Kelompok Kolom Baru'">
                 <template #modalBody>
                     <form>
                         <div class="form-group">
@@ -184,9 +193,13 @@ const deleteForm = function () {
             </ModalBs>
         </Teleport>
         <Teleport to="body">
-            <ModalBs :ModalStatus="deleteModalStatus" @close="deleteModalStatus = false" :title="'Hapus Kelompok Kolom'">
+            <ModalBs :ModalStatus="deleteModalStatus" @close="function () {
+        deleteModalStatus = false
+        form.reset()
+    }" :title="'Hapus Kelompok Kolom'">
                 <template v-slot:modalBody>
-                    <label>Apakah Anda yakin akan menghapus Kelompok Kolom ini? (Kolom yang di dalamnya maka akan ikut terhapus)</label>
+                    <label>Apakah Anda yakin akan menghapus Kelompok Kolom ini? (Kolom yang di dalamnya maka akan ikut
+                        terhapus)</label>
                 </template>
                 <template v-slot:modalFunction>
                     <button type="button" class="btn btn-sm badge-status-empat" :disabled="form.processing"

@@ -254,8 +254,4 @@ const deleteForm = function () {
 .role-update {
     cursor: pointer;
 }
-
-.edit-pen {
-    cursor: pointer;
-}
 </style>

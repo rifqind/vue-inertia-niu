@@ -51,11 +51,12 @@ const toggleMenuOpen = function (x) {
                     <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-display'"> Monitoring
                     </NavLinkSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
+                    :menuOpen="menuOpenTabel"
                         :toggleMenuOpen="toggleMenuOpen" :params="'tbl'">
                         <template v-slot:label> Kelola Tabel</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :navIcon="'fa-solid fa-list-ol'"> Daftar Tabel</NavLinkSidebar>
+                            <NavLinkSidebar :herf="route('tabel.index')" :currentRoute="currentRoute == 'tabel.index'" :navIcon="'fa-solid fa-list-ol'"> Daftar Tabel</NavLinkSidebar>
                             <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-plus'"> Tambah Tabel
                             </NavLinkSidebar>
                             <NavLinkSidebar :navIcon="'fa-solid fa-recycle'"> Recycle Bin</NavLinkSidebar>
@@ -95,7 +96,7 @@ const toggleMenuOpen = function (x) {
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
                         :toggleMenuOpen="toggleMenuOpen" :params="'master'"
-                        :menuOpen="currentRoute == 'subject.index' || currentRoute == 'column_group.index' || menuOpenMaster">
+                        :menuOpen="currentRoute == 'subject.index' || currentRoute == 'column_group.index' || currentRoute == 'columns.index' || currentRoute == 'row_group.index' || currentRoute == 'rows.index' || menuOpenMaster">
 
                         <template v-slot:label> Kelola Master</template>
 
@@ -106,11 +107,13 @@ const toggleMenuOpen = function (x) {
                             </NavLinkSidebar>
                             <NavLinkSidebar :href="route('column_group.index')" :navIcon="'fa-solid fas fa-bars'"
                                 :currentRoute="currentRoute == 'column_group.index'"> Kelompok Kolom</NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fas fa-bars'"> Kolom</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('columns.index')" :navIcon="'fa-solid fas fa-bars'"
+                                :currentRoute="currentRoute == 'columns.index'"> Kolom</NavLinkSidebar>
                             <NavLinkSidebar :href="route('row_group.index')"
                                 :currentRoute="currentRoute == 'row_group.index'" :navIcon="'fa-solid fas fa-th-list'">
                                 Kelompok Baris</NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fas fa-th-list'"> Baris</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('rows.index')" :currentRoute="currentRoute == 'rows.index'"
+                                :navIcon="'fa-solid fas fa-th-list'"> Baris</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkSidebar :navIcon="'fas fa-user'" :href="route('users.edit')"

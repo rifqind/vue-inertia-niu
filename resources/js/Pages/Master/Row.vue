@@ -1,75 +1,93 @@
 <script setup>
 import { Link, Head, usePage, useForm } from '@inertiajs/vue3';
-import { Teleport, onMounted, onUpdated, ref, watch } from 'vue';
+import { Teleport, defineComponent, onMounted, onUpdated, ref, watch } from 'vue';
 import { getPagination } from '@/pagination';
 import { clickSortProperties } from '@/sortAttribute';
 import GeneralLayout from '@/Layouts/GeneralLayout.vue'
 import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
+import Multiselect from '@vueform/multiselect';
 
+defineComponent({
+    Multiselect
+})
 const page = usePage()
-var rGObject = page.props.RowGroup
-var rowGroup = ref(rGObject)
+var rGroup = page.props.rows
+var rows = ref(rGroup)
+const row_groups = page.props.row_groups
 const createModalStatus = ref(false)
 const deleteModalStatus = ref(false)
 const toggleFlash = ref(false)
 const searchLabel = ref(null)
+const searchRowGroup = ref(null)
 const triggerSpinner = ref(false)
-const rowGroupFetched = ref(null)
+const rowsFetched = ref(null)
+const rowGroupsDrop = ref({
+    value: null,
+    options: row_groups
+})
 
 //pagination
-const tabelRowGroup = ref(null)
+const tabelRows = ref(null)
 const statusText = ref(false)
 const maxRows = ref(null)
 const currentPagination = ref(null)
 
 const ArrayBigObjects = [
-    { key: 'label', valueFilter: searchLabel }
+    { key: 'label', valueFilter: searchLabel },
+    { key: 'rowGroupsLabel', valueFilter: searchRowGroup },
 ]
 watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
     if (filters.length === 0) {
-        rowGroup.value = rGObject
+        rows.value = rGroup
         return
     }
-    rowGroup.value = rGObject.filter(item => {
+    rows.value = rGroup.filter(item => {
         return filters.every(obj => {
             const filterValue = obj.valueFilter.value.toLowerCase()
             return item[obj.key].toLowerCase().includes(filterValue)
         })
     })
 })
+
 onMounted(() => {
     let currentStatusText = statusText.value
-    var rowsTabel = tabelRowGroup.value.querySelectorAll('tbody tr').length
-    getPagination(tabelRowGroup, currentPagination, 10, statusText,
+    var rowsTabel = tabelRows.value.querySelectorAll('tbody tr').length
+    getPagination(tabelRows, currentPagination, 10, statusText,
         currentStatusText, rowsTabel)
     maxRows.value.addEventListener("change", function (e) {
         let valueChanged = this.value
-        getPagination(tabelRowGroup, currentPagination, valueChanged, statusText,
+        getPagination(tabelRows, currentPagination, valueChanged, statusText,
             currentStatusText, rowsTabel)
     })
 })
 onUpdated(() => {
+    rGroup = page.props.rows
+    rows = ref(rGroup)
     let currentStatusText = statusText.value
-    var rowsTabel = tabelRowGroup.value.querySelectorAll('tbody tr').length
+    var rowsTabel = tabelRows.value.querySelectorAll('tbody tr').length
     currentStatusText.querySelector('#showTotal').textContent = rowsTabel
     if (maxRows.value.value > rowsTabel) {
         currentStatusText.querySelector('#showPage').textContent = rowsTabel
     } else {
         currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
     }
-    rGObject = page.props.RowGroup
-    rowGroup = ref(rGObject)
+    maxRows.value.addEventListener("change", function (e) {
+        let valueChanged = this.value
+        getPagination(tabelRows, currentPagination, valueChanged, statusText,
+            currentStatusText, rowsTabel)
+    })
 })
 const form = useForm({
     id: null,
-    label: null
+    label: null,
+    id_row_groups: null,
 })
 const toggleUpdateModal = function (id) {
     if (id) {
-        fetchColumnGroup(id).then(function () {
+        fetchRows(id).then(function () {
             triggerSpinner.value = false
             createModalStatus.value = true
         })
@@ -79,19 +97,20 @@ const toggleDeleteModal = function (id) {
     deleteModalStatus.value = true
     form.id = id
 }
-const fetchColumnGroup = async function (id) {
+const fetchRows = async function (id) {
     try {
         triggerSpinner.value = true
-        const response = await axios.get('/row-group/fetch/' + id)
-        rowGroupFetched.value = response.data.data
-        form.id = rowGroupFetched.value.id
-        form.label = rowGroupFetched.value.label
+        const response = await axios.get('/row/fetch/' + id)
+        rowsFetched.value = response.data.data
+        form.id = rowsFetched.value.id
+        form.label = rowsFetched.value.label
+        form.id_row_groups = rowsFetched.value.id_row_groups
     } catch (error) {
-        console.error('Error Fetching Subject: ', error)
+        console.error('Error Fetching Row: ', error)
     }
 }
 const submit = function () {
-    form.post(route('row_group.store'), {
+    form.post(route('rows.store'), {
         onBefore: function () {
             triggerSpinner.value = true
             createModalStatus.value = false
@@ -105,7 +124,7 @@ const submit = function () {
     })
 }
 const deleteForm = function () {
-    form.post(route('row_group.destroy'), {
+    form.post(route('rows.destroy'), {
         onBefore: function () {
             triggerSpinner.value = true
             deleteModalStatus.value = false
@@ -121,28 +140,29 @@ const deleteForm = function () {
 </script>
 <template>
 
-    <Head title="Daftar Kelompok Baris" />
+    <Head title="Daftar Baris" />
     <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
         <div class="container-fluid">
             <div class="mb-2 d-flex">
                 <div class="h4 flex-grow-1">
-                    Daftar Kelompok Baris
+                    Daftar Baris
                 </div>
                 <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
                     data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
                 <a @click="createModalStatus = true" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
-                    Tambah Kelompok Baris Baru</a>
+                    Tambah Baris Baru</a>
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelRowGroup"
-            id="tabel-kelompok-Baris">
+        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelRows" id="tabel-Baris">
             <thead>
                 <tr class="bg-info-fordone">
-                    <th class="first-column tabel-width-10" @click="clickSortProperties(rowGroup, 'number')">No.</th>
-                    <th class="text-center tabel-width-70" @click="clickSortProperties(rowGroup, 'label')">Nama Kelompok
-                        Baris
+                    <th class="first-column tabel-width-10" @click="clickSortProperties(rows, 'number')">No.</th>
+                    <th class="text-center tabel-width-30" @click="clickSortProperties(rows, 'label')">Nama Baris
+                    </th>
+                    <th class="text-center tabel-width-30" @click="clickSortProperties(rows, 'rowGroupsLabel')">
+                        Nama Kelompok Baris
                     </th>
                     <th class="text-center deleted tabel-width-8">Edit</th>
                     <th class="text-center deleted">Hapus</th>
@@ -151,21 +171,24 @@ const deleteForm = function () {
                     <td class="search-header"></td>
                     <td class="search-header"><input v-model.trim="searchLabel" type="text"
                             class="search-input form-control"></td>
+                    <td class="search-header"><input v-model.trim="searchRowGroup" type="text"
+                            class="search-input form-control"></td>
                     <td class="search-header deleted"></td>
                     <td class="search-header deleted"></td>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="rowG in rowGroup" :key="rowG.id">
-                    <td>{{ rowG.number }}</td>
-                    <td>{{ rowG.label }}</td>
+                <tr v-for="row in rows" :key="row.id">
+                    <td>{{ row.number }}</td>
+                    <td>{{ row.label }}</td>
+                    <td>{{ row.rowGroupsLabel }}</td>
                     <td class="text-center deleted">
-                        <a @click.prevent="toggleUpdateModal(rowG.id)" class="edit-pen mx-1">
+                        <a @click.prevent="toggleUpdateModal(row.id)" class="edit-pen mx-1">
                             <i class="fa-solid fa-pencil" title="Edit Pengguna"></i>
                         </a>
                     </td>
                     <td class="text-center deleted">
-                        <a @click.prevent="toggleDeleteModal(rowG.id)" class="delete-trash">
+                        <a @click.prevent="toggleDeleteModal(row.id)" class="delete-trash">
                             <i class="fa-solid fa-trash-can icon-trash-color"></i>
                         </a>
                     </td>
@@ -176,13 +199,20 @@ const deleteForm = function () {
             <ModalBs :ModalStatus="createModalStatus" @close="function () {
         createModalStatus = false
         form.reset()
-    }" :title="'Tambah Kelompok Baris Baru'">
+    }" :title="'Tambah Baris Baru'">
                 <template #modalBody>
                     <form>
                         <div class="form-group">
-                            <label for="label">Nama Kelompok Baris</label>
-                            <input v-model="form.label" type="text" class="form-control" id="label"
-                                placeholder="Isi Nama Kelompok Baris">
+                            <div class="mb-3">
+                                <label for="label">Nama Baris</label>
+                                <input v-model="form.label" type="text" class="form-control" id="label"
+                                    placeholder="Isi Nama Baris">
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_row_groups">Nama Kelompok Baris</label>
+                                <Multiselect v-model="form.id_row_groups" :options="rowGroupsDrop.options"
+                                    placeholder="-- Pilih Kelompok Baris --" :searchable="true" />
+                            </div>
                         </div>
                     </form>
                 </template>
@@ -196,13 +226,12 @@ const deleteForm = function () {
             <ModalBs :ModalStatus="deleteModalStatus" @close="function () {
         deleteModalStatus = false
         form.reset()
-    }" :title="'Hapus Kelompok Baris'">
+    }" :title="'Hapus Baris'">
                 <template v-slot:modalBody>
-                    <label>Apakah Anda yakin akan menghapus Kelompok Baris ini? (Baris yang di dalamnya maka akan ikut
-                        terhapus)</label>
+                    <label>Apakah Anda yakin akan menghapus Baris ini?</label>
                 </template>
                 <template v-slot:modalFunction>
-                    <button type="button" class="btn btn-sm badge-status-empat" :disabled="form.processing"
+                    <button type="button" class="btn btn-sm badge-status-empat" :disabled="deleteForm.processing"
                         @click.prevent="deleteForm">Hapus</button>
                 </template>
             </ModalBs>

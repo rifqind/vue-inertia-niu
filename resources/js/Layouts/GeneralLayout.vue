@@ -164,6 +164,9 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 .delete-trash {
     cursor: pointer;
 }
+.edit-pen {
+    cursor: pointer;
+}
 .table thead tr th {
     background-color: #3d3b8e;
     color: whitesmoke;
