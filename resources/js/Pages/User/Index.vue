@@ -108,11 +108,21 @@ onMounted(function () {
     })
 })
 onUpdated(() => {
+    uObject = page.props.users
+    users = ref(uObject)
     let currentStatusText = statusText.value
     var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
     currentStatusText.querySelector('#showTotal').textContent = rowsTabel
-    uObject = page.props.users
-    users = ref(uObject)
+    if (maxRows.value.value > rowsTabel) {
+        currentStatusText.querySelector('#showPage').textContent = rowsTabel
+    } else {
+        currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
+    }
+    maxRows.value.addEventListener("change", function (e) {
+        let valueChanged = this.value
+        getPagination(tabelUser, currentPagination, valueChanged, statusText,
+            currentStatusText, rowsTabel)
+    })
 })
 const deleteForm = function () {
     form.post(route('users.delete'), {

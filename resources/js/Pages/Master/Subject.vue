@@ -52,11 +52,21 @@ onMounted(() => {
     })
 })
 onUpdated(() => {
+    sObject = page.props.subjects
+    subjects = ref(sObject)
     let currentStatusText = statusText.value
     var rowsTabel = tabelSubjek.value.querySelectorAll('tbody tr').length
     currentStatusText.querySelector('#showTotal').textContent = rowsTabel
-    sObject = page.props.subjects
-    subjects = ref(sObject)
+    if (maxRows.value.value > rowsTabel) {
+        currentStatusText.querySelector('#showPage').textContent = rowsTabel
+    } else {
+        currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
+    }
+    maxRows.value.addEventListener("change", function (e) {
+        let valueChanged = this.value
+        getPagination(tabelSubjek, currentPagination, valueChanged, statusText,
+            currentStatusText, rowsTabel)
+    })
 })
 const form = useForm({
     id: null,

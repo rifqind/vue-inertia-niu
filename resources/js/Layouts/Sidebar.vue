@@ -51,13 +51,13 @@ const toggleMenuOpen = function (x) {
                     <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-display'"> Monitoring
                     </NavLinkSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
-                    :menuOpen="menuOpenTabel"
+                    :menuOpen="menuOpenTabel || currentRoute == 'tabel.index' || currentRoute == 'tabel.index'"
                         :toggleMenuOpen="toggleMenuOpen" :params="'tbl'">
                         <template v-slot:label> Kelola Tabel</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :herf="route('tabel.index')" :currentRoute="currentRoute == 'tabel.index'" :navIcon="'fa-solid fa-list-ol'"> Daftar Tabel</NavLinkSidebar>
-                            <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-plus'"> Tambah Tabel
+                            <NavLinkSidebar :href="route('tabel.index')" :currentRoute="currentRoute == 'tabel.index'" :navIcon="'fa-solid fa-list-ol'"> Daftar Tabel</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('tabel.create')" :currentRoute="currentRoute == 'tabel.create'" :role="role == 'admin'" :navIcon="'fa-solid fa-plus'"> Tambah Tabel
                             </NavLinkSidebar>
                             <NavLinkSidebar :navIcon="'fa-solid fa-recycle'"> Recycle Bin</NavLinkSidebar>
                         </template>

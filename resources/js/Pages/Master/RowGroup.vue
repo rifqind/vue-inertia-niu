@@ -52,6 +52,8 @@ onMounted(() => {
     })
 })
 onUpdated(() => {
+    rGObject = page.props.RowGroup
+    rowGroup = ref(rGObject)
     let currentStatusText = statusText.value
     var rowsTabel = tabelRowGroup.value.querySelectorAll('tbody tr').length
     currentStatusText.querySelector('#showTotal').textContent = rowsTabel
@@ -60,8 +62,11 @@ onUpdated(() => {
     } else {
         currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
     }
-    rGObject = page.props.RowGroup
-    rowGroup = ref(rGObject)
+    maxRows.value.addEventListener("change", function (e) {
+        let valueChanged = this.value
+        getPagination(tabelRowGroup, currentPagination, valueChanged, statusText,
+            currentStatusText, rowsTabel)
+    })
 })
 const form = useForm({
     id: null,

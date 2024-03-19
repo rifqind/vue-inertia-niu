@@ -161,11 +161,21 @@ onMounted(() => {
 })
 
 onUpdated(() => {
+    dObject = page.props.dinas
+    d = ref(dObject)
     let currentStatusText = statusText.value
     var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
     currentStatusText.querySelector('#showTotal').textContent = rowsTabel
-    dObject = page.props.dinas
-    d = ref(dObject)
+    if (maxRows.value.value > rowsTabel) {
+        currentStatusText.querySelector('#showPage').textContent = rowsTabel
+    } else {
+        currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
+    }
+    maxRows.value.addEventListener("change", function (e) {
+        let valueChanged = this.value
+        getPagination(tabelDinas, currentPagination, valueChanged, statusText,
+            currentStatusText, rowsTabel)
+    })
 })
 defineComponent({
     Multiselect
