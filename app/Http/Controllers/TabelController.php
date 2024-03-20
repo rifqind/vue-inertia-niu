@@ -269,7 +269,7 @@ class TabelController extends Controller
     public function create()
     {
         $tabel = Tabel::all();
-        $rowLabel = RowGroup::get();
+        $rowLabel = RowGroup::get(['row_groups.id as value', 'row_groups.label as label']);
         $daftar_dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')
             ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
             ->get(['dinas.id as value', 'dinas.nama as label']);

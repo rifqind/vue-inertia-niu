@@ -18,8 +18,8 @@ class RowController extends Controller
     {
         //
         $rows = Row::leftJoin('row_groups as rg', 'rg.id', '=', 'rows.id_row_groups')
-        ->get(['rows.*', 'rg.label as rowGroupsLabel']);
-        
+            ->get(['rows.*', 'rg.label as rowGroupsLabel']);
+
         foreach ($rows as $key => $value) {
             # code...
             $value->number = $key + 1;
@@ -45,7 +45,7 @@ class RowController extends Controller
             'label' => ['required', 'string'],
             'id_row_groups' => 'required',
         ]);
-        if($request->id){
+        if ($request->id) {
             $updated = Row::where('id', $request->id)->update($validatedData);
             return redirect()->route('rows.index')->with('message', 'Berhasil mengedit baris');
         }
@@ -53,7 +53,8 @@ class RowController extends Controller
         return redirect()->route('rows.index')->with('message', 'Berhasil menambah baris baru');
     }
 
-    public function fetchForUpdate(string $id) {
+    public function fetchForUpdate(string $id)
+    {
         $target = Row::find($id);
         return response()->json([
             'data' => $target
@@ -62,12 +63,12 @@ class RowController extends Controller
     /**
      * Display the specified resource.
      */
-    
+
 
     /**
      * Update the specified resource in storage.
      */
-   
+
 
     /**
      * Remove the specified resource from storage.
@@ -86,13 +87,13 @@ class RowController extends Controller
         return redirect()->route('rows.index')->with('message', 'Berhasil menghapus baris');
     }
 
-    public function fetch(Request $request)
+    public function fetchForCreate(string $id)
     {
-        $id_rowLabels = $request->query('id_rowLabels');
-        $response_data = Row::join('rowlabels', 'rows.id_rowlabels', '=', 'rowlabels.id')
-            ->where('rows.id_rowlabels', $id_rowLabels) // tbd
-            ->select('rows.id', 'rows.label', 'rowlabels.label as tipe')
-            ->get();
-        return response()->json(['data' => $response_data, 'status' => 200]);
+        $target = Row::where('id_row_groups', $id)
+            ->leftJoin('row_groups as rg', 'rg.id', '=', 'rows.id_row_groups')
+            ->get(['rows.id', 'rows.label as label', 'rg.label as tipe']);
+        return response()->json([
+            'data' => $target,
+        ]);
     }
 }

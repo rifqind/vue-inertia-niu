@@ -82,6 +82,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/column/index', [ColumnController::class, 'index'])->name('columns.index');
     Route::post('/column/store', [ColumnController::class, 'store'])->name('columns.store');
     Route::get('/column/fetch/{id}', [ColumnController::class, 'fetchForUpdate'])->name('columns.fetchForUpdate');
+    Route::get('/column/fetchCreate/{id}', [ColumnController::class, 'fetchForCreate'])->name('columns.fetchForCreate');
     Route::post('column/destroy', [ColumnController::class, 'destroy'])->name('columns.destroy');
     
     Route::get('/row-group/index', [RowGroupController::class, 'index'])->name('row_group.index');
@@ -92,6 +93,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/row/index', [RowController::class, 'index'])->name('rows.index');
     Route::post('/row/store', [RowController::class, 'store'])->name('rows.store');
     Route::get('/row/fetch/{id}', [RowController::class, 'fetchForUpdate'])->name('rows.fetchForUpdate');
+    Route::get('/row/fetchCreate/{id}', [RowController::class, 'fetchForCreate'])->name('rows.fetchForCreate');
     Route::post('row/destroy', [RowController::class, 'destroy'])->name('rows.destroy');
 });
 
