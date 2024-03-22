@@ -274,9 +274,9 @@ class TabelController extends Controller
             ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
             ->get(['dinas.id as value', 'dinas.nama as label']);
         $daftar_kolom = Column::get();
-        $kolom_grup = ColumnGroup::get();
+        $kolom_grup = ColumnGroup::get(['column_groups.id as value', 'column_groups.label as label']);
         $subjects = Subject::get(['subjects.id as value', 'subjects.label as label']);
-        $turtahun_groups = TurTahunGroup::all();
+        $turtahun_groups = TurTahunGroup::get(['turtahun_groups.id as value', 'turtahun_groups.label as label']);
         $kabupatens = MasterWilayah::where('desa', 'like', '000')->where('kec', 'like', '000')->where('kab', 'not like', '00')->select(['wilayah_fullcode', 'label'])->get();
         return Inertia::render('Tabel/Create', [
             'tabels' => $tabel,

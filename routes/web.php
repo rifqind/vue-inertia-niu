@@ -11,6 +11,7 @@ use App\Http\Controllers\ColumnGroupController;
 use App\Http\Controllers\RowController;
 use App\Http\Controllers\RowGroupController;
 use App\Http\Controllers\TabelController;
+use App\Models\Turtahun;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -84,12 +85,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/column/fetch/{id}', [ColumnController::class, 'fetchForUpdate'])->name('columns.fetchForUpdate');
     Route::get('/column/fetchCreate/{id}', [ColumnController::class, 'fetchForCreate'])->name('columns.fetchForCreate');
     Route::post('column/destroy', [ColumnController::class, 'destroy'])->name('columns.destroy');
-    
+
     Route::get('/row-group/index', [RowGroupController::class, 'index'])->name('row_group.index');
     Route::post('/row-group/store', [RowGroupController::class, 'store'])->name('row_group.store');
     Route::get('/row-group/fetch/{id}', [RowGroupController::class, 'fetch'])->name('row_group.fetch');
     Route::post('row-group/destroy', [RowGroupController::class, 'destroy'])->name('row_group.destroy');
-    
+
     Route::get('/row/index', [RowController::class, 'index'])->name('rows.index');
     Route::post('/row/store', [RowController::class, 'store'])->name('rows.store');
     Route::get('/row/fetch/{id}', [RowController::class, 'fetchForUpdate'])->name('rows.fetchForUpdate');
@@ -126,5 +127,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 });
 
 Route::get('fetch/data', [TabelController::class, 'getDatacontent'])->name('tabel.getDatacontent');
-
-require __DIR__.'/auth.php';
+Route::get('/turtahun/fetch/{id}', function (string $id) {
+    $target = Turtahun::leftJoin('turtahun_groups as tg', 'tg.id', '=', 'turtahuns.type')
+        ->where('type', $id)
+        ->get(['turtahuns.id as value', 'turtahuns.label as label', 'tg.label as tipe']);
+    return response()->json(['data' => $target]);
+})->name('turtahun.fetch');
+require __DIR__ . '/auth.php';
