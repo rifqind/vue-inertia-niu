@@ -293,75 +293,89 @@ class TabelController extends Controller
     //     /**
     //      * Store a newly created resource in storage.
     //      */
-    //     public function store(Request $request)
-    //     {
-    //         // insert table
-    //         try {
-    //             //code...
-    //             DB::beginTransaction();
-    //             $newTable = Tabel::create($request->table);
-    //             $id_dinas = $request->table["id_dinas"];
-    //             //debatable
-    //             $wilayah_fc = Dinas::where('id', $id_dinas)->pluck("wilayah_fullcode");
-    //             // dd($wilayah_fc[0]);
-    //             $periodes = Turtahun::where('type', $request->periode['periode'])->get();
-    //             // generate datacontents
-    //             $data_contents = [];
-    //             $is_wilayah = $request->rows['tipe_row'] == 1;
-    //             foreach ($request->rows["rows_selected"] as $row) {
-    //                 foreach ($request->columns["columns"] as $column) {
-    //                     foreach ($periodes as $period) {
+    public function store(Request $request)
+    {
+        // insert table
+        // $new_tabel = Tabel::create($request->tabel);
+        // dd($new_tabel);
+        try {
+            //code...
+            DB::beginTransaction();
+            $request->validate([
+                'tabel.nomor' => ['required', 'string'],
+                'tabel.label' => ['required'],
+                'tabel.unit' => ['required'],
+                'tabel.id_dinas' => ['required', 'integer'],
+                'tabel.id_subjek' => ['required', 'integer'],
+            ]);
+            // dd($tabel);
 
-    //                         // $datacode = $newTable->id . "-" . $row . "-" . $column . "-" . $request->periode["tahun"] . "-" . $period->id;
-    //                         $datacontent = [
-    //                             'id_tabel' => $newTable->id,
-    //                             'id_row' =>  $is_wilayah ? 0 : $row,
-    //                             'id_column' => $column,
-    //                             'tahun' => $request->periode['tahun'],
-    //                             'id_turtahun' => $period->id,
-    //                             'wilayah_fullcode' =>  $is_wilayah ? (string) $row : (string) $wilayah_fc[0],
+            //tabel create
+            $new_tabel = Tabel::create($request->tabel);
+            // $new_tabel = Tabel::create([
+            //     'nomor' => $tabel['nomor'],
+            //     'label' => $tabel['label'],
+            //     'unit' => $tabel['unit'],
+            //     'id_dinas' => $tabel['id_dinas'],
+            //     'id_subjek' => $tabel['id_subjek'],
+            // ]);
+            $id_dinas = $request->tabel["id_dinas"];
+            // //debatable
+            $wilayah_fullcode_produsen = Dinas::where('id', $id_dinas)->value("wilayah_fullcode");
+            // // dd($wilayah_fc);
+            $id_turtahun = Turtahun::where('type', $request->id_turtahun)->get();
+            // // generate datacontents
+            $data_contents = [];
+            $is_wilayah = $request->rows['tipe'] == 1;
+            foreach ($request->rows['selected'] as $row) {
+                foreach ($request->columns as $column) {
+                    foreach ($id_turtahun as $period) {
+                        // dd($new_tabel->id, 0, $column['value'], $request->tahun, $period->id, $row['value']);
+                        $datacontent = [
+                            'id_tabel' => $new_tabel->id,
+                            'id_row' =>  $is_wilayah ? 0 : $row['value'],
+                            'id_column' => $column['value'],
+                            'tahun' => $request->tahun,
+                            'id_turtahun' => $period->id,
+                            'wilayah_fullcode' =>  $is_wilayah ? (string) $row['value'] : (string) $wilayah_fullcode_produsen,
+                        ];
+                        // dd($datacontent);
+                        array_push($data_contents, $datacontent);
+                    }
+                }
+            }
+            // dd($data_contents);
+            $newStatusTables = Statustables::create(
+                [
+                    'id_tabel' => $new_tabel->id,
+                    'tahun' => $request->tahun,
+                    'status' => 1,
+                    'edited_by' => auth()->user()->id,
+                ]
+            );
+            Notifikasi::create([
+                'id_statustabel' => $newStatusTables->id,
+                'id_user' => auth()->user()->id,
+                'komentar' => "Admin telah menambahkan tabel baru dengan judul ",
+            ]);
+            Datacontent::insert($data_contents);
 
-    //                         ];
-    //                         $datavalue = "";
-    //                         array_push($data_contents, $datacontent);
-    //                     }
-    //                 }
-    //             }
-    //             $newStatusTables = Statustables::create(
-    //                 [
-    //                     'id_tabel' => $newTable->id,
-    //                     'tahun' => $request->periode['tahun'],
-    //                     'status' => 1,
-    //                     'edited_by' => auth()->user()->id,
-    //                 ]
-    //             );
-    //             Notifikasi::create([
-    //                 'id_statustabel' => $newStatusTables->id,
-    //                 'id_user' => auth()->user()->id,
-    //                 'komentar' => "Admin telah menambahkan tabel baru dengan judul ",
-    //             ]);
-    //             Datacontent::insert($data_contents);
+            DB::commit();
+        } catch (\Exception $e) {
+            //throw $th;
+            DB::rollBack();
 
-    //             DB::commit();
-    //         } catch (\Exception $e) {
-    //             //throw $th;
-    //             DB::rollBack();
+            // Handle the exception (log it, show a user-friendly message, etc.)
+            // For example, you can log the error:
+            return response()->json($e);
+            // Optionally, you may throw the exception again to be caught by Laravel's exception handler
+            // throw $e;
+        }
 
-    //             // Handle the exception (log it, show a user-friendly message, etc.)
-    //             // For example, you can log the error:
-    //             return response()->json($e);
-    //             // Optionally, you may throw the exception again to be caught by Laravel's exception handler
-    //             // throw $e;
-    //         }
-
-    //         return response()->json([
-    //             "column" => $request->columns,
-    //             "periode" => $request->periode,
-    //             "row" => $request->rows,
-    //             "table" => $request->table,
-    //             'dat' => $data_contents
-    //         ]);
-    //     }
+        return response()->json([
+            'wasu'
+        ]);
+    }
     //     public function copy($id)
     //     {
     //         $decryptedId = Crypt::decrypt($id);

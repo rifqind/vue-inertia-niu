@@ -1,7 +1,9 @@
 <script setup>
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import Multiselect from "@vueform/multiselect";
-import Checkbox from "@/Components/Checkbox.vue";
+import ModalBs from "@/Components/ModalBs.vue";
+import TabelPreview from "@/Components/TabelPreview.vue";
+
 import { ref, defineComponent, onMounted, watch, onUnmounted } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
 
@@ -11,13 +13,14 @@ defineComponent({
 const page = usePage();
 const subjects = page.props.subjects;
 const dinas = page.props.dinas;
-const rowListFetched = ref(null);
-const columnListFetched = ref(null);
-const turtahunListFetched = ref(null);
+const rowListFetched = ref([]);
+const columnListFetched = ref([]);
+const turtahunListFetched = ref([]);
 const tabelRowList = ref(null);
 const kecs = ref([]);
 const desa = ref([]);
 const kabupatens = page.props.kabupatens;
+const previewModalStatus = ref(false)
 var kecLists = [];
 var desaLists = [];
 var kabLists = [];
@@ -63,10 +66,11 @@ const kabs = page.props.kabupatens.map((kab) => ({
 //try first
 const rowsCheckBox = ref([]);
 const columnsCheckBox = ref([])
+const rowsSelected = ref([])
+const columnsSelected = ref([])
 // Array(rowListFetched.value.length).fill(false)
 // rowsCheckBox.value = Array(kabupatens.length).fill(false);
 
-const rowsSelected = ref([]);
 const sended = function () {
     rowsSelected.value = kabupatens.filter((_, index) => {
         return rowsCheckBox.value[index];
@@ -122,6 +126,7 @@ const triggerTingkatan = function (value) {
     }
 };
 const assignRowListWilayah = function (options, parents) {
+    rowListFetched.value = []
     switch (options) {
         case 0:
             rowListFetched.value = [
@@ -169,6 +174,7 @@ const assignRowListWilayah = function (options, parents) {
     rowsCheckBox.value = Array(rowListFetched.value.length).fill(false);
 };
 const fetchRow = async function (value) {
+    rowListFetched.value = []
     try {
         const response = await axios.get("/row/fetchCreate/" + value);
         rowListFetched.value = response.data.data.map((obj) => ({
@@ -176,11 +182,13 @@ const fetchRow = async function (value) {
             tipe: obj.tipe,
             value: obj.id,
         }));
+        rowsCheckBox.value = Array(rowListFetched.value.length).fill(false);
     } catch (error) {
         console.error("Error Fetching data:", error);
     }
 };
 const fetchColumn = async function (value) {
+    // columnListFetched.value = []
     try {
         const response = await axios.get("/column/fetchCreate/" + value);
         columnListFetched.value = response.data.data.map((obj) => ({
@@ -188,11 +196,13 @@ const fetchColumn = async function (value) {
             tipe: obj.tipe,
             value: obj.id,
         }));
+        columnsCheckBox.value = Array(columnListFetched.value.length).fill(false)
     } catch (error) {
         console.error("Error Fetching data:", error);
     }
 };
 const fetchTurtahun = async function (value) {
+    turtahunListFetched.value = []
     try {
         const response = await axios.get('/turtahun/fetch/' + value)
         turtahunListFetched.value = response.data.data
@@ -231,6 +241,39 @@ const loadDesa = async (valueKecs) => {
     }
 };
 
+const form = useForm({
+    tabel: {
+        nomor: null,
+        label: null,
+        unit: null,
+        id_dinas: null,
+        id_subjek: null
+    },
+    rows: {
+        tipe: null,
+        selected: [],
+    },
+    columns: [],
+    tahun: null,
+    id_turtahun: null,
+})
+
+const submit = function () {
+    form.post(route('tabel.store'))
+}
+
+const buildValue = function () {
+    rowsSelected.value = rowListFetched.value.filter((_, index) => {
+        return rowsCheckBox.value[index];
+    });
+    columnsSelected.value = columnListFetched.value.filter((_, index) => {
+        return columnsCheckBox.value[index];
+    });
+    form.rows.selected = rowsSelected.value
+    form.columns = columnsSelected.value
+    previewModalStatus.value = true
+}
+
 onMounted(() => {
     // console.log(tabelRowList.value.querySelectorAll('.row-select'))
 });
@@ -243,326 +286,226 @@ onMounted(() => {
                     <h2>Buat Tabel Baru</h2>
                 </div>
             </div>
-            <div class="form-group">
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <label class="h5 mb-0">Deskripsi Umum</label>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="dinas">Produsen Data</label>
-                            <Multiselect
-                                v-model="dinasDrop.value"
-                                :options="dinasDrop.options"
-                                placeholder="-- Pilih Produsen Data --"
-                                :searchable="true"
-                            />
-                            <div
-                                class="text-danger text-left"
-                                v-if="true"
-                                id="error-dinas"
-                            ></div>
+            <form @submit.prevent="submit" id="form-create-tabel">
+                <div class="form-group">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <label class="h5 mb-0">Deskripsi Umum</label>
                         </div>
-                        <div class="mb-3">
-                            <label for="nomor">Nomor Tabel</label>
-                            <input
-                                type="text"
-                                id="nomor"
-                                class="form-control"
-                                placeholder="1.1.1"
-                            />
-                            <div
-                                class="text-danger text-left"
-                                v-if="true"
-                                id="error-nomor"
-                            ></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="judul">Judul Tabel</label>
-                            <input
-                                type="text"
-                                id="judul"
-                                class="form-control"
-                                placeholder="Isikan judul tabel"
-                            />
-                            <div
-                                class="text-danger text-left"
-                                v-if="true"
-                                id="error-judul"
-                            ></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="subjek">Subjek Tabel</label>
-                            <Multiselect
-                                v-model="subjectDrop.value"
-                                :options="subjectDrop.options"
-                                placeholder="-- Pilih Subjek --"
-                                :searchable="true"
-                            />
-                            <div
-                                class="text-danger text-left"
-                                v-if="true"
-                                id="error-subjek"
-                            ></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="unit">Satuan/Unit Data</label>
-                            <input
-                                type="text"
-                                id="unit"
-                                class="form-control"
-                                placeholder="Isikan satuan/unit data"
-                            />
-                            <div
-                                class="text-danger text-left"
-                                v-if="true"
-                                id="error-unit"
-                            ></div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="dinas">Produsen Data</label>
+                                <Multiselect v-model="form.tabel.id_dinas" :options="dinasDrop.options"
+                                    placeholder="-- Pilih Produsen Data --" :searchable="true" />
+                                <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nomor">Nomor Tabel</label>
+                                <input v-model="form.tabel.nomor" type="text" id="nomor" class="form-control"
+                                    placeholder="1.1.1" />
+                                <div class="text-danger text-left" v-if="true" id="error-nomor"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="judul">Judul Tabel</label>
+                                <input v-model="form.tabel.label" type="text" id="judul" class="form-control"
+                                    placeholder="Isikan judul tabel" />
+                                <div class="text-danger text-left" v-if="true" id="error-judul"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="subjek">Subjek Tabel</label>
+                                <Multiselect v-model="form.tabel.id_subjek" :options="subjectDrop.options"
+                                    placeholder="-- Pilih Subjek --" :searchable="true" />
+                                <div class="text-danger text-left" v-if="true" id="error-subjek"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="unit">Satuan/Unit Data</label>
+                                <input v-model="form.tabel.unit" type="text" id="unit" class="form-control"
+                                    placeholder="Isikan satuan/unit data" />
+                                <div class="text-danger text-left" v-if="true" id="error-unit"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <label class="h5 mb-0">Detail Baris</label>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="rowType">Tipe Baris</label>
-                            <Multiselect
-                                v-model="rowTypeDrop.value"
-                                :options="rowTypeDrop.options"
-                                placeholder="-- Pilih Tipe Baris --"
-                                :searchable="true"
-                            />
-                            <div
-                                class="text-danger text-left"
-                                v-if="true"
-                                id="error-rowType"
-                            ></div>
+                    <div class="card">
+                        <div class="card-header">
+                            <label class="h5 mb-0">Detail Baris</label>
                         </div>
-                        <div class="mb-3" v-if="rowTypeDrop.value == '1'">
-                            <label for="tingkat-label">Tingkatan Wilayah</label>
-                            <Multiselect
-                                v-model="tingkatanDrop.value"
-                                :options="tingkatanDrop.options"
-                                @change="triggerTingkatan"
-                                :searchable="true"
-                                placeholder="-- Pilih Tingkatan --"
-                            />
-                        </div>
-                        <div
-                            v-if="tingkatanDrop.value > 1"
-                            class="mb-3"
-                            id="kabupaten-group"
-                        >
-                            <label for="kab-label">Kabupaten</label>
-                            <Multiselect
-                                v-model="kabsDrop.value"
-                                :options="kabsDrop.options"
-                                placeholder="-- Pilih Kabupaten/Kota --"
-                                :searchable="true"
-                                @change="loadKecamatans"
-                            />
-                        </div>
-                        <div
-                            v-if="tingkatanDrop.value > 2"
-                            class="mb-3"
-                            id="kecamatan-group"
-                        >
-                            <label for="kec-label">Kecamatan</label>
-                            <Multiselect
-                                v-model="kecsDrop.value"
-                                :options="kecsDrop.options"
-                                placeholder="-- Pilih Kecamatan --"
-                                :searchable="true"
-                                @change="loadDesa"
-                            />
-                        </div>
-                        <div class="mb-3" v-if="rowTypeDrop.value == '2'">
-                            <label for="row-groups">Kelompok Baris</label>
-                            <Multiselect
-                                v-model="rowGroupsDrop.value"
-                                :options="rowGroupsDrop.options"
-                                @change="fetchRow"
-                                :searchable="true"
-                                placeholder="-- Pilih Kelompok Baris --"
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label for="judul">Daftar Baris</label>
-                            <table
-                                class="table table-hover table-bordered"
-                                ref="tabelRowList"
-                                id="tabelRowList"
-                            >
-                                <thead>
-                                    <tr>
-                                        <th>No.</th>
-                                        <th>Kelompok Baris</th>
-                                        <th>Label</th>
-                                        <th>
-                                            <div
-                                                class="btn btn-sm bg-success-fordone mr-1"
-                                                @click="toggleAll(rowsCheckBox)"
-                                            >
-                                                <i class="fa fa-check"></i>
-                                            </div>
-                                            Pilih Semua
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody v-if="rowTypeDrop.value">
-                                    <tr
-                                        v-for="(node, index) in rowListFetched"
-                                        :key="index"
-                                        @click="
-                                            toggleCheck(index, rowsCheckBox)
-                                        "
-                                    >
-                                        <td>{{ index + 1 }}</td>
-                                        <td>{{ node.tipe }}</td>
-                                        <td>{{ node.label }}</td>
-                                        <td class="text-center">
-                                            <input
-                                                class="row-select"
-                                                type="checkbox"
-                                                v-model="rowsCheckBox[index]"
-                                                :value="node.id"
-                                                ref="checkbox"
-                                            />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="rowType">Tipe Baris</label>
+                                <Multiselect v-model="form.rows.tipe" :options="rowTypeDrop.options"
+                                    placeholder="-- Pilih Tipe Baris --" :searchable="true" />
+                                <div class="text-danger text-left" v-if="true" id="error-rowType"></div>
+                            </div>
+                            <div class="mb-3" v-if="form.rows.tipe == '1'">
+                                <label for="tingkat-label">Tingkatan Wilayah</label>
+                                <Multiselect v-model="tingkatanDrop.value" :options="tingkatanDrop.options"
+                                    @change="triggerTingkatan" :searchable="true" placeholder="-- Pilih Tingkatan --" />
+                            </div>
+                            <div v-if="tingkatanDrop.value > 1" class="mb-3" id="kabupaten-group">
+                                <label for="kab-label">Kabupaten</label>
+                                <Multiselect v-model="kabsDrop.value" :options="kabsDrop.options"
+                                    placeholder="-- Pilih Kabupaten/Kota --" :searchable="true"
+                                    @change="loadKecamatans" />
+                            </div>
+                            <div v-if="tingkatanDrop.value > 2" class="mb-3" id="kecamatan-group">
+                                <label for="kec-label">Kecamatan</label>
+                                <Multiselect v-model="kecsDrop.value" :options="kecsDrop.options"
+                                    placeholder="-- Pilih Kecamatan --" :searchable="true" @change="loadDesa" />
+                            </div>
+                            <div class="mb-3" v-if="form.rows.tipe == '2'">
+                                <label for="row-groups">Kelompok Baris</label>
+                                <Multiselect v-model="rowGroupsDrop.value" :options="rowGroupsDrop.options"
+                                    @change="fetchRow" :searchable="true" placeholder="-- Pilih Kelompok Baris --" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="judul">Daftar Baris</label>
+                                <table class="table table-hover table-bordered" ref="tabelRowList" id="tabelRowList">
+                                    <thead>
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>Kelompok Baris</th>
+                                            <th>Label</th>
+                                            <th>
+                                                <div class="btn btn-sm bg-success-fordone mr-1"
+                                                    @click="toggleAll(rowsCheckBox)">
+                                                    <i class="fa fa-check"></i>
+                                                </div>
+                                                Pilih Semua
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody v-if="form.rows.tipe">
+                                        <tr v-if="rowListFetched.length > 0" v-for="(node, index) in rowListFetched"
+                                            :key="index" @click="
+                toggleCheck(index, rowsCheckBox)
+                ">
+                                            <td>{{ index + 1 }}</td>
+                                            <td>{{ node.tipe }}</td>
+                                            <td>{{ node.label }}</td>
+                                            <td class="text-center">
+                                                <input class="row-select" type="checkbox" v-model="rowsCheckBox[index]"
+                                                    :value="node.id" ref="checkbox" />
+                                            </td>
+                                        </tr>
+                                        <tr v-else>
+                                            <td colspan="4" class="text-center"> Belum ada daftar baris yang tersedia
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <label class="h5 mb-0">Detail Kolom</label>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="column-groups">Kelompok Kolom</label>
-                            <Multiselect
-                                v-model="colGroupsDrop.value"
-                                :options="colGroupsDrop.options"
-                                @change="fetchColumn"
-                                :searchable="true"
-                                placeholder="-- Pilih Kelompok Kolom --"
-                            />
+                    <div class="card">
+                        <div class="card-header">
+                            <label class="h5 mb-0">Detail Kolom</label>
                         </div>
-                        <div class="mb-3" v-if="true">
-                            <label for="judul">Daftar Kolom</label>
-                            <table
-                                class="table table-hover table-bordered"
-                                ref="tabelRowList"
-                                id="tabelRowList"
-                            >
-                                <thead>
-                                    <tr>
-                                        <th>No.</th>
-                                        <th>Kelompok Kolom</th>
-                                        <th>Label</th>
-                                        <th>
-                                            <div
-                                                class="btn btn-sm bg-success-fordone mr-1"
-                                                @click="toggleAll(columnsCheckBox)"
-                                            >
-                                                <i class="fa fa-check"></i>
-                                            </div>
-                                            Pilih Semua
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        v-for="(
-                                            node, index
-                                        ) in columnListFetched"
-                                        :key="index"
-                                        @click="
-                                            toggleCheck(index, columnsCheckBox)
-                                        "
-                                    >
-                                        <td>{{ index + 1 }}</td>
-                                        <td>{{ node.tipe }}</td>
-                                        <td>{{ node.label }}</td>
-                                        <td class="text-center">
-                                            <input
-                                                class="row-select"
-                                                type="checkbox"
-                                                v-model="columnsCheckBox[index]"
-                                                :value="node.id"
-                                                ref="checkbox"
-                                            />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="column-groups">Kelompok Kolom</label>
+                                <Multiselect v-model="colGroupsDrop.value" :options="colGroupsDrop.options"
+                                    @change="fetchColumn" :searchable="true" placeholder="-- Pilih Kelompok Kolom --" />
+                            </div>
+                            <div class="mb-3" v-if="true">
+                                <label for="judul">Daftar Kolom</label>
+                                <table class="table table-hover table-bordered" ref="tabelRowList" id="tabelRowList">
+                                    <thead>
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>Kelompok Kolom</th>
+                                            <th>Label</th>
+                                            <th>
+                                                <div class="btn btn-sm bg-success-fordone mr-1"
+                                                    @click="toggleAll(columnsCheckBox)">
+                                                    <i class="fa fa-check"></i>
+                                                </div>
+                                                Pilih Semua
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-if="columnListFetched.length > 0" v-for="(
+                                                node, index
+                                            ) in columnListFetched" :key="index" @click="
+                toggleCheck(index, columnsCheckBox)
+                ">
+                                            <td>{{ index + 1 }}</td>
+                                            <td>{{ node.tipe }}</td>
+                                            <td>{{ node.label }}</td>
+                                            <td class="text-center">
+                                                <input class="row-select" type="checkbox"
+                                                    v-model="columnsCheckBox[index]" :value="node.id" ref="checkbox" />
+                                            </td>
+                                        </tr>
+                                        <tr v-else>
+                                            <td colspan="4" class="text-center"> Belum ada daftar kolom yang tersedia
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <label class="h5 mb-0">Detail Waktu</label>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="column-groups">Pilih Tahun</label>
+                                <Multiselect v-model="form.tahun" :options="yearDrop.options" :searchable="true"
+                                    placeholder="-- Pilih Tahun --" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="column-groups">Pilih Periode/Turunan Tahun</label>
+                                <Multiselect v-model="form.id_turtahun" :options="yearDownDrop.options"
+                                    :searchable="true" @change="fetchTurtahun"
+                                    placeholder="-- Pilih Periode/Turunan Tahun --" />
+                            </div>
+                            <div class="mb-3" v-if="true">
+                                <label for="judul">Daftar Turunan Tahun</label>
+                                <table class="table table-hover table-bordered" ref="tabelRowList" id="tabelRowList">
+                                    <thead>
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>Tipe</th>
+                                            <th>Label</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody v-if="form.id_turtahun">
+                                        <tr v-for="(
+                                                node, index
+                                            ) in turtahunListFetched" :key="index">
+                                            <td>{{ index + 1 }}</td>
+                                            <td>{{ node.tipe }}</td>
+                                            <td>{{ node.label }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body text-right">
+                            <div @click="buildValue" class="btn bg-info-fordone"><i class="fa fa-save"></i> Buat
+                                Tabel</div>
                         </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="card-header">
-                        <label class="h5 mb-0">Detail Waktu</label>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="column-groups">Pilih Tahun</label>
-                            <Multiselect
-                                v-model="yearDrop.value"
-                                :options="yearDrop.options"
-                                :searchable="true"
-                                placeholder="-- Pilih Tahun --"
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label for="column-groups">Pilih Periode/Turunan Tahun</label>
-                            <Multiselect
-                                v-model="yearDownDrop.value"
-                                :options="yearDownDrop.options"
-                                :searchable="true"
-                                @change="fetchTurtahun"
-                                placeholder="-- Pilih Periode/Turunan Tahun --"
-                            />
-                        </div>
-                        <div class="mb-3" v-if="true">
-                            <label for="judul">Daftar Turunan Tahun</label>
-                            <table
-                                class="table table-hover table-bordered"
-                                ref="tabelRowList"
-                                id="tabelRowList"
-                            >
-                                <thead>
-                                    <tr>
-                                        <th>No.</th>
-                                        <th>Tipe</th>
-                                        <th>Label</th>
-                                    </tr>
-                                </thead>
-                                <tbody v-if="yearDownDrop.value">
-                                    <tr
-                                        v-for="(
-                                            node, index
-                                        ) in turtahunListFetched"
-                                        :key="index"
-                                    >
-                                        <td>{{ index + 1 }}</td>
-                                        <td>{{ node.tipe }}</td>
-                                        <td>{{ node.label }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body text-right">
-                        <button class="btn bg-info-fordone"><i class="fa fa-save"></i> Buat Tabel</button>
-                    </div>
-                </div>
-            </div>
+                <Teleport to="body">
+                    <ModalBs :ModalStatus="previewModalStatus" :modalSize="'modal-xl modal-dialog-scrollable'"
+                        @close="previewModalStatus = false" :title="'Preview Tabel'">
+                        <template #modalBody>
+                            <TabelPreview :rows="form.rows.selected" :columns="form.columns"
+                                :turtahun="turtahunListFetched" />
+                        </template>
+                        <template #modalFunction>
+                            <button id="" type="submit" class="btn btn-sm bg-success-fordone"
+                                :disabled="form.processing" @click.prevent="submit">Simpan</button>
+                        </template>
+                    </ModalBs>
+                </Teleport>
+            </form>
         </div>
         <div><br /></div>
     </GeneralLayout>
