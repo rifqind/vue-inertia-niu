@@ -107,7 +107,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tabel/index', [TabelController::class, 'index'])->name('tabel.index');
-    Route::get('/tabel/show/{id}', [TabelController::class, 'show'])->name('tabel.show');
+    Route::get('/tabel/entri/{id}', [TabelController::class, 'entri'])->name('tabel.entri');
     Route::put('/tabel/update-content/{id}', [TabelController::class, 'update_content'])->name('tabel.update_content');
 });
 

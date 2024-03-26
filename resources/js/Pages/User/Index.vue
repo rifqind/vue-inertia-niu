@@ -54,7 +54,8 @@ const editUser = function (id) {
     form.id = id
     form.get(route('users.edit'), {
         onBefore: function () { triggerSpinner.value = true },
-        onFinish: function () { triggerSpinner.value = false }
+        onFinish: function () { triggerSpinner.value = false },
+        onError: function () { triggerSpinner.value = false },
     })
 }
 
@@ -111,7 +112,7 @@ onUpdated(() => {
     uObject = page.props.users
     users = ref(uObject)
     let currentStatusText = statusText.value
-    var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
+    var rowsTabel = tabelUser.value.querySelectorAll('tbody tr').length
     currentStatusText.querySelector('#showTotal').textContent = rowsTabel
     if (maxRows.value.value > rowsTabel) {
         currentStatusText.querySelector('#showPage').textContent = rowsTabel

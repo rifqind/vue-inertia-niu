@@ -50,8 +50,8 @@ const toggleMenuOpen = function (x) {
                     </li>
                     <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-display'"> Monitoring
                     </NavLinkSidebar>
-                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
-                    :menuOpen="menuOpenTabel || currentRoute == 'tabel.index' || currentRoute == 'tabel.index'"
+                    <NavLinkParentSidebar :navIcon="'fa-solid fa-building'"
+                    :menuOpen="menuOpenTabel || currentRoute == 'tabel.index' || currentRoute == 'tabel.create'"
                         :toggleMenuOpen="toggleMenuOpen" :params="'tbl'">
                         <template v-slot:label> Kelola Tabel</template>
 
@@ -59,7 +59,7 @@ const toggleMenuOpen = function (x) {
                             <NavLinkSidebar :href="route('tabel.index')" :currentRoute="currentRoute == 'tabel.index'" :navIcon="'fa-solid fa-list-ol'"> Daftar Tabel</NavLinkSidebar>
                             <NavLinkSidebar :href="route('tabel.create')" :currentRoute="currentRoute == 'tabel.create'" :role="role == 'admin'" :navIcon="'fa-solid fa-plus'"> Tambah Tabel
                             </NavLinkSidebar>
-                            <NavLinkSidebar :navIcon="'fa-solid fa-recycle'"> Recycle Bin</NavLinkSidebar>
+                            <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-recycle'"> Recycle Bin</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :navIcon="'fa-solid fa-building'" :toggleMenuOpen="toggleMenuOpen">
@@ -144,5 +144,8 @@ div.nav-link {
 .sidebar-light-success .nav-sidebar>.nav-item>.nav-link.active {
     background-color: #3d3b8e;
     color: #fff;
+}
+body:not(.layout-fixed) .main-sidebar {
+    position: fixed !important;
 }
 </style>

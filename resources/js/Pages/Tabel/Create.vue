@@ -3,6 +3,7 @@ import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import Multiselect from "@vueform/multiselect";
 import ModalBs from "@/Components/ModalBs.vue";
 import TabelPreview from "@/Components/TabelPreview.vue";
+import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 
 import { ref, defineComponent, onMounted, watch, onUnmounted } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
@@ -16,6 +17,7 @@ const dinas = page.props.dinas;
 const rowListFetched = ref([]);
 const columnListFetched = ref([]);
 const turtahunListFetched = ref([]);
+const triggerSpinner = ref(false)
 const tabelRowList = ref(null);
 const kecs = ref([]);
 const desa = ref([]);
@@ -26,7 +28,7 @@ var desaLists = [];
 var kabLists = [];
 const provinsi = {
     label: "PROVINSI SULAWESI UTARA",
-    wilayah_fullcode: "7100000000",
+    value: "7100000000",
 };
 
 const rowGroups = page.props.row_groups;
@@ -259,7 +261,12 @@ const form = useForm({
 })
 
 const submit = function () {
-    form.post(route('tabel.store'))
+    previewModalStatus.value = false
+    form.post(route('tabel.store'), {
+        onBefore: function () { triggerSpinner.value = true },
+        onFinish: function () { triggerSpinner.value = false },
+        onError: function () { triggerSpinner.value = false },
+    })
 }
 
 const buildValue = function () {
@@ -279,8 +286,11 @@ onMounted(() => {
 });
 </script>
 <template>
+
+    <Head title="Tambah Tabel Baru" />
+    <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
-        <div class="container">
+        <div class="container pb-3">
             <div class="card">
                 <div class="card-body bg-info-fordone text-center">
                     <h2>Buat Tabel Baru</h2>
@@ -377,8 +387,8 @@ onMounted(() => {
                                     <tbody v-if="form.rows.tipe">
                                         <tr v-if="rowListFetched.length > 0" v-for="(node, index) in rowListFetched"
                                             :key="index" @click="
-                toggleCheck(index, rowsCheckBox)
-                ">
+        toggleCheck(index, rowsCheckBox)
+        ">
                                             <td>{{ index + 1 }}</td>
                                             <td>{{ node.tipe }}</td>
                                             <td>{{ node.label }}</td>
@@ -427,8 +437,8 @@ onMounted(() => {
                                         <tr v-if="columnListFetched.length > 0" v-for="(
                                                 node, index
                                             ) in columnListFetched" :key="index" @click="
-                toggleCheck(index, columnsCheckBox)
-                ">
+        toggleCheck(index, columnsCheckBox)
+        ">
                                             <td>{{ index + 1 }}</td>
                                             <td>{{ node.tipe }}</td>
                                             <td>{{ node.label }}</td>
@@ -507,7 +517,7 @@ onMounted(() => {
                 </Teleport>
             </form>
         </div>
-        <div><br /></div>
+        <!-- <div><br /></div> -->
     </GeneralLayout>
 </template>
 <style scoped>

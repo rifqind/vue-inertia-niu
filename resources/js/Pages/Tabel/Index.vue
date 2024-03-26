@@ -9,6 +9,8 @@ import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import Multiselect from '@vueform/multiselect';
+import { formToJSON } from 'axios';
+import axios from 'axios';
 
 const page = usePage()
 const tGroup = page.props.tables
@@ -55,6 +57,9 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
     })
 })
 onMounted(() => {
+    if (page.props.flash.message) {
+        toggleFlash.value = true
+    }
     searchCell(tabelTabels.value, 10)
     let currentStatusText = statusText.value
     var rowsTabel = tabelTabels.value.querySelectorAll('tbody tr').length
@@ -66,6 +71,9 @@ onMounted(() => {
             currentStatusText, rowsTabel)
     })
 })
+const entriTabel = function (id) {
+    axios.get(route('tabel.entri', { id: id }))
+}
 </script>
 <template>
 
@@ -87,7 +95,7 @@ onMounted(() => {
                 <tr class="bg-info-fordone">
                     <th class="first-column text-center align-middle" @click="clickSortProperties(tables, 'number')">No.
                     </th>
-                    <th class="text-center align-middle tabel-width-25" @click="clickSortProperties(tables, 'label')">
+                    <th class="text-center align-middle tabel-width-20" @click="clickSortProperties(tables, 'label')">
                         Nama Tabel
                     </th>
                     <th class="text-center align-middle tabel-width-20"
@@ -96,6 +104,9 @@ onMounted(() => {
                     </th>
                     <th class="text-center align-middle">
                         Daftar Kolom
+                    </th>
+                    <th class="text-center align-middle">
+                        Daftar Baris
                     </th>
                     <th class="text-center align-middle" @click="clickSortProperties(tables, 'tahun')">
                         Tahun
@@ -106,10 +117,9 @@ onMounted(() => {
                     <th class="text-center align-middle" @click="clickSortProperties(tables, 'status_updated')">
                         Terakhir di-update
                     </th>
-                    <th class="text-center align-middle">
-                        Cek/Ubah Isian
+                    <th class="text-center align-middle tabel-width-5">
+                        Cek/Hapus
                     </th>
-                    <th class="text-center align-middle deleted">Hapus</th>
                 </tr>
                 <tr class="">
                     <td class="search-header"></td>
@@ -118,13 +128,13 @@ onMounted(() => {
                     <td class="search-header"><input v-model.trim="searchLabelDinas" type="text"
                             class="search-input form-control"></td>
                     <td class="search-header"><input type="text" class="search-input form-control"></td>
+                    <td class="search-header"><input type="text" class="search-input form-control"></td>
                     <td class="search-header"><input v-model.trim="searchTahun" type="text"
                             class="search-input form-control"></td>
                     <td class="search-header"><input v-model.trim="searchStatus" type="text"
                             class="search-input form-control"></td>
                     <td class="search-header"><input v-model.trim="searchUpdated" type="text"
                             class="search-input form-control"></td>
-                    <td class="search-header deleted"></td>
                     <td class="search-header deleted"></td>
                 </tr>
             </thead>
@@ -133,19 +143,19 @@ onMounted(() => {
                     <td class="align-middle">{{ table.number }}</td>
                     <td class="align-middle">{{ table.label }}</td>
                     <td class="align-middle">{{ table.nama_dinas }}</td>
-                    <td class="align-middle"><span v-for="(col, index) in table.columns" :key="index" class="badge mr-1 badge-info">{{
+                    <td class="align-middle"><span v-for="(col, index) in table.columns" :key="index"
+                            class="badge mr-1 badge-info">{{
         col.label }}</span></td>
+                    <td class="align-middle">{{ table.row_label }}</td>
                     <td class="align-middle">{{ table.tahun }}</td>
                     <td class="align-middle">{{ table.status }}</td>
-                    <td class="text-center">({{ table.who_updated }})<br>{{ table.status_updated }}</td>
+                    <td class="text-center align-middle">({{ table.who_updated }})<br>{{ table.status_updated }}</td>
                     <td class="text-center align-middle deleted">
-                        <a @click.prevent="toggleUpdateModal(table.id)" class="edit-pen mx-1">
-                            <i class="fa-solid fa-pencil" title="Edit Pengguna"></i>
-                        </a>
-                    </td>
-                    <td class="text-center align-middle deleted">
+                        <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mr-5">
+                        <i class="fa-solid fa-pencil" title="Cek/Edit"></i>
+                        </Link>
                         <a @click.prevent="toggleDeleteModal(table.id)" class="delete-trash">
-                            <i class="fa-solid fa-trash-can icon-trash-color"></i>
+                            <i class="fa-solid fa-trash-can icon-trash-color" title="Hapus"></i>
                         </a>
                     </td>
                 </tr>
@@ -157,6 +167,7 @@ onMounted(() => {
             </div>
             <div class="form-group"> <!--		Show Numbers Of Rows 		-->
                 <select class="form-control" ref="maxRows" name="state" id="maxRows">
+                    <option value="5">5</option>
                     <option value="10">10</option>
                     <option value="15">15</option>
                     <option value="20">20</option>
