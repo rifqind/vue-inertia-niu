@@ -464,132 +464,134 @@ class TabelController extends Controller
     //     /**
     //      * Display the specified resource.
     //      */
-        public function entri(string $id)
-        {
-            // $tabel = Tabel::where('id', $decryptedId)->first();
-            // $statusTabel = Statustables::join('tabels AS t','t.id','statustables.id_tabel')
-            // ->select('statustables')
-            $statusTabel = Statustables::join('tabels as t', 'statustables.id_tabel', 't.id')
-                ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
-                ->select(
-                    't.id as id_tabel',
-                    't.label as judul_tabel',
-                    'statustables.tahun',
-                    'statustables.status as status',
-                    'statustables.id as id_statustables',
-                    'sdesc.label as status_desc',
-                    'statustables.updated_at as status_updated',
-                )
-                ->where('statustables.id', $id)->first();
+    public function entri(string $id)
+    {
+        // $tabel = Tabel::where('id', $decryptedId)->first();
+        // $statusTabel = Statustables::join('tabels AS t','t.id','statustables.id_tabel')
+        // ->select('statustables')
+        $statusTabel = Statustables::join('tabels as t', 'statustables.id_tabel', 't.id')
+            ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
+            ->select(
+                't.id as id_tabel',
+                't.label as judul_tabel',
+                'statustables.tahun',
+                'statustables.status as status',
+                'statustables.id as id_statustables',
+                'sdesc.label as status_desc',
+                'statustables.updated_at as status_updated',
+            )
+            ->where('statustables.id', $id)->first();
 
-            $catatans = Catatan::where('id_statustabel', $id)->first();
+        $catatans = Catatan::where('id_statustabel', $id)->first();
 
-            $id_tabel = $statusTabel->id_tabel;
-            $tahun = $statusTabel->tahun;
-            $status = $statusTabel->status;
-            $roles = auth()->user()->role;
-            $sdesc = $statusTabel->status_desc;
+        $id_tabel = $statusTabel->id_tabel;
+        $tahun = $statusTabel->tahun;
+        $status = $statusTabel->status;
+        $roles = auth()->user()->role;
+        $sdesc = $statusTabel->status_desc;
 
-            // $pattern = $id_tabel . '-%-' . $tahun . '-%';
+        // $pattern = $id_tabel . '-%-' . $tahun . '-%';
 
-            $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
-            // return response()->json(['data' => $datacontents, 'pattern' => $pattern, 'id_status' => $decryptedId]);
-            $id_rows = [];
-            $wilayah_fullcodes = [];
-            $id_columns = [];
-            $tahuns = [];
-            $turTahunKeys = [];
+        $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
+        // return response()->json(['data' => $datacontents, 'pattern' => $pattern, 'id_status' => $decryptedId]);
+        $id_rows = [];
+        $wilayah_fullcodes = [];
+        $id_columns = [];
+        $tahuns = [];
+        $turTahunKeys = [];
 
-            foreach ($datacontents as $datacontent) {
-                $split = explode("-", $datacontent->label);
+        foreach ($datacontents as $datacontent) {
+            $split = explode("-", $datacontent->label);
 
-                array_push($id_rows, $datacontent->id_row);
-                array_push($id_columns, $datacontent->id_column);
-                array_push($tahuns, $datacontent->tahun);
-                array_push($turTahunKeys, $datacontent->id_turtahun);
+            array_push($id_rows, $datacontent->id_row);
+            array_push($id_columns, $datacontent->id_column);
+            array_push($tahuns, $datacontent->tahun);
+            array_push($turTahunKeys, $datacontent->id_turtahun);
 
-                array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
-            }
-            // $tabels = Tabel::where('id', $id_tabel)->first();
-
-            $rows = Row::whereIn('id', $id_rows)->get();
-            $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->get();
-            try {
-                //code...
-                if ($rows[0]->id == 0) {
-                    // $wilayah_master = MasterWilayah::where('wilayah_fullcode','like',$wilayah_fullcodes[0]);
-                    $wilayah_parent_code = '';
-                    $jenis = "DAFTAR ";
-                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                        ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
-                        ->orderBy('desa')
-                        ->get();
-                    $rows = $temp;
-                    // dd($rows);
-                    $desa = substr($wilayah_fullcodes[0], 7, 3);
-                    $kec = substr($wilayah_fullcodes[0], 4, 3);
-                    $kab = substr($wilayah_fullcodes[0], 2, 2);
-                    if ($desa != '000') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
-                        $jenis = $jenis . "DESA DI ";
-                    } else if ($kec != '000') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
-                        $jenis = $jenis . "KECAMATAN DI ";
-                    } else if ($kab != '00') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
-                        $jenis = $jenis . "KABUPATEN DI ";
-                    }
-                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
-                    $rowLabel = strtolower($rowLabel);
-                    $rowLabel = ucwords($rowLabel);
-                } else {
-
-                    $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
-                }
-            } catch (\Exception $e) {
-                return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
-            }
-
-            $columns = Column::whereIn('id', $id_columns)->get();
-            $tahuns = array_unique($tahuns);
-            sort($tahuns);
-            // $turtahuns = array_unique($turtahuns);
-            // sort($turtahuns);
-            // dd($rows);
-            $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
-
-            // return view('tabel.show', [
-            //     'datacontents' => $datacontents,
-            //     // 'tabels' => $tabels,
-            //     'encryptedId' => $id,
-            //     'tahuns' => $tahuns,
-            //     'years' => $tahuns[0],
-            //     'rows' => $rows,
-            //     'row_label' => $rowLabel,
-            //     'columns' => $columns,
-            //     'turtahuns' => $turtahuns,
-            //     'tabel' => $statusTabel,
-            //     'status' => $status,
-            //     'roles' => $roles,
-            //     'status_desc' => $sdesc,
-            //     'catatans' => $catatans,
-            // ]);
-            return Inertia::render('Tabel/Entri', [
-                'datacontents' => $datacontents,
-            //     'encryptedId' => $id,
-            //     'tahuns' => $tahuns,
-            //     'years' => $tahuns[0],
-                'rows' => $rows,
-                'row_label' => $rowLabel,
-                'columns' => $columns,
-                'turtahuns' => $turtahuns,
-            //     'tabel' => $statusTabel,
-            //     'status' => $status,
-            //     'roles' => $roles,
-            //     'status_desc' => $sdesc,
-            //     'catatans' => $catatans,
-            ]);
+            array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
         }
+        // $tabels = Tabel::where('id', $id_tabel)->first();
+
+        $rows = Row::whereIn('id', $id_rows)->get();
+        $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->get();
+        try {
+            //code...
+            if ($rows[0]->id == 0) {
+                // $wilayah_master = MasterWilayah::where('wilayah_fullcode','like',$wilayah_fullcodes[0]);
+                $wilayah_parent_code = '';
+                $jenis = "DAFTAR ";
+                $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                    ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
+                    ->orderBy('desa')
+                    ->get();
+                $rows = $temp;
+                // dd($rows);
+                $desa = substr($wilayah_fullcodes[0], 7, 3);
+                $kec = substr($wilayah_fullcodes[0], 4, 3);
+                $kab = substr($wilayah_fullcodes[0], 2, 2);
+                if ($desa != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
+                    $jenis = $jenis . "DESA DI ";
+                } else if ($kec != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
+                    $jenis = $jenis . "KECAMATAN DI ";
+                } else if ($kab != '00') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
+                    $jenis = $jenis . "KABUPATEN DI ";
+                }
+                $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                $rowLabel = strtolower($rowLabel);
+                $rowLabel = ucwords($rowLabel);
+            } else {
+
+                $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
+            }
+        } catch (\Exception $e) {
+            return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
+        }
+
+        $columns = Column::whereIn('id', $id_columns)->get();
+        $tahuns = array_unique($tahuns);
+        sort($tahuns);
+        // $turtahuns = array_unique($turtahuns);
+        // sort($turtahuns);
+        // dd($rows);
+        $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
+
+        // return view('tabel.show', [
+        //     'datacontents' => $datacontents,
+        //     // 'tabels' => $tabels,
+        //     'encryptedId' => $id,
+        //     'tahuns' => $tahuns,
+        //     'years' => $tahuns[0],
+        //     'rows' => $rows,
+        //     'row_label' => $rowLabel,
+        //     'columns' => $columns,
+        //     'turtahuns' => $turtahuns,
+        //     'tabel' => $statusTabel,
+        //     'status' => $status,
+        //     'roles' => $roles,
+        //     'status_desc' => $sdesc,
+        //     'catatans' => $catatans,
+        // ]);
+        return Inertia::render('Tabel/Entri', [
+            'datacontents' => $datacontents,
+            //     'encryptedId' => $id,
+            // 'tahuns' => $tahuns,
+            'years' => $tahuns[0],
+            'rows' => $rows,
+            'row_label' => $rowLabel,
+            'columns' => $columns,
+            'turtahuns' => $turtahuns,
+            'judul_tabel' => $statusTabel->judul_tabel,
+            'status_updated' => $statusTabel->status_updated,
+            //     'tabel' => $statusTabel,
+            //     'status' => $status,
+            //     'roles' => $roles,
+            'status_desc' => [$statusTabel->status, $sdesc],
+            //     'catatans' => $catatans,
+        ]);
+    }
 
     //     /**
     //      * Show the form for editing the specified resource.
@@ -647,64 +649,60 @@ class TabelController extends Controller
     //         $data = $request->data;
     //     }
 
-    //     public function update_content(Request $request)
-    //     {
-    //         $data = $request->data;
-    //         $decisions = $request->decisions;
-    //         // dd($request->catatans);
-    //         try {
-    //             //code...
-    //             DB::beginTransaction();
-    //             foreach ($data as $item) {
+    public function update_content(Request $request)
+    {
+        $data = $request->dataContents;
+        $decisions = $request->decisions;
+        // dd($data, $decisions);
+        // dd($request->catatans);
+        try {
+            //code...
+            DB::beginTransaction();
+            foreach ($data as $item) {
+                Datacontent::where('id', $item['id'])
+                    ->update([
+                        'value' => $item['value']
+                    ]);
+            }
+            Statustables::where('id_tabel', $data[0]['id_tabel'])
+                ->where('tahun', $data[0]['tahun'])
+                ->update([
+                    'status' => ($decisions == "save") ? '2' : '3',
+                    'edited_by' => auth()->user()->id,
+                ]);
+            $status = Statustables::where('id_tabel', $data[0]['id_tabel'])
+                ->where('tahun', $data[0]['tahun'])
+                ->leftJoin('status_desc', 'statustables.status', '=', 'status_desc.id')
+                ->first(['statustables.*', 'status_desc.label as statuslabel']);
 
-    //                 Datacontent::where('id', $item['id'])
-    //                     ->update([
-    //                         'value' => $item['value']
-    //                     ]);
-    //             }
-    //             Statustables::where('id_tabel', $data[0]['id_tabel'])
-    //                 ->where('tahun', $data[0]['tahun'])
-    //                 ->update([
-    //                     'status' => ($decisions == "save") ? '2' : '3',
-    //                     'edited_by' => auth()->user()->id,
-    //                 ]);
-    //             $status = Statustables::where('id_tabel', $data[0]['id_tabel'])
-    //                 ->where('tahun', $data[0]['tahun'])
-    //                 ->leftJoin('status_desc', 'statustables.status', '=', 'status_desc.id')
-    //                 ->first(['statustables.*', 'status_desc.label as statuslabel']);
+            if ($status->status == '3') {
+                # code...
+                Notifikasi::create([
+                    'id_statustabel' => $status->id,
+                    'id_user' => auth()->user()->id,
+                    'komentar' => auth()->user()->name . " [ " . auth()->user()->dinas->nama . " ]" . " telah mengirim tabel dengan judul ",
+                ]);
+            }
+            if ($request->catatans) {
+                # code...
+                $catatan = Catatan::create([
+                    'id_statustabel' => $status->id,
+                    'catatan' => $request->catatans,
+                ]);
+            }
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
 
-    //             if ($status->status == '3') {
-    //                 # code...
-    //                 Notifikasi::create([
-    //                     'id_statustabel' => $status->id,
-    //                     'id_user' => auth()->user()->id,
-    //                     'komentar' => auth()->user()->name . " [ " . auth()->user()->dinas->nama . " ]" . " telah mengirim tabel dengan judul ",
-    //                 ]);
-    //             }
-    //             if ($request->catatans) {
-    //                 # code...
-    //                 $catatan = Catatan::create([
-    //                     'id_statustabel' => $status->id,
-    //                     'catatan' => $request->catatans,
-    //                 ]);
-    //             }
-    //             DB::commit();
-    //         } catch (\Throwable $th) {
-    //             //throw $th;
-    //             DB::rollBack();
+            // Handle the exception (log it, show a user-friendly message, etc.)
+            // For example, you can log the error:
+            return response()->json($th->getMessage());
+        }
+        // Update records in a single query
 
-    //             // Handle the exception (log it, show a user-friendly message, etc.)
-    //             // For example, you can log the error:
-    //             return response()->json($th);
-    //         }
-    //         // Update records in a single query
-
-    //         return response()->json([
-    //             'data' => $data,
-    //             'status' => $status->status,
-    //             'status_label' => $status->statuslabel
-    //         ]);
-    //     }
+        return redirect()->route('tabel.entri', ['id' => $status->id])->with('message', 'Berhasil');
+    }
 
     //     public function adminHandleData(Request $request)
     //     {

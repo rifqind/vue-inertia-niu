@@ -1,12 +1,23 @@
 <script setup>
 import GeneralLayout from '@/Layouts/GeneralLayout.vue'
-import { usePage, useForm, Head } from '@inertiajs/vue3'
+import FlashMessage from '@/Components/FlashMessage.vue';
+import SpinnerBorder from '@/Components/SpinnerBorder.vue';
+import { usePage, useForm, Head, Link } from '@inertiajs/vue3'
+import { onMounted, ref, onUpdated } from 'vue';
 
 const page = usePage()
 const form = useForm({
-    dataContents: page.props.datacontents
+    dataContents: page.props.datacontents,
+    decisions: null,
 })
+const badges = ref(null)
+const toggleFlash = ref(false)
+const triggerSpinner = ref(false)
+const inputDisabled = ref(false)
+
 var columnComponents, rowComponents
+var status = page.props.status_desc
+
 const getData = function (row, column) {
     columnComponents = column.id
     if (row.id) {
@@ -16,6 +27,21 @@ const getData = function (row, column) {
         return (x.id_row === rowComponents || x.wilayah_fullcode === rowComponents) && x.id_column === columnComponents
     })
     return probablyTheData.value
+}
+const defineBadges = function (status) {
+    const statusMapping = {
+        1: "badge-status-satu",
+        2: "badge-status-dua",
+        3: "badge-status-tiga",
+        4: "badge-status-empat",
+        5: "badge-status-lima"
+    }
+    badges.value = statusMapping[status]
+}
+const defineInputDisable = function (status, role) {
+    if (status == 3) {
+        inputDisabled.value = true
+    }
 }
 const handleInput = function (event, row, column) {
     // console.log(event, row, column);
@@ -31,16 +57,39 @@ const handleInput = function (event, row, column) {
         form.dataContents[theIndex].value = event.target.value
     }
 }
+onMounted(() => {
+    defineBadges(status[0])
+    defineInputDisable(status[0], page.props.auth.user.role)
+})
 
-const submit = function () {
-    form.post()
+const submit = function (decision) {
+    form.decisions = decision
+    form.post(route('tabel.update_content'), {
+        onSuccess: function () { toggleFlash.value = true },
+        onBefore: function () { triggerSpinner.value = true },
+        onFinish: function () { triggerSpinner.value = false },
+        onError: function () { triggerSpinner.value = false }
+    })
 }
 </script>
 <template>
 
     <Head title="Entri Data" />
+    <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
         <div class="container pb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-bold">{{ page.props.judul_tabel }}, Tahun {{ page.props.years }}
+                    </h3>
+                    <h4 class="my-0 d-flex">
+                        <span class="badge" :class="badges" id="badges-status"> {{ status[1] }}</span>
+                        <span class="ml-auto text-right small" id=""> Terakhir diupdate : {{
+        page.props.status_updated }}</span>
+                    </h4>
+                </div>
+            </div>
+            <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
             <div class="table-container">
                 <div class="row">
                     <table class="table table-bordered" id="RowTabel">
@@ -69,7 +118,7 @@ const submit = function () {
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
                                         <th class="text-center" v-for="(node, index) in page.props.columns"
                                             :key="index">{{
-                                    node.label }}</th>
+        node.label }}</th>
                                     </template>
                                 </tr>
                             </thead>
@@ -79,6 +128,7 @@ const submit = function () {
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
                                             <input type="text" class="form-control"
                                                 :value="getData(nodeRow, nodeColumn)"
+                                                :disabled="inputDisabled"
                                                 @input="(event) => { handleInput(event, nodeRow, nodeColumn) }">
                                         </td>
                                     </template>
@@ -117,8 +167,18 @@ const submit = function () {
                     </tr>
                 </tbody>
             </table> -->
+            <div class="mb-2 d-flex">
+                <div class="flex-grow-1">
+                    <Link :href="route('tabel.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
+                    Kembali
+                    </Link>
+                </div>
+                <button @click="submit(decision = 'save')" class="btn bg-primary-fordone save-send mr-2"
+                    id="save-table">Simpan <i class="fas fa-save"></i></button>
+                <button @click="submit(decision = 'send')" class="btn bg-success-fordone save-send"
+                    id="save-table">Kirim <i class="fas fa-paper-plane"></i></button>
+            </div>
         </div>
-        <!-- <div><br /></div> -->
     </GeneralLayout>
 </template>
 <style scoped>

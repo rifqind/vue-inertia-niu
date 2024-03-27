@@ -108,7 +108,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tabel/index', [TabelController::class, 'index'])->name('tabel.index');
     Route::get('/tabel/entri/{id}', [TabelController::class, 'entri'])->name('tabel.entri');
-    Route::put('/tabel/update-content/{id}', [TabelController::class, 'update_content'])->name('tabel.update_content');
+    Route::post('/tabel/update-content', [TabelController::class, 'update_content'])->name('tabel.update_content');
 });
 
 Route::post('/tabel/adminHandleData', [TabelController::class, 'adminHandleData'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('tabel.adminHandleData');

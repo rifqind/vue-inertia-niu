@@ -125,6 +125,11 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     background-color: #2E7AE6;
     color: whitesmoke;
 }
+.bg-primary-fordone:hover, .bg-primary-fordone:active {
+    background-color: #3368b3;
+    color: whitesmoke;
+}
+
 
 .badge-status-satu {
     background-color: #7286a0;
@@ -149,7 +154,6 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     background-color: #724452;
     color: whitesmoke;
 }
-
 
 .badge-status-lima {
     background-color: green;
