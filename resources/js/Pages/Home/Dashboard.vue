@@ -1,0 +1,253 @@
+<script setup>
+// import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import GeneralLayout from '@/Layouts/GeneralLayout.vue';
+import PieChart from '@/Components/PieChart.vue';
+import Multiselect from '@vueform/multiselect';
+import { Head, usePage } from '@inertiajs/vue3';
+// import {  } from '@inertiajs/vue3';
+import { ref, onMounted, defineComponent } from 'vue'
+
+defineComponent({
+    Multiselect
+})
+const page = usePage()
+const pieChartData = page.props.pieValues
+const pieCharts = ref(null)
+const percentProgress = ref(null)
+var all = [{ label: 'Pilih Semua', value: 'all' }]
+const yearDrop = ref({
+    value: 'all',
+    options: [...all, ...page.props.years]
+})
+const kabsDrop = ref({
+    value: 'all',
+    options: [...all, ...page.props.wilayah]
+})
+
+const defineBadges = function (status) {
+    const statusMapping = {
+        1: "badge-status-satu",
+        2: "badge-status-dua",
+        3: "badge-status-tiga",
+        4: "badge-status-empat",
+        5: "badge-status-lima"
+    }
+    return statusMapping[status]
+}
+onMounted(() => {
+    percentProgress.value.style.height = `${pieCharts.value.offsetHeight}px`
+})
+</script>
+
+<template>
+
+    <Head title="Dashboard" />
+    <GeneralLayout>
+        <div class="d-flex mb-2">
+            <div class="year mr-1">
+                <Multiselect :options="yearDrop.options" :value="yearDrop.value" placeholder="-- Pilih Tahun --" />
+            </div>
+            <div class="mr-1 wilayah">
+                <Multiselect :options="kabsDrop.options" :value="kabsDrop.value" placeholder="-- Pilih Wilayah --" />
+            </div>
+            <div class="">
+                <button type="submit" class="btn bg-info-fordone"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+        </div>
+        <div class="row d-flex justify-content-start">
+            <div class="card col-xl-6 col-l-6 col-md-12 col-sm-12" id="box-satu">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-bold mb-2 text-satu">JUMLAH TABEL BARU</div>
+                            <div class="h5 text-bold">{{ page.props.newTabels }} Tabel</div>
+                        </div>
+                        <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-bars-staggered text-satu"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card col-xl-6 col-l-6 col-md-12 col-sm-12" id="box-lima">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-bold mb-2 text-lima">RILIS</div>
+                            <div class="h5 text-bold">{{ page.props.finalTabels }} Tabel</div>
+                        </div>
+                        <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-check-double text-lima"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row d-flex justify-content-start">
+            <div class="card col-xl-4 col-l-4 col-md-12 col-sm-12" id="box-dua">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-bold mb-2 text-dua">DALAM PROSES ENTRI</div>
+                            <div class="h5 text-bold">{{ page.props.entriTabels }} Tabel</div>
+                        </div>
+                        <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-pen-nib text-dua"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card col-xl-4 col-l-4 col-md-12 col-sm-12" id="box-tiga">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-bold mb-2 text-tiga">DIPERIKSA</div>
+                            <div class="h5 text-bold">{{ page.props.verifyTabels }} Tabel</div>
+                        </div>
+                        <div class="col-auto align-middle"><i class="fa-regular fa-2x fa-hourglass-half text-tiga"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card col-xl-4 col-l-4 col-md-12 col-sm-12" id="box-empat">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-bold mb-2 text-empat">PERLU PERBAIKAN</div>
+                            <div class="h5 text-bold">{{ page.props.repairTabels }} Tabel</div>
+                        </div>
+                        <div class="col-auto align-middle"><i
+                                class="fa-solid fa-2x fa-screwdriver-wrench text-empat"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row ">
+            <div class="p-0" id="p-progress">
+                <div class="card" id="pie-charts" ref="pieCharts">
+                    <div class="card-header text-bold text-center">
+                        DIAGRAM PROGRES PENGERJAAN DATA
+                    </div>
+                    <div class="card-body">
+                        <div class="pie-chart-container mb-3 text-center">
+                            <PieChart v-if="true" :chartValue="pieChartData"></PieChart>
+                            <!-- <canvas id="pie-chart"></canvas> -->
+                        </div>
+                        <div class="row p-2">
+                            <div class="col">
+                                <div class="small mr-3">
+                                    <i class="fa-solid fa-circle text-satu"></i>
+                                    Tabel Baru
+                                </div>
+                                <div class="small mr-3">
+                                    <i class="fa-solid fa-circle text-lima"></i>
+                                    Rilis
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="small mr-3">
+                                    <i class="fa-solid fa-circle text-dua"></i>
+                                    Proses Entri
+                                </div>
+                                <div class="small mr-3">
+                                    <i class="fa-solid fa-circle text-tiga"></i>
+                                    Diperiksa
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="small">
+                                    <i class="fa-solid fa-circle text-empat"></i>
+                                    Perbaikan
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-0 ml-1 col-9">
+                <div class="card mr-3" id="percentage-progress" ref="percentProgress">
+                    <div class="card-header text-center text-bold">
+                        PROGRES PENGERJAAN
+                    </div>
+                    <div class="card-body" id="card-notifikasi">
+                        <div v-for="(node, index) in page.props.notifikasiList" :key="index" class="row">
+                            <div class="col-2 mb-3">
+                                <div class="">
+                                    <span class="badge" :class="defineBadges(node.status)">
+                                        <div>{{ node.timestamp }}</div>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-10 mb-3">
+                                {{ node.komentar }}
+                                <span class="text-bold">{{ node.judul_tabel }}</span>, Tahun {{ node.tahundata }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+
+        </div>
+    </GeneralLayout>
+</template>
+<style scoped>
+.year {
+    width: 15%;
+}
+.wilayah {
+    width: 25%;
+}
+#box-satu {
+    border-left: 4px solid #7286a0;
+}
+
+#box-dua {
+    width: 32%;
+    border-left: 4px solid #03254e;
+}
+
+#box-tiga {
+    width: 32%;
+    border-left: 4px solid #f18f01;
+}
+
+#box-empat {
+    width: 32%;
+    border-left: 4px solid #8b1e3f;
+}
+
+#box-lima {
+    border-left: 4px solid green;
+}
+
+.text-satu {
+    color: #7286a0;
+}
+
+.text-dua {
+    color: #03254e;
+}
+
+.text-tiga {
+    color: #f18f01;
+}
+
+.text-empat {
+    color: #8b1e3f;
+}
+
+.text-lima {
+    color: green;
+}
+
+#percentage-progress {
+    width: 100%;
+}
+
+#card-notifikasi {
+    overflow-y: scroll;
+}
+
+#p-progress {
+    width: 24.5%;
+}
+</style>

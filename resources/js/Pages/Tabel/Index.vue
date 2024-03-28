@@ -149,7 +149,7 @@ const entriTabel = function (id) {
                     <td class="align-middle">{{ table.row_label }}</td>
                     <td class="align-middle">{{ table.tahun }}</td>
                     <td class="align-middle">{{ table.status }}</td>
-                    <td class="text-center align-middle">({{ table.who_updated }})<br>{{ table.status_updated }}</td>
+                    <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated }}</span><br>{{ table.status_updated }}</td>
                     <td class="text-center align-middle deleted">
                         <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mr-5">
                         <i class="fa-solid fa-pencil" title="Cek/Edit"></i>

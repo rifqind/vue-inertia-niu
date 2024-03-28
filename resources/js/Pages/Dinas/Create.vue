@@ -3,7 +3,6 @@ import GeneralLayout from '@/Layouts/GeneralLayout.vue';
 import { Head, useForm, usePage, Link } from '@inertiajs/vue3';
 import { defineComponent, ref } from 'vue';
 import Multiselect from '@vueform/multiselect';
-import VueMultiselect from 'vue-multiselect';
 
 const page = usePage()
 const kabs = page.props.kabs
@@ -11,7 +10,7 @@ const kecs = ref([])
 const desa = ref([])
 
 defineComponent({
-    Multiselect, VueMultiselect
+    Multiselect
 })
 
 const tingkatan = ref({

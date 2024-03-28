@@ -9,6 +9,7 @@ const page = usePage()
 const form = useForm({
     dataContents: page.props.datacontents,
     decisions: null,
+    catatans: page.props.catatans
 })
 const badges = ref(null)
 const toggleFlash = ref(false)
@@ -38,10 +39,32 @@ const defineBadges = function (status) {
     }
     badges.value = statusMapping[status]
 }
-const defineInputDisable = function (status, role) {
-    if (status == 3) {
-        inputDisabled.value = true
+const buttonMapping = {
+    'admin': false,
+    'kominfo': false,
+    'produsen': true,
+}
+const defineButton = function (role, position) {
+    const isAdmin = buttonMapping[role]
+    const status = page.props.status_desc[0]
+    if (isAdmin) {
+        if (position == 'right') return false
+        else {
+            if (status == 3 || status > 4) return false
+            else return true
+        }
+    } else {
+        if (position == 'left') return false
+        else {
+            if (status < 3) return false
+            else return true
+        }
     }
+}
+const defineInputDisable = function (status, role) {
+    if (status == 3) inputDisabled.value = true
+    if (status > 4) inputDisabled.value = true
+    if (!buttonMapping[role]) inputDisabled.value = true
 }
 const handleInput = function (event, row, column) {
     // console.log(event, row, column);
@@ -62,14 +85,29 @@ onMounted(() => {
     defineInputDisable(status[0], page.props.auth.user.role)
 })
 
+onUpdated(() => {
+    status = page.props.status_desc
+    defineBadges(status[0])
+    defineInputDisable(status[0], page.props.auth.user.role)
+})
+
 const submit = function (decision) {
     form.decisions = decision
-    form.post(route('tabel.update_content'), {
-        onSuccess: function () { toggleFlash.value = true },
-        onBefore: function () { triggerSpinner.value = true },
-        onFinish: function () { triggerSpinner.value = false },
-        onError: function () { triggerSpinner.value = false }
-    })
+    if (decision == 'save' || decision == 'send') {
+        form.post(route('tabel.update_content'), {
+            onSuccess: function () { toggleFlash.value = true },
+            onBefore: function () { triggerSpinner.value = true },
+            onFinish: function () { triggerSpinner.value = false },
+            onError: function () { triggerSpinner.value = false }
+        })
+    } else {
+        form.post(route('tabel.adminHandleData'), {
+            onSuccess: function () { toggleFlash.value = true },
+            onBefore: function () { triggerSpinner.value = true },
+            onFinish: function () { triggerSpinner.value = false },
+            onError: function () { triggerSpinner.value = false }
+        })
+    }
 }
 </script>
 <template>
@@ -127,8 +165,7 @@ const submit = function (decision) {
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
                                             <input type="text" class="form-control"
-                                                :value="getData(nodeRow, nodeColumn)"
-                                                :disabled="inputDisabled"
+                                                :value="getData(nodeRow, nodeColumn)" :disabled="inputDisabled"
                                                 @input="(event) => { handleInput(event, nodeRow, nodeColumn) }">
                                         </td>
                                     </template>
@@ -167,16 +204,31 @@ const submit = function (decision) {
                     </tr>
                 </tbody>
             </table> -->
+            <div class="card">
+                <div class="card-header">
+                    CATATAN
+                </div>
+                <div class="card-body">
+                    <textarea :disabled="inputDisabled" name="catatan" v-model="form.catatans" class="form-control"
+                        id="catatan" rows="5" placeholder="Masukkan Catatan Jika Perlu">{{ form.catatans }}</textarea>
+                </div>
+            </div>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
                     <Link :href="route('tabel.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
                     Kembali
                     </Link>
                 </div>
-                <button @click="submit(decision = 'save')" class="btn bg-primary-fordone save-send mr-2"
-                    id="save-table">Simpan <i class="fas fa-save"></i></button>
-                <button @click="submit(decision = 'send')" class="btn bg-success-fordone save-send"
-                    id="save-table">Kirim <i class="fas fa-paper-plane"></i></button>
+                <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'save')"
+                    class="btn bg-primary-fordone save-send mr-2" id="save-table">Simpan <i
+                        class="fas fa-save"></i></button>
+                <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'send')"
+                    class="btn bg-success-fordone save-send" id="save-table">Kirim <i
+                        class="fas fa-paper-plane"></i></button>
+                <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'reject')"
+                    class="btn badge-status-empat mr-2" id="save-table">Reject <i class="fas fa-ban"></i></button>
+                <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'final')"
+                    class="btn bg-success-fordone" id="save-table">Final <i class="fas fa-flag-checkered"></i></button>
             </div>
         </div>
     </GeneralLayout>

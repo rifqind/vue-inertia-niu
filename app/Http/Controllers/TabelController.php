@@ -466,9 +466,6 @@ class TabelController extends Controller
     //      */
     public function entri(string $id)
     {
-        // $tabel = Tabel::where('id', $decryptedId)->first();
-        // $statusTabel = Statustables::join('tabels AS t','t.id','statustables.id_tabel')
-        // ->select('statustables')
         $statusTabel = Statustables::join('tabels as t', 'statustables.id_tabel', 't.id')
             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
             ->select(
@@ -482,18 +479,13 @@ class TabelController extends Controller
             )
             ->where('statustables.id', $id)->first();
 
-        $catatans = Catatan::where('id_statustabel', $id)->first();
+        $catatans = Catatan::where('id_statustabel', $id)->value('catatan');
 
         $id_tabel = $statusTabel->id_tabel;
         $tahun = $statusTabel->tahun;
-        $status = $statusTabel->status;
-        $roles = auth()->user()->role;
         $sdesc = $statusTabel->status_desc;
 
-        // $pattern = $id_tabel . '-%-' . $tahun . '-%';
-
         $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
-        // return response()->json(['data' => $datacontents, 'pattern' => $pattern, 'id_status' => $decryptedId]);
         $id_rows = [];
         $wilayah_fullcodes = [];
         $id_columns = [];
@@ -510,14 +502,11 @@ class TabelController extends Controller
 
             array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
         }
-        // $tabels = Tabel::where('id', $id_tabel)->first();
-
         $rows = Row::whereIn('id', $id_rows)->get();
         $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->get();
         try {
             //code...
             if ($rows[0]->id == 0) {
-                // $wilayah_master = MasterWilayah::where('wilayah_fullcode','like',$wilayah_fullcodes[0]);
                 $wilayah_parent_code = '';
                 $jenis = "DAFTAR ";
                 $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
@@ -525,7 +514,6 @@ class TabelController extends Controller
                     ->orderBy('desa')
                     ->get();
                 $rows = $temp;
-                // dd($rows);
                 $desa = substr($wilayah_fullcodes[0], 7, 3);
                 $kec = substr($wilayah_fullcodes[0], 4, 3);
                 $kab = substr($wilayah_fullcodes[0], 2, 2);
@@ -553,31 +541,10 @@ class TabelController extends Controller
         $columns = Column::whereIn('id', $id_columns)->get();
         $tahuns = array_unique($tahuns);
         sort($tahuns);
-        // $turtahuns = array_unique($turtahuns);
-        // sort($turtahuns);
-        // dd($rows);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
 
-        // return view('tabel.show', [
-        //     'datacontents' => $datacontents,
-        //     // 'tabels' => $tabels,
-        //     'encryptedId' => $id,
-        //     'tahuns' => $tahuns,
-        //     'years' => $tahuns[0],
-        //     'rows' => $rows,
-        //     'row_label' => $rowLabel,
-        //     'columns' => $columns,
-        //     'turtahuns' => $turtahuns,
-        //     'tabel' => $statusTabel,
-        //     'status' => $status,
-        //     'roles' => $roles,
-        //     'status_desc' => $sdesc,
-        //     'catatans' => $catatans,
-        // ]);
         return Inertia::render('Tabel/Entri', [
             'datacontents' => $datacontents,
-            //     'encryptedId' => $id,
-            // 'tahuns' => $tahuns,
             'years' => $tahuns[0],
             'rows' => $rows,
             'row_label' => $rowLabel,
@@ -585,11 +552,8 @@ class TabelController extends Controller
             'turtahuns' => $turtahuns,
             'judul_tabel' => $statusTabel->judul_tabel,
             'status_updated' => $statusTabel->status_updated,
-            //     'tabel' => $statusTabel,
-            //     'status' => $status,
-            //     'roles' => $roles,
             'status_desc' => [$statusTabel->status, $sdesc],
-            //     'catatans' => $catatans,
+            'catatans' => $catatans,
         ]);
     }
 
@@ -653,8 +617,6 @@ class TabelController extends Controller
     {
         $data = $request->dataContents;
         $decisions = $request->decisions;
-        // dd($data, $decisions);
-        // dd($request->catatans);
         try {
             //code...
             DB::beginTransaction();
@@ -704,61 +666,59 @@ class TabelController extends Controller
         return redirect()->route('tabel.entri', ['id' => $status->id])->with('message', 'Berhasil');
     }
 
-    //     public function adminHandleData(Request $request)
-    //     {
-    //         $isAdmin = auth()->user()->role == "admin" |  auth()->user()->role == "kominfo";
-    //         if (!$isAdmin) {
-    //             return response()->json([
-    //                 'error' => 'Operasi ini hanya bisa dilakukan oleh Admin'
-    //             ], 403);
-    //         }
-    //         $data = $request->data;
-    //         $decisions = $request->decisions;
-    //         try {
-    //             //code...
-    //             DB::beginTransaction();
-    //             Statustables::where('id_tabel', $data[0]['id_tabel'])
-    //                 ->where('tahun', $data[0]['tahun'])
-    //                 ->update([
-    //                     'status' => ($decisions == "reject") ? '4' : '5',
-    //                     'edited_by' => auth()->user()->id,
-    //                 ]);
-    //             $status = Statustables::where('id_tabel', $data[0]['id_tabel'])
-    //                 ->where('tahun', $data[0]['tahun'])
-    //                 ->leftJoin('status_desc', 'statustables.status', '=', 'status_desc.id')
-    //                 ->first(['statustables.*', 'status_desc.label as statuslabel']);
+    public function adminHandleData(Request $request)
+    {
+        $isAdmin = auth()->user()->role == "admin" |  auth()->user()->role == "kominfo";
+        if (!$isAdmin) {
+            return response()->json([
+                'error' => 'Operasi ini hanya bisa dilakukan oleh Admin'
+            ], 403);
+        }
+        $data = $request->dataContents;
+        $decisions = $request->decisions;
+        try {
+            //code...
+            DB::beginTransaction();
+            Statustables::where('id_tabel', $data[0]['id_tabel'])
+                ->where('tahun', $data[0]['tahun'])
+                ->update([
+                    'status' => ($decisions == "reject") ? '4' : '5',
+                    'edited_by' => auth()->user()->id,
+                ]);
+            $status = Statustables::where('id_tabel', $data[0]['id_tabel'])
+                ->where('tahun', $data[0]['tahun'])
+                ->leftJoin('status_desc', 'statustables.status', '=', 'status_desc.id')
+                ->first(['statustables.*', 'status_desc.label as statuslabel']);
 
-    //             $isKominfo = auth()->user()->role == "kominfo";
-    //             $Admins = ($isKominfo) ? "Kominfo" : "Admin";
-    //             if ($status->status == '4') {
-    //                 # code...
-    //                 Notifikasi::create([
-    //                     'id_statustabel' => $status->id,
-    //                     'id_user' => auth()->user()->id,
-    //                     'komentar' => $Admins." telah me-reject data (perlu perbaikan) dengan judul ",
-    //                 ]);
-    //             } elseif ($status->status == '5') {
-    //                 # code...
-    //                 Notifikasi::create([
-    //                     'id_statustabel' => $status->id,
-    //                     'id_user' => auth()->user()->id,
-    //                     'komentar' => $Admins." telah me-finalkan data dengan judul ",
-    //                 ]);
-    //             }
-    //             DB::commit();
-    //         } catch (\Throwable $th) {
-    //             //throw $th;
-    //             DB::rollBack();
+            $isKominfo = auth()->user()->role == "kominfo";
+            $Admins = ($isKominfo) ? "Kominfo" : "Admin";
+            if ($status->status == '4') {
+                # code...
+                Notifikasi::create([
+                    'id_statustabel' => $status->id,
+                    'id_user' => auth()->user()->id,
+                    'komentar' => $Admins . " telah me-reject data (perlu perbaikan) dengan judul ",
+                ]);
+            } elseif ($status->status == '5') {
+                # code...
+                Notifikasi::create([
+                    'id_statustabel' => $status->id,
+                    'id_user' => auth()->user()->id,
+                    'komentar' => $Admins . " telah me-finalkan data dengan judul ",
+                ]);
+            }
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
 
-    //             // Handle the exception (log it, show a user-friendly message, etc.)
-    //             // For example, you can log the error:
-    //             return response()->json($th);
-    //         }
+            // Handle the exception (log it, show a user-friendly message, etc.)
+            // For example, you can log the error:
+            return response()->json($th->getMessage());
+        }
 
-    //         return response()->json([
-    //             'messages' => 'Berhasil di-' . $decisions
-    //         ]);
-    //     }
+        return redirect()->route('tabel.entri', ['id' => $status->id])->with('message', 'Berhasil');
+    }
 
     //     /**
     //      * Remove the specified resource from storage.

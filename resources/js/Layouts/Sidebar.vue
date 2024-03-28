@@ -40,26 +40,25 @@ const toggleMenuOpen = function (x) {
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                     data-accordion="false">
-                    <li class="nav-item">
-                        <div class="nav-link" :class="{ 'active': currentRoute == 'dashboard' }">
-                            <i class="nav-icon fas fa-tachometer-alt"></i>
-                            <p>
-                                Dashboard
-                            </p>
-                        </div>
-                    </li>
-                    <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-display'"> Monitoring
+                    <NavLinkSidebar :nav-icon="'fas fa-tachometer-alt'" :current-route="currentRoute == 'home.dashboard'"
+                        :href="route('home.dashboard')"> Dashboard</NavLinkSidebar>
+                    <NavLinkSidebar :currentRoute="currentRoute == 'home.monitoring'" :role="role == 'admin'"
+                        :href="route('home.monitoring')" :navIcon="'fa-solid fa-display'"> Monitoring
                     </NavLinkSidebar>
                     <NavLinkParentSidebar :navIcon="'fa-solid fa-building'"
-                    :menuOpen="menuOpenTabel || currentRoute == 'tabel.index' || currentRoute == 'tabel.create'"
+                        :menuOpen="menuOpenTabel || currentRoute == 'tabel.index' || currentRoute == 'tabel.create' || currentRoute == 'tabel.deletedList'"
                         :toggleMenuOpen="toggleMenuOpen" :params="'tbl'">
                         <template v-slot:label> Kelola Tabel</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :href="route('tabel.index')" :currentRoute="currentRoute == 'tabel.index'" :navIcon="'fa-solid fa-list-ol'"> Daftar Tabel</NavLinkSidebar>
-                            <NavLinkSidebar :href="route('tabel.create')" :currentRoute="currentRoute == 'tabel.create'" :role="role == 'admin'" :navIcon="'fa-solid fa-plus'"> Tambah Tabel
+                            <NavLinkSidebar :href="route('tabel.index')" :currentRoute="currentRoute == 'tabel.index'"
+                                :navIcon="'fa-solid fa-list-ol'"> Daftar Tabel</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('tabel.create')" :currentRoute="currentRoute == 'tabel.create'"
+                                :role="role == 'admin'" :navIcon="'fa-solid fa-plus'"> Tambah Tabel
                             </NavLinkSidebar>
-                            <NavLinkSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-recycle'"> Recycle Bin</NavLinkSidebar>
+                            <NavLinkSidebar :role="role == 'admin'" :href="route('tabel.deletedList')"
+                                :currentRoute="currentRoute == 'tabel.deletedList'" :navIcon="'fa-solid fa-recycle'">
+                                Recycle Bin</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :navIcon="'fa-solid fa-building'" :toggleMenuOpen="toggleMenuOpen">
@@ -145,6 +144,7 @@ div.nav-link {
     background-color: #3d3b8e;
     color: #fff;
 }
+
 body:not(.layout-fixed) .main-sidebar {
     position: fixed !important;
 }
