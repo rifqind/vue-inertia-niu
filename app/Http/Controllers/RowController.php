@@ -24,7 +24,7 @@ class RowController extends Controller
             # code...
             $value->number = $key + 1;
         }
-        $row_groups = RowGroup::get(['row_groups.label as label', 'row_groups.id as value']);
+        $row_groups = RowGroup::orderBy('label')->get(['row_groups.label as label', 'row_groups.id as value']);
         return Inertia::render('Master/Row', [
             'rows' => $rows,
             'row_groups' => $row_groups

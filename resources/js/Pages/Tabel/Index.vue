@@ -13,11 +13,15 @@ import { formToJSON } from 'axios';
 import axios from 'axios';
 
 const page = usePage()
-const tGroup = page.props.tables
-const tables = ref(tGroup)
+var tGroup = page.props.tables
+var tables = ref(tGroup)
+const form = useForm({
+    id: null,
+})
 
 const triggerSpinner = ref(false)
 const toggleFlash = ref(false)
+const deleteModalStatus = ref(false)
 
 const searchLabel = ref(null)
 const searchLabelDinas = ref(null)
@@ -71,8 +75,23 @@ onMounted(() => {
             currentStatusText, rowsTabel)
     })
 })
-const entriTabel = function (id) {
-    axios.get(route('tabel.entri', { id: id }))
+onUpdated(() => {
+    tGroup = page.props.tables
+    tables = ref(tGroup)
+})
+const deleteForm = function () {
+    form.post(route('tabel.statusDestroy'), {
+        onBefore: function () {
+            triggerSpinner.value = true
+            deleteModalStatus.value = false
+        },
+        onFinish: function () { triggerSpinner.value = false },
+        onSuccess: function () {
+            if (page.props.flash.message) toggleFlash.value = true
+            form.reset()
+        },
+        onError: function () { deleteModalStatus.value = true }
+    })
 }
 </script>
 <template>
@@ -149,18 +168,36 @@ const entriTabel = function (id) {
                     <td class="align-middle">{{ table.row_label }}</td>
                     <td class="align-middle">{{ table.tahun }}</td>
                     <td class="align-middle">{{ table.status }}</td>
-                    <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated }}</span><br>{{ table.status_updated }}</td>
+                    <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated
+                            }}</span><br>{{ table.status_updated }}</td>
                     <td class="text-center align-middle deleted">
                         <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mr-5">
                         <i class="fa-solid fa-pencil" title="Cek/Edit"></i>
                         </Link>
-                        <a @click.prevent="toggleDeleteModal(table.id)" class="delete-trash">
+                        <a @click.prevent="() => {
+        deleteModalStatus = true;
+        form.id = table.id_statustables
+    }" class="delete-trash">
                             <i class="fa-solid fa-trash-can icon-trash-color" title="Hapus"></i>
                         </a>
                     </td>
                 </tr>
             </tbody>
         </table>
+        <Teleport to="body">
+            <ModalBs :ModalStatus="deleteModalStatus" @close="function () {
+        deleteModalStatus = false
+        form.reset()
+    }" :title="'Hapus Tabel'">
+                <template v-slot:modalBody>
+                    <label>Apakah Anda yakin akan menghapus Tabel tahun ini?</label>
+                </template>
+                <template v-slot:modalFunction>
+                    <button type="button" class="btn btn-sm badge-status-empat" :disabled="deleteForm.processing"
+                        @click.prevent="deleteForm">Hapus</button>
+                </template>
+            </ModalBs>
+        </Teleport>
         <div class="d-flex justify-content-end align-items-center">
             <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
                 <span id="showTotal"></span>

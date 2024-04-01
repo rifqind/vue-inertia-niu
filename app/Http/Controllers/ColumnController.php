@@ -29,7 +29,7 @@ class ColumnController extends Controller
             $value->number = $number;
             $number++;
         }
-        $column_groups = ColumnGroup::get(['column_groups.label as label', 'column_groups.id as value']);
+        $column_groups = ColumnGroup::orderBy('label')->get(['column_groups.label as label', 'column_groups.id as value']);
         return Inertia::render('Master/Column', [
             'columns' => $columns,
             'column_groups' => $column_groups

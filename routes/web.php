@@ -41,7 +41,7 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/dashboard', [HomeController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('home.dashboard');
 Route::get('/monitoring', [HomeController::class, 'monitoring'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('home.monitoring');
 Route::get('getMonitoring/{years}', [HomeController::class, 'getMonitoring'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('home.getMonitoring');
-
+Route::get('/getDashboard/{years}/{wilayah}', [HomeController::class, 'getDashboard'])->middleware(['auth', 'verified'])->name('home.getDashboard');
 
 //users
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {

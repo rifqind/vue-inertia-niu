@@ -88,6 +88,7 @@ class TabelController extends Controller
                 array_push($id_columns, $datacontent->id_column);
                 array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
             }
+            $yearList = Statustables::where('id_tabel', $table->tabelUuid)->distinct()->get(['statustables.tahun']);
             $rows = Row::whereIn('id', $id_rows)->get();
             try {
                 //code...
@@ -135,6 +136,7 @@ class TabelController extends Controller
                 'row_label' => $rowLabel,
                 'columns' => $columns,
                 'tahun' => $table->tahun,
+                'yearList' => $yearList,
                 'status' => $table->status,
                 'id_statustables' => $table->id_statustables,
                 'status_updated' => $when_updated,
@@ -761,13 +763,12 @@ class TabelController extends Controller
     //         ]);
     //     }
 
-    //     public function statusDestroy(Request $request)
-    //     {
-    //         $decryptedId = Crypt::decrypt($request->id);
-    //         $thisStatus = Statustables::where('id', $decryptedId);
-    //         $thisStatus->update(['status' => '6']);
-    //         return response()->json($thisStatus);
-    //     }
+        public function statusDestroy(Request $request)
+        { 
+            $thisStatus = Statustables::where('id', $request->id);
+            $thisStatus->update(['status' => '6']);
+            return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
+        }
 
     //     public function fetchMasterKecamatan($kab)
     //     {

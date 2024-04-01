@@ -3,7 +3,8 @@
 import GeneralLayout from '@/Layouts/GeneralLayout.vue';
 import PieChart from '@/Components/PieChart.vue';
 import Multiselect from '@vueform/multiselect';
-import { Head, usePage } from '@inertiajs/vue3';
+import SpinnerBorder from '@/Components/SpinnerBorder.vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 // import {  } from '@inertiajs/vue3';
 import { ref, onMounted, defineComponent } from 'vue'
 
@@ -11,9 +12,19 @@ defineComponent({
     Multiselect
 })
 const page = usePage()
-const pieChartData = page.props.pieValues
+
+var pieChartData = page.props.pieValues
+var newTabels = page.props.newTabels
+var finalTabels = page.props.finalTabels
+var entriTabels = page.props.entriTabels
+var verifyTabels = page.props.verifyTabels
+var repairTabels = page.props.repairTabels
+
 const pieCharts = ref(null)
 const percentProgress = ref(null)
+const updatePieCharts = ref(true)
+const triggerSpinner = ref(false)
+
 var all = [{ label: 'Pilih Semua', value: 'all' }]
 const yearDrop = ref({
     value: 'all',
@@ -37,21 +48,44 @@ const defineBadges = function (status) {
 onMounted(() => {
     percentProgress.value.style.height = `${pieCharts.value.offsetHeight}px`
 })
+const getDashboard = async function () {
+    triggerSpinner.value = true
+    if (!yearDrop.value.value) yearDrop.value.value = 'all'
+    if (!kabsDrop.value.value) kabsDrop.value.value = 'all'
+    try {
+        const response = await axios.get(`/getDashboard/${yearDrop.value.value}/${kabsDrop.value.value}`)
+        newTabels = response.data.newTabels
+        finalTabels = response.data.finalTabels
+        entriTabels = response.data.entriTabels
+        verifyTabels = response.data.verifyTabels
+        repairTabels = response.data.repairTabels
+        updatePieCharts.value = false
+        setTimeout(() => {
+            pieChartData = response.data.pieValues
+            updatePieCharts.value = true
+        }, 100);
+    } catch (error) {
+        console.error('Error Fetching Data :', error);
+    }
+    triggerSpinner.value = false
+}
 </script>
 
 <template>
 
     <Head title="Dashboard" />
+    <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
         <div class="d-flex mb-2">
             <div class="year mr-1">
-                <Multiselect :options="yearDrop.options" :value="yearDrop.value" placeholder="-- Pilih Tahun --" />
+                <Multiselect :options="yearDrop.options" v-model="yearDrop.value" placeholder="-- Pilih Tahun --" />
             </div>
             <div class="mr-1 wilayah">
-                <Multiselect :options="kabsDrop.options" :value="kabsDrop.value" placeholder="-- Pilih Wilayah --" />
+                <Multiselect :options="kabsDrop.options" v-model="kabsDrop.value" placeholder="-- Pilih Wilayah --" />
             </div>
             <div class="">
-                <button type="submit" class="btn bg-info-fordone"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button @click.prevent="getDashboard" type="submit" class="btn bg-info-fordone"><i
+                        class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </div>
         <div class="row d-flex justify-content-start">
@@ -60,7 +94,7 @@ onMounted(() => {
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-bold mb-2 text-satu">JUMLAH TABEL BARU</div>
-                            <div class="h5 text-bold">{{ page.props.newTabels }} Tabel</div>
+                            <div class="h5 text-bold">{{ newTabels }} Tabel</div>
                         </div>
                         <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-bars-staggered text-satu"></i>
                         </div>
@@ -72,7 +106,7 @@ onMounted(() => {
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-bold mb-2 text-lima">RILIS</div>
-                            <div class="h5 text-bold">{{ page.props.finalTabels }} Tabel</div>
+                            <div class="h5 text-bold">{{ finalTabels }} Tabel</div>
                         </div>
                         <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-check-double text-lima"></i>
                         </div>
@@ -86,7 +120,7 @@ onMounted(() => {
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-bold mb-2 text-dua">DALAM PROSES ENTRI</div>
-                            <div class="h5 text-bold">{{ page.props.entriTabels }} Tabel</div>
+                            <div class="h5 text-bold">{{ entriTabels }} Tabel</div>
                         </div>
                         <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-pen-nib text-dua"></i>
                         </div>
@@ -98,7 +132,7 @@ onMounted(() => {
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-bold mb-2 text-tiga">DIPERIKSA</div>
-                            <div class="h5 text-bold">{{ page.props.verifyTabels }} Tabel</div>
+                            <div class="h5 text-bold">{{ verifyTabels }} Tabel</div>
                         </div>
                         <div class="col-auto align-middle"><i class="fa-regular fa-2x fa-hourglass-half text-tiga"></i>
                         </div>
@@ -110,7 +144,7 @@ onMounted(() => {
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-bold mb-2 text-empat">PERLU PERBAIKAN</div>
-                            <div class="h5 text-bold">{{ page.props.repairTabels }} Tabel</div>
+                            <div class="h5 text-bold">{{ repairTabels }} Tabel</div>
                         </div>
                         <div class="col-auto align-middle"><i
                                 class="fa-solid fa-2x fa-screwdriver-wrench text-empat"></i></div>
@@ -126,7 +160,7 @@ onMounted(() => {
                     </div>
                     <div class="card-body">
                         <div class="pie-chart-container mb-3 text-center">
-                            <PieChart v-if="true" :chartValue="pieChartData"></PieChart>
+                            <PieChart v-if="updatePieCharts" :chartValue="pieChartData" />
                             <!-- <canvas id="pie-chart"></canvas> -->
                         </div>
                         <div class="row p-2">
@@ -193,9 +227,11 @@ onMounted(() => {
 .year {
     width: 15%;
 }
+
 .wilayah {
     width: 25%;
 }
+
 #box-satu {
     border-left: 4px solid #7286a0;
 }
