@@ -95,12 +95,12 @@ const toggleMenuOpen = function (x) {
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
                         :toggleMenuOpen="toggleMenuOpen" :params="'master'"
-                        :menuOpen="currentRoute == 'subject.index' || currentRoute == 'column_group.index' || currentRoute == 'columns.index' || currentRoute == 'row_group.index' || currentRoute == 'rows.index' || menuOpenMaster">
+                        :menuOpen="currentRoute == 'tabel.master' || currentRoute == 'subject.index' || currentRoute == 'column_group.index' || currentRoute == 'columns.index' || currentRoute == 'row_group.index' || currentRoute == 'rows.index' || menuOpenMaster">
 
                         <template v-slot:label> Kelola Master</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :navIcon="'fas fa-table'"> Tabel</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('tabel.master')" :currentRoute="currentRoute == 'tabel.master'" :navIcon="'fas fa-table'"> Tabel</NavLinkSidebar>
                             <NavLinkSidebar :href="route('subject.index')" :navIcon="'fa-solid fa-tags'"
                                 :currentRoute="currentRoute == 'subject.index'"> Subjek
                             </NavLinkSidebar>

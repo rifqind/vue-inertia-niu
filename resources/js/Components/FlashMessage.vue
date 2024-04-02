@@ -9,6 +9,10 @@ const props = defineProps({
     flash: {
         type: [String, null],
         required: true,
+    },
+    types: {
+        type: String,
+        default: 'alert-success',
     }
 })
 const emit = defineEmits(['close'])
@@ -24,7 +28,7 @@ onUpdated(() => {
 })
 </script>
 <template>
-    <div class="alert alert-success" v-if="toggleFlash" role="alert">
+    <div class="alert" :class="types" v-if="toggleFlash" role="alert">
         {{ flash }}
     </div>
 </template>

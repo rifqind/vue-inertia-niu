@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
             'route' => $routeName,
             'flash' => [
                 'message' => session('message'),
+                'error' => session('error'),
             ]
         ];
     }

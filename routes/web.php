@@ -122,7 +122,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/tabel/deletedList', [TabelController::class, 'index'])->name('tabel.deletedList');
 
     Route::get('/tabel/master/copy/{id}', [TabelController::class, 'copy'])->name('tabel.copy');
-    Route::post('/tabel/copy/{id}', [TabelController::class, 'storeCopy'])->name('tabel.storeCopy');
+    Route::post('/tabel/copy', [TabelController::class, 'storeCopy'])->name('tabel.storeCopy');
     Route::get('/tabel/edit/{id}', [TabelController::class, 'edit'])->name('tabel.edit');
     Route::post('/tabel/statusDestroy', [TabelController::class, 'statusDestroy'])->name('tabel.statusDestroy');
     Route::post('/tabel/destroy', [TabelController::class, 'destroy'])->name('tabel.destroy');

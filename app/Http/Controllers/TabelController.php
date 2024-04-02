@@ -150,87 +150,79 @@ class TabelController extends Controller
         ]);
     }
 
-    //     public function master()
-    //     {
-    //         //
-    //         $tables = Tabel::leftJoin('dinas', 'dinas.id', '=', 'tabels.id_dinas')
-    //             ->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
-    //             ->get(['tabels.*']);
-    //         // $tables = Tabel::get();
-    //         // dd($tables);
-    //         $table_objects = [];
-    //         $daftar_region = Region::get();
-    //         foreach ($tables as $table) {
-    //             $datacontents = Datacontent::where('id_tabel', $table->id)->get();
-    //             $id_rows = [];
-    //             $tahunObjects = Statustables::where('id_tabel', $table->id)->select('tahun')->distinct()->get();
+    public function master()
+    {
+        //
+        $tables = Tabel::leftJoin('dinas', 'dinas.id', '=', 'tabels.id_dinas')
+            ->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
+            ->get(['tabels.*', 'tabels.id as tabelUuid']);
+        $table_objects = [];
+        foreach ($tables as $key => $table) {
+            $datacontents = Datacontent::where('id_tabel', $table->id)->get();
+            $id_rows = [];
+            $tahunObjects = Statustables::where('id_tabel', $table->id)->select('tahun')->distinct()->get();
 
-    //             $tahuns = $tahunObjects->pluck('tahun')->toArray();
-    //             $id_columns = [];
-    //             $wilayah_fullcodes = [];
-    //             foreach ($datacontents as $datacontent) {
-    //                 // $split = explode("-", $datacontent->label);
-    //                 array_push($id_rows, $datacontent->id_row);
-    //                 array_push($id_columns, $datacontent->id_column);
-    //                 array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+            $tahuns = $tahunObjects->pluck('tahun')->toArray();
+            $id_columns = [];
+            $wilayah_fullcodes = [];
+            foreach ($datacontents as $datacontent) {
+                array_push($id_rows, $datacontent->id_row);
+                array_push($id_columns, $datacontent->id_column);
+                array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+            }
+            $rows = Row::whereIn('id', $id_rows)->get();
+            try {
+                //code...
+                if ($rows[0]->id == 0) {
+                    $wilayah_parent_code = '';
+                    $jenis = "DAFTAR ";
 
-    //                 // $turtahuns = $split[4];
-    //             }
-    //             $rows = Row::whereIn('id', $id_rows)->get();
-    //             try {
-    //                 //code...
-    //                 if ($rows[0]->id == 0) {
-    //                     // $wilayah_master = MasterWilayah::where('wilayah_fullcode','like',$wilayah_fullcodes[0]);
-    //                     $wilayah_parent_code = '';
-    //                     $jenis = "DAFTAR ";
+                    $desa = substr($wilayah_fullcodes[0], 7, 3);
+                    $kec = substr($wilayah_fullcodes[0], 4, 3);
+                    $kab = substr($wilayah_fullcodes[0], 2, 2);
+                    // dd($kec);
+                    if ($desa != '000') {
+                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
+                        $jenis = $jenis . "DESA DI ";
+                    } else if ($kec != '000') {
+                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
+                        $jenis = $jenis . "KECAMATAN DI ";
+                    } else if ($kab != '00') {
+                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
+                        $jenis = $jenis . "KABUPATEN DI ";
+                    }
+                    if ($wilayah_parent_code == '') {
+                        $rowLabel = 'PROVINSI SULAWESI UTARA';
+                    } else {
+                        $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                        $rowLabel = strtolower($rowLabel);
+                        $rowLabel = ucwords($rowLabel);
+                    }
+                } else {
+                    $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+                }
+            } catch (\Exception $e) {
+                return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->id, 'rows' => $rows));
+            }
+            $columns = Column::whereIn('id', $id_columns)->get();
+            array_push($table_objects, [
+                'number' => $key + 1,
+                'label' => $table->label,
+                'id' => $table->tabelUuid,
+                'nama_dinas' => $table->dinas->nama,
+                'rows' => $rows,
+                'row_label' => $rowLabel,
+                'columns' => $columns,
+                'tahuns' => $tahuns,
+                'status' => $table->status,
+                'id_statustables' => $table->id_statustables,
+            ]);
+        }
 
-    //                     $desa = substr($wilayah_fullcodes[0], 7, 3);
-    //                     $kec = substr($wilayah_fullcodes[0], 4, 3);
-    //                     $kab = substr($wilayah_fullcodes[0], 2, 2);
-    //                     // dd($kec);
-    //                     if ($desa != '000') {
-    //                         $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
-    //                         $jenis = $jenis . "DESA DI ";
-    //                     } else if ($kec != '000') {
-    //                         $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
-    //                         $jenis = $jenis . "KECAMATAN DI ";
-    //                     } else if ($kab != '00') {
-    //                         $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
-    //                         $jenis = $jenis . "KABUPATEN DI ";
-    //                     }
-    //                     $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
-    //                     $rowLabel = strtolower($rowLabel);
-    //                     $rowLabel = ucwords($rowLabel);
-    //                 } else {
-
-    //                     $rowLabel = RowLabel::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
-    //                 }
-    //             } catch (\Exception $e) {
-    //                 return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->id, 'rows' => $rows));
-    //             }
-    //             $columns = Column::whereIn('id', $id_columns)->get();
-    //             array_push($table_objects, [
-    //                 'datacontents' => $datacontents,
-    //                 'label' => $table->label,
-    //                 'id' => $table->id,
-    //                 'nama_dinas' => $table->dinas->nama,
-    //                 'rows' => $rows,
-    //                 'row_label' => $rowLabel,
-    //                 'columns' => $columns,
-    //                 'tahuns' => $tahuns,
-    //                 // 'turtahuns' => $turtahuns,
-    //                 'status' => $table->status,
-    //                 'id_statustables' => $table->id_statustables,
-    //             ]);
-    //         }
-
-    //         // dd($tables);
-
-    //         return view('tabel.master', [
-    //             'tables' => $table_objects,
-
-    //         ]);
-    //     }
+        return Inertia::render('Master/Tabel', [
+            'tables' => $table_objects,
+        ]);
+    }
 
     //     public function getDatacontent(Request $request)
     //     {
@@ -318,13 +310,6 @@ class TabelController extends Controller
 
             //tabel create
             $new_tabel = Tabel::create($request->tabel);
-            // $new_tabel = Tabel::create([
-            //     'nomor' => $tabel['nomor'],
-            //     'label' => $tabel['label'],
-            //     'unit' => $tabel['unit'],
-            //     'id_dinas' => $tabel['id_dinas'],
-            //     'id_subjek' => $tabel['id_subjek'],
-            // ]);
             $id_dinas = $request->tabel["id_dinas"];
             // //debatable
             $wilayah_fullcode_produsen = Dinas::where('id', $id_dinas)->value("wilayah_fullcode");
@@ -380,88 +365,64 @@ class TabelController extends Controller
 
         return redirect()->route('tabel.index')->with('message', 'Berhasil menambahkan tabel baru');
     }
-    //     public function copy($id)
-    //     {
-    //         $decryptedId = Crypt::decrypt($id);
-    //         $tabel = Tabel::where('id', $decryptedId)->firstOrFail();
-
-    //         // $rowLabel = RowLabel::get();
-    //         // $daftar_dinas = Dinas::get();
-    //         // $daftar_kolom = Column::get();
-    //         // $kolom_grup = ColumnGroup::get();
-    //         // $subjects = Subject::all();
-    //         // $turtahun_groups = TurTahunGroup::all();
-
-    //         // $row_list = $this->get_rows_by_row_labels(1);
-
-    //         return view('tabel.copy', [
-    //             'table' => $tabel,
-    //             'id' => $id,
-    //         ]);
-    //     }
 
     //     /**
     //      * Store a newly created resource in storage.
     //      */
-    //     public function storeCopy(Request $request, $id)
-    //     {
-    //         $decryptedId = Crypt::decrypt($id);
-    //         $tabel = Tabel::where('id', $decryptedId)->first();
-    //         if (!$tabel) {
-    //             return back()->with('error', 'Tabel tidak dapat Ditemukan !');
-    //         }
-    //         // cek if year already exists
-    //         $tabelStatus = Statustables::where('id_tabel', $decryptedId)
-    //             ->where('tahun', $request->tahun)
-    //             ->first();
-    //         if ($tabelStatus) {
-    //             return back()->with('error', 'Tabel dengan tahun yang sama sudah dibuat !' . $request->tahun);
-    //         }
+    public function storeCopy(Request $request)
+    {
+        $tabel = Tabel::where('id', $request->id)->first();
+        if (!$tabel) {
+            return back()->with('error', 'Tabel tidak dapat Ditemukan !');
+        }
+        // cek if year already exists
+        $tabelStatus = Statustables::where('id_tabel', $request->id)
+            ->where('tahun', $request->tahun)
+            ->first();
+        if ($tabelStatus) {
+            return back()->with('error', 'Tabel dengan tahun yang sama sudah dibuat ! ');
+        }
 
-    //         // get first year entry
-    //         $firstStatus = Statustables::where('id_tabel', $decryptedId)
-    //             ->first();
-    //         // get data contents by tahun and id
-    //         // $pattern = $decryptedId . '-%-' . $firstStatus->tahun . '-%';
-    //         // $dataContents = Datacontent::where('label', 'like', $pattern)->get();
+        // get first year entry
+        $firstStatus = Statustables::where('id_tabel', $request->id)
+            ->first();
 
-    //         $oldDataContents = Datacontent::where('id_tabel', $firstStatus->id_tabel)
-    //             ->where('tahun', $firstStatus->tahun)
-    //             ->get();
+        $oldDataContents = Datacontent::where('id_tabel', $firstStatus->id_tabel)
+            ->where('tahun', $firstStatus->tahun)
+            ->get();
 
-    //         $newDataContents = [];
-    //         foreach ($oldDataContents as $record) {
-    //             // $splittedData = explode('-', $record->label);
-    //             // $splittedData[3] = $request->tahun;
-    //             // $joinedData = implode('-', $splittedData);
-    //             array_push(
-    //                 $newDataContents,
-    //                 [
-    //                     'value' => '',
-    //                     'id_tabel' => $record->id_tabel,
-    //                     'id_row' => $record->id_row,
-    //                     'id_column' => $record->id_column,
-    //                     'id_turtahun' => $record->id_turtahun,
-    //                     'tahun' => $request->tahun,
-    //                     'wilayah_fullcode' => $record->wilayah_fullcode,
-    //                 ]
-    //             );
-    //         }
-    //         // add new record in statustabel 
-    //         try {
-    //             $newStatus = Statustables::create([
-    //                 'id_tabel' => $decryptedId,
-    //                 'tahun' => $request->tahun,
-    //                 'status' => '1',
-    //                 'edited_by' => auth()->user()->id,
-    //             ]);
-    //             Datacontent::insert($newDataContents);
-    //             return redirect(route('tabel.master'))->with('success', 'Berhasil Menyalin Tabel !');
-    //         } catch (\Exception $e) {
-
-    //             return back()->with('error', $e->getMessage());
-    //         }
-    //     }
+        $newDataContents = [];
+        foreach ($oldDataContents as $record) {
+            array_push(
+                $newDataContents,
+                [
+                    'value' => '',
+                    'id_tabel' => $record->id_tabel,
+                    'id_row' => $record->id_row,
+                    'id_column' => $record->id_column,
+                    'id_turtahun' => $record->id_turtahun,
+                    'tahun' => $request->tahun,
+                    'wilayah_fullcode' => $record->wilayah_fullcode,
+                ]
+            );
+        }
+        // add new record in statustabel 
+        try {
+            DB::beginTransaction();
+            $newStatus = Statustables::create([
+                'id_tabel' => $request->id,
+                'tahun' => $request->tahun,
+                'status' => '1',
+                'edited_by' => auth()->user()->id,
+            ]);
+            Datacontent::insert($newDataContents);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json($e->getMessage());
+        }
+        return redirect()->route('tabel.master')->with('message', 'Berhasil Menyalin Tabel !');
+    }
 
     //     /**
     //      * Display the specified resource.
@@ -562,22 +523,20 @@ class TabelController extends Controller
     //     /**
     //      * Show the form for editing the specified resource.
     //      */
-    //     public function edit(string $id)
-    //     {
-    //         $decryptedId = Crypt::decrypt($id);
-    //         $tabel = Tabel::where('id', $decryptedId)->first();
-    //         // search for id row label
-    //         $data_contents = DataContent::where('id_tabel', 'like', $decryptedId)->first();
-    //         $daftar_dinas = Dinas::whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->get();
-    //         $subjects = Subject::all();
+    public function edit(string $id)
+    {
+        $tabel = Tabel::where('id', $id)->first();
+        $daftar_dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')
+            ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
+            ->get(['dinas.id as value', 'dinas.nama as label']);
+        $subjects = Subject::get(['subjects.id as value', 'subjects.label as label']);
 
-    //         return view('tabel.edit', [
-    //             'tabel' => $tabel,
-    //             'encryptedId' => $id,
-    //             'daftar_dinas' => $daftar_dinas,
-    //             'subjects' => $subjects,
-    //         ]);
-    //     }
+        return Inertia::render('Tabel/Edit', [
+            'tabel' => $tabel,
+            'dinas' => $daftar_dinas,
+            'subjects' => $subjects,
+        ]);
+    }
 
     //     /**
     //      * Update the specified resource in storage.
@@ -763,12 +722,12 @@ class TabelController extends Controller
     //         ]);
     //     }
 
-        public function statusDestroy(Request $request)
-        { 
-            $thisStatus = Statustables::where('id', $request->id);
-            $thisStatus->update(['status' => '6']);
-            return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
-        }
+    public function statusDestroy(Request $request)
+    {
+        $thisStatus = Statustables::where('id', $request->id);
+        $thisStatus->update(['status' => '6']);
+        return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
+    }
 
     //     public function fetchMasterKecamatan($kab)
     //     {
