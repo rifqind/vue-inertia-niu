@@ -119,7 +119,7 @@ const toggleMenuOpen = function (x) {
                         :currentRoute="currentRoute == 'users.edit'"> Edit
                         Profile</NavLinkSidebar>
                     <li class="nav-item">
-                        <Link :href="route('home')" class="nav-link">
+                        <Link :href="route('/')" class="nav-link">
                         <i class="nav-icon fa-solid fa-home"></i>
                         <p class="text-bold">
                             Kembali ke Beranda

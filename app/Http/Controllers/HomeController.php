@@ -25,116 +25,116 @@ class HomeController extends Controller
     //     /**
     //      * Display a listing of the resource.
     //      */
+    // public function index()
+    // {
+    //     return Inertia::render('Home/Home');
+    // }
     public function index()
     {
-        return Inertia::render('Home/Home');
+        //
+        $tabels = Statustables::where('status', 5)
+            ->leftJoin('tabels', 'statustables.id_tabel', '=', 'tabels.id')
+            ->leftJoin('dinas', 'tabels.id_dinas', '=', 'dinas.id')
+            ->leftJoin('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
+            ->leftJoin('subjects', 'tabels.id_subjek', '=', 'subjects.id')
+            ->get([
+                'statustables.id as id_statustables',
+                'statustables.tahun',
+                'tabels.*',
+                'dinas.id as id_dinas',
+                'dinas.nama as nama_dinas',
+                'master_wilayah.wilayah_fullcode as kode_wilayah',
+                'master_wilayah.label as nama_regions',
+                'subjects.id as id_subjects',
+                'subjects.label as nama_subjects',
+                'statustables.updated_at as status_updated',
+            ]);
+        $dinas = [];
+        $provs = [];
+        $kabs = [];
+        $kecs = [];
+        $desa = [];
+        $subjects = [];
+        foreach ($tabels as $tabel) {
+            # code...
+            $dinas[] = [
+                'value' => $tabel->id_dinas,
+                'label' => $tabel->nama_dinas,
+            ];
+            $text = $tabel->nama_regions;
+            $partOfText = explode(' ', $text);
+            array_shift($partOfText);
+            $modifiedText = implode(' ', $partOfText);
+
+            $kode = $tabel->kode_wilayah;
+            $kabupaten_kode = substr($kode, 2, 2);
+            $kecamatan_kode = substr($kode, 4, 3);
+            $desa_kode = substr($kode, 7, 3);
+            if ($kabupaten_kode != '00') {
+                $kab_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                    ->where('kec', 'like', '000')->value('label');
+                $partOfText = explode(' ', $kab_label);
+                array_shift($partOfText);
+                $modifiedKabLabel = implode(' ', $partOfText);
+                $kabs[] = [
+                    'label' => $modifiedKabLabel,
+                    'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                        ->where('kec', 'like', '000')->value('wilayah_fullcode')
+                ];
+
+                if ($kecamatan_kode != '000') {
+                    $kec_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                        ->where('kec', 'like', $kecamatan_kode)->value('label');
+                    $partOfText = explode(' ', $kec_label);
+                    array_shift($partOfText);
+                    $modifiedKecLabel = implode(' ', $partOfText);
+                    $kecs[] = [
+                        'label' => $modifiedKecLabel,
+                        'parent_code' => $kabupaten_kode,
+                        'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                            ->where('kec', 'like', $kecamatan_kode)->value('wilayah_fullcode'),
+                    ];
+
+                    if ($desa_kode != '000') {
+                        $desa[] = [
+                            'label' => $modifiedText,
+                            'parent_code' => $kabupaten_kode . $kecamatan_kode,
+                            'wilayah_fullcode' => $kode,
+                        ];
+                    }
+                }
+            }
+            $subjects[] = [
+                'id' => $tabel->id_subjects,
+                'label' => $tabel->nama_subjects,
+            ];
+        }
+        $provs[] = [
+            'label' => 'SULAWESI UTARA',
+            'wilayah_fullcode' => '7100000000'
+        ];
+        $kabs = array_unique($kabs, SORT_REGULAR);
+        $kecs = array_unique($kecs, SORT_REGULAR);
+        $desa = array_unique($desa, SORT_REGULAR);
+        $wilayahs = (sizeof($tabels) > 0) ? array_merge($provs, $kabs) : [];
+        $subjects = array_unique($subjects, SORT_REGULAR);
+        // $subjects = Subject::all();
+        $tahuns = Statustables::where('status', 5)->distinct()->get(['tahun as value', 'tahun as label']);
+        $countfinals = Statustables::where('status', 5)->count();
+        $counttabels = $tabels->count();
+        return Inertia::render('Home/Home', [
+            // 'kabs' => $kabs,
+            'kecs' => $kecs,
+            'desa' => $desa,
+            'wilayahs' => $wilayahs,
+            'dinas' => $dinas,
+            'tabels' => $tabels,
+            'subjects' => $subjects,
+            'counttabels' => $counttabels,
+            'countfinals' => $countfinals,
+            'tahuns' => $tahuns,
+        ]);
     }
-    //     public function index()
-    //     {
-    //         //
-    //         $tabels = Statustables::where('status', 5)
-    //             ->leftJoin('tabels', 'statustables.id_tabel', '=', 'tabels.id')
-    //             ->leftJoin('dinas', 'tabels.id_dinas', '=', 'dinas.id')
-    //             ->leftJoin('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
-    //             ->leftJoin('subjects', 'tabels.id_subjek', '=', 'subjects.id')
-    //             ->get([
-    //                 'statustables.id as id_statustables',
-    //                 'statustables.tahun',
-    //                 'tabels.*',
-    //                 'dinas.id as id_dinas',
-    //                 'dinas.nama as nama_dinas',
-    //                 'master_wilayah.wilayah_fullcode as kode_wilayah',
-    //                 'master_wilayah.label as nama_regions',
-    //                 'subjects.id as id_subjects',
-    //                 'subjects.label as nama_subjects',
-    //                 'statustables.updated_at as status_updated',
-    //             ]);
-    //         $dinas = [];
-    //         $provs = [];
-    //         $kabs = [];
-    //         $kecs = [];
-    //         $desa = [];
-    //         $subjects = [];
-    //         foreach ($tabels as $tabel) {
-    //             # code...
-    //             $dinas[] = [
-    //                 'id' => $tabel->id_dinas,
-    //                 'nama' => $tabel->nama_dinas,
-    //             ];
-    //             $text = $tabel->nama_regions;
-    //             $partOfText = explode(' ', $text);
-    //             array_shift($partOfText);
-    //             $modifiedText = implode(' ', $partOfText);
-
-    //             $kode = $tabel->kode_wilayah;
-    //             $kabupaten_kode = substr($kode, 2, 2);
-    //             $kecamatan_kode = substr($kode, 4, 3);
-    //             $desa_kode = substr($kode, 7, 3);
-    //             if ($kabupaten_kode != '00') {
-    //                 $kab_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
-    //                     ->where('kec', 'like', '000')->value('label');
-    //                 $partOfText = explode(' ', $kab_label);
-    //                 array_shift($partOfText);
-    //                 $modifiedKabLabel = implode(' ', $partOfText);
-    //                 $kabs[] = [
-    //                     'label' => $modifiedKabLabel,
-    //                     'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
-    //                         ->where('kec', 'like', '000')->value('wilayah_fullcode')
-    //                 ];
-
-    //                 if ($kecamatan_kode != '000') {
-    //                     $kec_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
-    //                         ->where('kec', 'like', $kecamatan_kode)->value('label');
-    //                     $partOfText = explode(' ', $kec_label);
-    //                     array_shift($partOfText);
-    //                     $modifiedKecLabel = implode(' ', $partOfText);
-    //                     $kecs[] = [
-    //                         'label' => $modifiedKecLabel,
-    //                         'parent_code' => $kabupaten_kode,
-    //                         'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
-    //                             ->where('kec', 'like', $kecamatan_kode)->value('wilayah_fullcode'),
-    //                     ];
-
-    //                     if ($desa_kode != '000') {
-    //                         $desa[] = [
-    //                             'label' => $modifiedText,
-    //                             'parent_code' => $kabupaten_kode.$kecamatan_kode,
-    //                             'wilayah_fullcode' => $kode,
-    //                         ];
-    //                     }
-    //                 }
-    //             }
-    //             $subjects[] = [
-    //                 'id' => $tabel->id_subjects,
-    //                 'label' => $tabel->nama_subjects,
-    //             ];
-    //         }
-    //         $provs[] = [
-    //             'label' => 'SULAWESI UTARA',
-    //             'wilayah_fullcode' => '7100000000'
-    //         ];
-    //         $kabs = array_unique($kabs, SORT_REGULAR);
-    //         $kecs = array_unique($kecs, SORT_REGULAR);
-    //         $desa = array_unique($desa, SORT_REGULAR);
-    //         $wilayahs = (sizeof($tabels) > 0) ? array_merge($provs, $kabs) : [];
-    //         $subjects = array_unique($subjects, SORT_REGULAR);
-    //         // $subjects = Subject::all();
-    //         $tahuns = Statustables::where('status', 5)->distinct()->get('tahun');
-    //         $countfinals = Statustables::where('status', 5)->count();
-    //         $counttabels = $tabels->count();
-    //         return view('frontpage', [
-    //             // 'kabs' => $kabs,
-    //             'kecs' => $kecs,
-    //             'desa' => $desa,
-    //             'wilayahs' => $wilayahs,
-    //             'dinas' => $dinas,
-    //             'tabels' => $tabels,
-    //             'subjects' => $subjects,
-    //             'counttabels' => $counttabels,
-    //             'countfinals' => $countfinals,
-    //             'tahuns' => $tahuns,
-    //         ]);
-    //     }
 
     //     public function getSearch(Request $request)
     //     {

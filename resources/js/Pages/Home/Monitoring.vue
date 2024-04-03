@@ -77,7 +77,7 @@ onUpdated(() => {
                     Monitoring Pengisian Tabel
                 </div>
                 <div class="mr-2 year">
-                    <Multiselect @change="changeYearList" :options="yearDrop.options" :value="yearDrop.value"
+                    <Multiselect @change="changeYearList" :options="yearDrop.options" v-model="yearDrop.value"
                         placeholder="-- Pilih Tahun --" />
                 </div>
                 <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"

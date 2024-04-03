@@ -130,12 +130,12 @@ const submit = function () {
     <Head title="Master Tabel" />
     <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
-        <div class="container-fluid">
+        <div class="container-fluid p-0">
             <div class="mb-2 d-flex">
                 <div class="h4 flex-grow-1">
                     Daftar Tabel
                 </div>
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
+                <a href="#" class="btn bg-success-fordone" title="Download" data-target="#downloadModal"
                     data-toggle="modal"><i class="fa-solid fa-circle-down"></i> Download</a>
             </div>
         </div>

@@ -490,9 +490,13 @@ class TabelController extends Controller
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
                     $jenis = $jenis . "KABUPATEN DI ";
                 }
-                $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
-                $rowLabel = strtolower($rowLabel);
-                $rowLabel = ucwords($rowLabel);
+                if ($wilayah_parent_code == '') {
+                    $rowLabel = 'PROVINSI SULAWESI UTARA';
+                } else {
+                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                    $rowLabel = strtolower($rowLabel);
+                    $rowLabel = ucwords($rowLabel);
+                }
             } else {
 
                 $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
@@ -542,37 +546,31 @@ class TabelController extends Controller
     //      * Update the specified resource in storage.
     //      */
 
-    //     public function update(StoreUpdateTabelRequest $request, $id)
-    //     {
-    //         try {
-    //             $data = $request->validated();
-    //             $decryptedId = Crypt::decrypt($id);
-    //             $dataUpdate = [
-    //                 'id_dinas' => $data['dinas'],
-    //                 'nomor' => $data['nomor'],
-    //                 'label' => $data['judul'],
-    //                 'id_subjek' => $data['subject'],
-    //                 'unit' => $data['unit'],
-    //             ];
+    public function update(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'tabel.nomor' => ['required', 'string'],
+                'tabel.label' => ['required'],
+                'tabel.unit' => ['required'],
+                'tabel.id_dinas' => ['required', 'integer'],
+                'tabel.id_subjek' => ['required', 'integer'],
+            ]);
+            $dataUpdate = [
+                'nomor' => $data['tabel']['nomor'],
+                'label' => $data['tabel']['label'],
+                'unit' => $data['tabel']['unit'],
+                'id_dinas' => $data['tabel']['id_dinas'],
+                'id_subjek' => $data['tabel']['id_subjek'],
+            ];
+            $tabel = Tabel::findOrFail($request->id);
+            $tabel->update($dataUpdate);
 
-
-    //             $tabel = Tabel::findOrFail($decryptedId);
-    //             $tabel->update($dataUpdate);
-
-
-    //             return redirect(route('tabel.master'))->with('success', 'Berhasil menyimpan perubahan !');
-    //         } catch (\Exception $e) {
-    //             return back()->with('error', $e->getMessage());
-    //         }
-
-    //         // Update records in a single query
-    //         foreach ($data as $item) {
-
-    //             Datacontent::where('id', $item['id'])->update($item);
-    //         }
-    //         return response()->json($data);
-    //         $data = $request->data;
-    //     }
+            return redirect()->route('tabel.master')->with('message', 'Berhasil menyimpan perubahan !');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
 
     public function update_content(Request $request)
     {

@@ -27,6 +27,7 @@ const dinasDrop = ref({
 
 
 const form = useForm({
+    id: page.props.tabel.id,
     tabel: {
         nomor: page.props.tabel.nomor,
         label: page.props.tabel.label,
@@ -37,14 +38,12 @@ const form = useForm({
 })
 
 const submit = function () {
-    previewModalStatus.value = false
-    form.post(route('tabel.store'), {
+    form.post(route('tabel.update'), {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () { triggerSpinner.value = false },
         onError: function () { triggerSpinner.value = false },
     })
 }
-
 </script>
 <template>
 
@@ -98,6 +97,15 @@ const submit = function () {
                     </div>
                 </div>
             </form>
+            <div class="mb-2 d-flex">
+                <div class="flex-grow-1">
+                    <Link :href="route('tabel.master')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
+                        Kembali
+                    </Link>
+                </div>
+                <a @click.prevent="submit" class="btn bg-success-fordone"><i class="fa-solid fa-save"></i>
+                    Simpan</a>
+            </div>
         </div>
     </GeneralLayout>
 </template>

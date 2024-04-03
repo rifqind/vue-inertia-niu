@@ -118,7 +118,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/tabel/master', [TabelController::class, 'master'])->name('tabel.master');
     Route::get('/tabel/create', [TabelController::class, 'create'])->name('tabel.create');
     Route::post('/tabel/create', [TabelController::class, 'store'])->name('tabel.store');
-    Route::put('/tabel/update/{id}', [TabelController::class, 'update'])->name('tabel.update');
+    Route::post('/tabel/update', [TabelController::class, 'update'])->name('tabel.update');
     Route::get('/tabel/deletedList', [TabelController::class, 'index'])->name('tabel.deletedList');
 
     Route::get('/tabel/master/copy/{id}', [TabelController::class, 'copy'])->name('tabel.copy');

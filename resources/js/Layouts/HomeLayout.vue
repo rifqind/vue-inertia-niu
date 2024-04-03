@@ -27,7 +27,7 @@ if (page.props.auth.user) {
                             <Link class="nav-link text-white text-bold" :href="route('login')">Masuk</Link>
                         </li>
                         <li v-else class="nav-item active mx-3">
-                            <Link class="nav-link text-white text-bold" :href="route('dashboard')">Dashboard</Link>
+                            <Link class="nav-link text-white text-bold" :href="route('home.dashboard')">Dashboard</Link>
                         </li>
                     </ul>
                 </div>
@@ -67,3 +67,4 @@ if (page.props.auth.user) {
         <!-- ./wrapper -->
     </body>
 </template>
+<style src="@vueform/multiselect/themes/default.css"></style>
