@@ -113,11 +113,11 @@ class HomeController extends Controller
             'label' => 'SULAWESI UTARA',
             'wilayah_fullcode' => '7100000000'
         ];
-        $kabs = array_unique($kabs, SORT_REGULAR);
-        $kecs = array_unique($kecs, SORT_REGULAR);
-        $desa = array_unique($desa, SORT_REGULAR);
+        $kabs = array_values(array_unique($kabs, SORT_REGULAR));
+        $kecs = array_values(array_unique($kecs, SORT_REGULAR));
+        $desa = array_values(array_unique($desa, SORT_REGULAR));
         $wilayahs = (sizeof($tabels) > 0) ? array_merge($provs, $kabs) : [];
-        $subjects = array_unique($subjects, SORT_REGULAR);
+        $subjects = array_values(array_unique($subjects, SORT_REGULAR));
         // $subjects = Subject::all();
         $tahuns = Statustables::where('status', 5)->distinct()->get(['tahun as value', 'tahun as label']);
         $countfinals = Statustables::where('status', 5)->count();
