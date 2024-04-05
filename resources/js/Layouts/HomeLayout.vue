@@ -8,6 +8,7 @@ if (page.props.auth.user) {
 }
 </script>
 <template>
+
     <body class="hold-transition">
         <!-- Site wrapper -->
         <div class="wrapper">
@@ -17,20 +18,20 @@ if (page.props.auth.user) {
                 </div>
             </div>
             <!-- Navbar -->
-            <nav class="navbar navbar-expand-lg navbar-light" id="navbar-front">
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item active mx-3">
-                            <Link class="nav-link text-white text-bold" :href="route('home')">Beranda</Link>
-                        </li>
-                        <li v-if="navbarStatus" class="nav-item active mx-3">
-                            <Link class="nav-link text-white text-bold" :href="route('login')">Masuk</Link>
-                        </li>
-                        <li v-else class="nav-item active mx-3">
-                            <Link class="nav-link text-white text-bold" :href="route('home.dashboard')">Dashboard</Link>
-                        </li>
-                    </ul>
-                </div>
+            <nav class="navbar navbar-expand-lg navbar-light topbar static-top shadow" id="navbar-front">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active mx-3">
+                        <Link class="nav-link text-white text-bold" :href="route('home')">Beranda</Link>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li v-if="navbarStatus" class="nav-item active mx-3">
+                        <Link class="nav-link text-white text-bold" :href="route('login')">Masuk</Link>
+                    </li>
+                    <li v-else class="nav-item active mx-3">
+                        <Link class="nav-link text-white text-bold" :href="route('home.dashboard')">Dashboard</Link>
+                    </li>
+                </ul>
             </nav>
             <!-- /.navbar -->
 
@@ -54,7 +55,8 @@ if (page.props.auth.user) {
                     <b>Version</b> Beta
                 </div>
                 <div class="text-center">
-                    <strong>Copyright &copy; 2024 <a href="https://sulut.bps.go.id">BPS Provinsi Sulawesi Utara</a></strong>
+                    <strong>Copyright &copy; 2024 <a href="https://sulut.bps.go.id">BPS Provinsi Sulawesi
+                            Utara</a></strong>
                 </div>
             </footer>
 

@@ -4,7 +4,7 @@ import TabelListTimeline from '@/Components/TabelListTimeline.vue'
 import SpinnerBorder from '@/Components/SpinnerBorder.vue';
 import { Head, usePage, useForm } from '@inertiajs/vue3'
 import Multiselect from '@vueform/multiselect';
-import { onMounted, ref, defineComponent } from 'vue';
+import { onMounted, ref, defineComponent, computed } from 'vue';
 
 defineComponent({
     Multiselect
@@ -12,14 +12,22 @@ defineComponent({
 const page = usePage()
 const wilayahCheckBox = ref([])
 const subjectCheckBox = ref([])
+const kecamatanCheckBox = ref([])
+const desaCheckBox = ref([])
 const wilayahSelected = ref([])
 const subjectSelected = ref([])
+const kecamatanSelected = ref([])
+const desaSelected = ref([])
 const triggerSpinner = ref(false)
+const visibleKecs = ref([])
+const visibleDesa = ref([])
 var dataFiltered = ref(page.props.tabels)
 const countDataFiltered = ref(page.props.counttabels)
 const form = useForm({
     year: [],
     wilayah: [],
+    kec: [],
+    desa: [],
     dinas: ['all'],
     subject: [],
 })
@@ -32,14 +40,34 @@ const dinasDrop = ref({
     value: ['all'],
     options: [...all, ...page.props.dinas]
 })
+visibleKecs.value = page.props.kecs.map((kec, index) => ({
+    index: kec.index,
+    parent_code: kec.parent_code,
+    value: false
+}))
+visibleDesa.value = page.props.desa.map((desa, index) => ({
+    index: desa.index,
+    parent_code: desa.parent_code,
+    value: false
+}))
 onMounted(() => {
     wilayahCheckBox.value = Array(page.props.wilayahs.length).fill(false)
+    kecamatanCheckBox.value = Array(page.props.kecs.length).fill(false)
+    desaCheckBox.value = Array(page.props.desa.length).fill(false)
 })
+const isVisibleKecs = (parent_code) => {
+    const theIndex = visibleKecs.value.findIndex(x => x.parent_code === parent_code)
+    return visibleKecs.value[theIndex].value
+}
+const isVisibleDesa = (parent_code) => {
+    const theIndex = visibleDesa.value.findIndex(x => x.parent_code === parent_code)
+    return visibleDesa.value[theIndex].value
+}
 const toggleCheck = function (index, object) {
     object[index] = !object[index];
 };
-const submit = function () {
-    dataFiltered = ref(page.props.tabels)
+const submit = () => {
+    dataFiltered.value = page.props.tabels
     triggerSpinner.value = true
     wilayahSelected.value = page.props.wilayahs.filter((_, index) => {
         return wilayahCheckBox.value[index]
@@ -47,6 +75,24 @@ const submit = function () {
     subjectSelected.value = page.props.subjects.filter((_, index) => {
         return subjectCheckBox.value[index]
     })
+    kecamatanSelected.value = page.props.kecs.filter((_, index) => {
+        return kecamatanCheckBox.value[index]
+    })
+    desaSelected.value = page.props.desa.filter((_, index) => {
+        return desaCheckBox.value[index]
+    })
+    let searchWilayah = []
+    searchWilayah = [...wilayahSelected.value]
+    if (kecamatanSelected.value.length > 0) {
+        let parentDeleted = kecamatanSelected.value.map(obj => obj.wilayah_fullcode.substring(0, 4) + '000000')
+        searchWilayah = [...searchWilayah,...kecamatanSelected.value]
+        searchWilayah = searchWilayah.filter(item => !parentDeleted.includes(item.wilayah_fullcode))
+    }
+    if (desaSelected.value.length > 0) {
+        let parentDeleted = desaSelected.value.map(obj => obj.wilayah_fullcode.substring(0, 7) + '000')
+        searchWilayah = [...searchWilayah,...desaSelected.value]
+        searchWilayah = searchWilayah.filter(item => !parentDeleted.includes(item.wilayah_fullcode))
+    }
     let isDinasAll = false
     let isYearAll = false
     if (form.dinas.includes('all')) {
@@ -57,8 +103,10 @@ const submit = function () {
         form.year.splice(form.year.indexOf('all'), 1)
         isYearAll = true
     }
-    form.wilayah = wilayahSelected.value.map(obj => obj.wilayah_fullcode)
+    form.wilayah = searchWilayah.map(obj => obj.wilayah_fullcode)
     form.subject = subjectSelected.value.map(obj => obj.id)
+    form.kec = kecamatanSelected.value.map(obj => obj.wilayah_fullcode)
+    form.desa = desaSelected.value.map(obj => obj.wilayah_fullcode)
     const ArrayBigObjects = [
         { key: 'tahun', valueFilter: form.year },
         { key: 'kode_wilayah', valueFilter: form.wilayah },
@@ -84,15 +132,61 @@ const submit = function () {
         triggerSpinner.value = false
     }, 500);
 }
-const handleChangeCheckBox = function (index, object) {
+var count_kabupaten = []
+var count_kecamatan = []
+const handleChangeCheckBoxKec = (index, object) => {
+    let kecamatanValue = page.props.kecs[index].wilayah_fullcode.substring(2, 7)
+    let desaValue = findDesa(page.props.desa, kecamatanValue)
     if (object[index]) {
-        let kabupatenValue = page.props.wilayahs.filter((_, index) => {
-            return wilayahCheckBox.value[index]
+        desaValue.forEach((item) => {
+            count_kecamatan.push(item.parent_code)
         })
-        let kecamatanValue = findKecamatan(page.props.kecs, kabupatenValue[0].wilayah_fullcode.substring(2,4))
-        console.log(kecamatanValue)
+        count_kecamatan.forEach((item) => {
+            const theIndex = visibleDesa.value.findIndex(x => x.parent_code === item)
+            if (theIndex !== -1) visibleDesa.value[theIndex].value = true
+        })
+    } else {
+        let removeDesa = []
+        desaValue.forEach((item) => {
+            removeDesa.push(item.parent_code)
+        })
+        removeDesa.forEach((item) => {
+            const theIndex = visibleDesa.value.findIndex(x => x.parent_code === item)
+            if (theIndex !== -1) visibleDesa.value[theIndex].value = false; desaCheckBox.value[theIndex] = false
+        })
+        count_kecamatan = count_kecamatan.filter((item) => !removeDesa.includes(item))
     }
-    else console.log('this unchecked : ', index)
+}
+const handleChangeCheckBoxKab = function (index, object) {
+    let kabupatenValue = page.props.wilayahs[index].wilayah_fullcode.substring(2, 4)
+    let kecamatanValue = findKecamatan(page.props.kecs, kabupatenValue)
+    if (object[index]) {
+        kecamatanValue.forEach((item) => {
+            count_kabupaten.push(item.parent_code)
+        })
+        count_kabupaten.forEach((item) => {
+            const theIndex = visibleKecs.value.findIndex(x => x.parent_code === item)
+            if (theIndex !== -1) visibleKecs.value[theIndex].value = true
+        })
+    }
+    else {
+        let removeKecamatan = []
+        kecamatanValue.forEach((item) => {
+            removeKecamatan.push(item.parent_code)
+        })
+        let desaRemove = kecamatanValue.map((obj) => ({
+            parent_code: obj.wilayah_fullcode.substring(2, 7)
+        }))
+        desaRemove.forEach((item) => {
+            const theIndex = visibleDesa.value.findIndex(x => x.parent_code === item.parent_code)
+            if (theIndex !== -1) visibleDesa.value[theIndex].value = false; desaCheckBox.value[theIndex] = false
+        })
+        removeKecamatan.forEach((item) => {
+            const theIndex = visibleKecs.value.findIndex(x => x.parent_code === item)
+            if (theIndex !== -1) visibleKecs.value[theIndex].value = false; kecamatanCheckBox.value[theIndex] = false
+        })
+        count_kabupaten = count_kabupaten.filter((item) => !removeKecamatan.includes(item))
+    }
 }
 function findKecamatan(array, parent) {
     let kecamatan = [];
@@ -102,6 +196,18 @@ function findKecamatan(array, parent) {
         }
     }
     return kecamatan;
+}
+function findDesa(array, parent) {
+    let desa = [];
+    for (let key in array) {
+        if (array.hasOwnProperty(key) && array[key].parent_code === parent) {
+            desa.push(array[key]);
+        }
+    }
+    return desa;
+}
+const showCard = (targetVisible) => {
+    return targetVisible.some(x => x.value === true)
 }
 </script>
 <template>
@@ -146,10 +252,11 @@ function findKecamatan(array, parent) {
                                     <div class="card-large-homepage">
                                         <div v-if="page.props.wilayahs.length > 0"
                                             v-for="(node, index) in page.props.wilayahs" class="my-2 d-flex">
-                                            <input :id="'checkbox-' + index"
-                                                @change="handleChangeCheckBox(index, wilayahCheckBox)" type="checkbox"
-                                                ref="checkbox" v-model="wilayahCheckBox[index]" :value="index">
-                                            <label :for="'checkbox-' + index" class="ml-3 mb-0 text-capitalize"
+                                            <input :id="'checkbox-wilayah-' + index"
+                                                @change="handleChangeCheckBoxKab(index, wilayahCheckBox)"
+                                                type="checkbox" ref="checkbox" v-model="wilayahCheckBox[index]"
+                                                :value="index">
+                                            <label :for="'checkbox-wilayah-' + index" class="ml-3 mb-0 text-capitalize"
                                                 :title="node.label">{{ node.label
                                                 }}</label>
                                         </div>
@@ -161,7 +268,7 @@ function findKecamatan(array, parent) {
                                     </div>
                                 </div>
                             </div>
-                            <div id="card-kecs" class="card shadow mb-2 d-none">
+                            <div v-if="showCard(visibleKecs)" id="card-kecs" class="card shadow mb-2">
                                 <!-- Card Header - Dropdown -->
                                 <div
                                     class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -169,28 +276,22 @@ function findKecamatan(array, parent) {
                                 </div>
                                 <!-- Card Body -->
                                 <div class="card-body">
-                                    <div class="text-center card-overlay" id="spinner-kecamatan">
-                                        <div class="spinner-border text-info" role="status">
-                                            <span class="sr-only">Loading...</span>
-                                        </div>
-                                    </div>
                                     <div class="card-small-homepage">
-                                        @foreach ($kecs as $kec)
-                                        <div class="row my-2 d-none row-wilayah-homepage"
-                                            id="{{ $kec['wilayah_fullcode'] }}">
-                                            <input type="checkbox" id="{{ 'dinas-' . $kec['wilayah_fullcode'] }}"
-                                                class="ml-3 kecs-checkbox" name="kecs[]"
-                                                value="{{ $kec['wilayah_fullcode'] }}">
-                                            <label class="ml-3 mb-0 click-to-check-kecs text-capitalize"
-                                                data-target="{{ 'dinas-' . $kec['wilayah_fullcode'] }}">
-                                                <!-- {{ $kec['label'] }} -->
-                                            </label>
-                                        </div>
-                                        @endforeach
+                                        <template v-for="(node, index) in page.props.kecs" :key="index">
+                                            <div v-if="isVisibleKecs(node.parent_code)" class="d-flex my-2" id="">
+                                                <input type="checkbox" :id="'checkbox-kecs-' + index"
+                                                    @change="handleChangeCheckBoxKec(index, kecamatanCheckBox)"
+                                                    v-model="kecamatanCheckBox[index]">
+                                                <label class="ml-3 mb-0 text-capitalize" :for="'checkbox-kecs-' + index"
+                                                    :title="node.label">
+                                                    {{ node.label }}
+                                                </label>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
-                            <div id="card-desa" class="card shadow mb-2 d-none">
+                            <div v-if="showCard(visibleDesa)" id="card-desa" class="card shadow mb-2">
                                 <!-- Card Header - Dropdown -->
                                 <div
                                     class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -198,24 +299,22 @@ function findKecamatan(array, parent) {
                                 </div>
                                 <!-- Card Body -->
                                 <div class="card-body">
-                                    <div class="text-center card-overlay" id="spinner-desa">
+                                    <!-- <div class="text-center card-overlay" id="spinner-desa">
                                         <div class="spinner-border text-info" role="status">
                                             <span class="sr-only">Loading...</span>
                                         </div>
-                                    </div>
+                                    </div> -->
                                     <div class="card-small-homepage">
-                                        @foreach ($desa as $des)
-                                        <div class="row my-2 d-none row-wilayah-homepage"
-                                            id="{{ $des['wilayah_fullcode'] }}">
-                                            <input type="checkbox" id="{{ 'dinas-' . $des['wilayah_fullcode'] }}"
-                                                class="ml-3 desa-checkbox" name="desa[]"
-                                                value="{{ $des['wilayah_fullcode'] }}">
-                                            <label class="ml-3 mb-0 click-to-check-desa text-capitalize"
-                                                data-target="{{ 'dinas-' . $des['wilayah_fullcode'] }}">
-                                                <!-- {{ $des['label'] }} -->
-                                            </label>
-                                        </div>
-                                        @endforeach
+                                        <template v-for="(node, index) in page.props.desa" :key="index">
+                                            <div v-if="isVisibleDesa(node.parent_code)" class="d-flex my-2" id="">
+                                                <input type="checkbox" :id="'checkbox-desa-' + index"
+                                                    class="desa-checkbox" v-model="desaCheckBox[index]">
+                                                <label class="ml-3 mb-0 text-capitalize" :for="'checkbox-desa-' + index"
+                                                    :title="node.label">
+                                                    {{ node.label }}
+                                                </label>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
