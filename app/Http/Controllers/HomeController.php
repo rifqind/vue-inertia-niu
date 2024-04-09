@@ -10,6 +10,7 @@ use App\Models\MetadataVariabel;
 use App\Models\Notifikasi;
 use App\Models\Region;
 use App\Models\Row;
+use App\Models\RowGroup;
 use App\Models\Rowlabel;
 use App\Models\Statustables;
 use App\Models\Subject;
@@ -405,14 +406,14 @@ class HomeController extends Controller
         ]);
     }
 
-    public function getDashboard(String $years, String $wilayah)
+    public function getDashboard(string $years, string $wilayah)
     {
         // dd($years, $wilayah);
 
         if (auth()->user()->role != 'produsen') {
             # code...
             $id_wilayah = MasterWilayah::getMyWilayahId();
-            $ourDinas = Dinas::whereIn('wilayah_fullcode', ($wilayah != "all") ?  ((!$wilayah) ? MasterWilayah::getDinasWilayah() : [$wilayah]) : MasterWilayah::getDinasWilayah())
+            $ourDinas = Dinas::whereIn('wilayah_fullcode', ($wilayah != "all") ? ((!$wilayah) ? MasterWilayah::getDinasWilayah() : [$wilayah]) : MasterWilayah::getDinasWilayah())
                 ->pluck('id');
             $myTabels = Tabel::whereIn('id_dinas', $ourDinas)->pluck('id');
             // dd($id_wilayah);
@@ -479,16 +480,6 @@ class HomeController extends Controller
         #total tabel
         $totalTabels = $newTabels + $entriTabels + $verifyTabels + $repairTabels + $finalTabels;
 
-        // if ($request->input('chart')) {
-        //     return response()->json([
-        //         'newTabels' => $newTabels,
-        //         'entriTabels' => $entriTabels,
-        //         'verifyTabels' => $verifyTabels,
-        //         'repairTabels' => $repairTabels,
-        //         'finalTabels' => $finalTabels,
-        //         'totalTabels' => $totalTabels,
-        //     ]);
-        // }
         return response()->json([
             'newTabels' => $newTabels,
             'pieValues' => [$finalTabels, $entriTabels, $verifyTabels, $repairTabels, $newTabels],
@@ -529,101 +520,98 @@ class HomeController extends Controller
     //         ]);
     //     }
 
-    //     public function show(string $id, string $tahun)
-    //     {
-    //         $decryptedId = Crypt::decrypt($id);
-    //         // $tabel = Tabel::where('id', $decryptedId)->first();
-    //         // $statusTabel = Statustables::join('tabels AS t','t.id','statustables.id_tabel')
-    //         // ->select('statustables')
-    //         $statusTabel = Statustables::join('tabels as t', 'statustables.id_tabel', 't.id')
-    //             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
-    //             ->select('t.id as id_tabel', 't.label as judul_tabel', 'statustables.tahun', 'sdesc.label as status', 'statustables.id as id_statustables')
-    //             ->where('statustables.id', $decryptedId)->first();
+    public function show(Request $request)
+    {
+        $statusTabel = Statustables::join('tabels as t', 'statustables.id_tabel', 't.id')
+            ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
+            ->select(
+                't.id as id_tabel',
+                't.label as judul_tabel',
+                'statustables.tahun',
+                'sdesc.label as status',
+                'statustables.id as id_statustables',
+                'statustables.updated_at as status_updated'
+            )
+            ->where('statustables.id', $request->id)->first();
 
 
-    //         $id_tabel = $statusTabel->id_tabel;
-    //         $tahun = $statusTabel->tahun;
+        $id_tabel = $statusTabel->id_tabel;
+        $tahun = $statusTabel->tahun;
 
-    //         // $pattern = $id_tabel . '-%-' . $tahun . '-%';
+        $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
+        $id_rows = [];
+        $wilayah_fullcodes = [];
+        $id_columns = [];
+        $tahuns = [];
+        $turTahunKeys = [];
 
-    //         $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
-    //         // return response()->json(['data' => $datacontents, 'pattern' => $pattern, 'id_status' => $decryptedId]);
-    //         $id_rows = [];
-    //         $wilayah_fullcodes = [];
-    //         $id_columns = [];
-    //         $tahuns = [];
-    //         $turTahunKeys = [];
+        foreach ($datacontents as $datacontent) {
+            array_push($id_rows, $datacontent->id_row);
+            array_push($id_columns, $datacontent->id_column);
+            array_push($tahuns, $datacontent->tahun);
+            array_push($turTahunKeys, $datacontent->id_turtahun);
 
-    //         foreach ($datacontents as $datacontent) {
-    //             $split = explode("-", $datacontent->label);
+            array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+        }
+        $tabels = Tabel::where('tabels.id', $id_tabel)
+            ->leftJoin('subjects as sb', 'sb.id', '=', 'tabels.id_subjek')
+            ->leftJoin('dinas as d', 'd.id', '=', 'tabels.id_dinas')
+            ->leftJoin('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'd.wilayah_fullcode')
+            ->first(['tabels.*', 'sb.label as subject_label', 'd.nama as dinas_label', 'mw.label as wilayah_label']);
 
-    //             array_push($id_rows, $datacontent->id_row);
-    //             array_push($id_columns, $datacontent->id_column);
-    //             array_push($tahuns, $datacontent->tahun);
-    //             array_push($turTahunKeys, $datacontent->id_turtahun);
+        $rows = Row::whereIn('id', $id_rows)->get();
+        $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->get();
+        try {
+            //code...
+            if ($rows[0]->id == 0) {
+                $wilayah_parent_code = '';
+                $jenis = "DAFTAR ";
+                $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                    ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
+                    ->orderBy('desa')
+                    ->get();
+                $rows = $temp;
+                $desa = substr($wilayah_fullcodes[0], 7, 3);
+                $kec = substr($wilayah_fullcodes[0], 4, 3);
+                $kab = substr($wilayah_fullcodes[0], 2, 2);
+                if ($desa != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
+                    $jenis = $jenis . "DESA DI ";
+                } else if ($kec != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
+                    $jenis = $jenis . "KECAMATAN DI ";
+                } else if ($kab != '00') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
+                    $jenis = $jenis . "KABUPATEN DI ";
+                }
+                if ($wilayah_parent_code == '') {
+                    $rowLabel = 'PROVINSI SULAWESI UTARA';
+                } else {
+                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                    $rowLabel = strtolower($rowLabel);
+                    $rowLabel = ucwords($rowLabel);
+                }
+            } else {
+                $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
+            }
+        } catch (\Exception $e) {
+            return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
+        }
 
-    //             array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
-    //         }
-    //         $tabels = Tabel::where('id', $id_tabel)->first();
-
-    //         $rows = Row::whereIn('id', $id_rows)->get();
-    //         $rowLabel = RowLabel::where('id', $rows[0]->id_rowlabels)->get();
-    //         try {
-    //             //code...
-    //             if ($rows[0]->id == 0) {
-    //                 // $wilayah_master = MasterWilayah::where('wilayah_fullcode','like',$wilayah_fullcodes[0]);
-    //                 $wilayah_parent_code = '';
-    //                 $jenis = "DAFTAR ";
-    //                 $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-    //                     ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
-    //                     ->orderBy('desa')
-    //                     ->get();
-    //                 $rows = $temp;
-
-    //                 $desa = substr($wilayah_fullcodes[0], 7, 3);
-    //                 $kec = substr($wilayah_fullcodes[0], 4, 3);
-    //                 $kab = substr($wilayah_fullcodes[0], 2, 2);
-    //                 if ($desa != '000') {
-    //                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
-    //                     $jenis = $jenis . "DESA DI ";
-    //                 } else if ($kec != '000') {
-    //                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
-    //                     $jenis = $jenis . "KECAMATAN DI ";
-    //                 } else if ($kab != '00') {
-    //                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
-    //                     $jenis = $jenis . "KABUPATEN DI ";
-    //                 }
-    //                 $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
-    //                 $rowLabel = strtolower($rowLabel);
-    //                 $rowLabel = ucwords($rowLabel);
-    //             } else {
-
-    //                 $rowLabel = RowLabel::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
-    //             }
-    //         } catch (\Exception $e) {
-    //             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
-    //         }
-
-    //         $columns = Column::whereIn('id', $id_columns)->get();
-    //         $tahuns = array_unique($tahuns);
-    //         sort($tahuns);
-    //         // $turtahuns = array_unique($turtahuns);
-    //         // sort($turtahuns);
-    //         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
-
-
-    //         // return response()->json(array('rows' => $tahuns));
-    //         return view('view-tabel', [
-    //             'datacontents' => $datacontents,
-    //             'tabels' => $tabels,
-    //             'encryptedId' => $id,
-    //             'tahuns' => $tahuns,
-    //             'tahun' => $tahun,
-    //             'rows' => $rows,
-    //             'row_label' => $rowLabel,
-    //             'columns' => $columns,
-    //             'turtahuns' => $turtahuns,
-    //             'tabel' => $statusTabel
-    //         ]);
-    //     }
+        $columns = Column::whereIn('id', $id_columns)->get();
+        $tahuns = array_unique($tahuns);
+        sort($tahuns);
+        $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
+        return Inertia::render('Home/View', [
+            'datacontents' => $datacontents,
+            'tabels' => $tabels,
+            'tahuns' => $tahuns,
+            'tahun' => $tahun,
+            'rows' => $rows,
+            'row_label' => $rowLabel,
+            'columns' => $columns,
+            'turtahuns' => $turtahuns,
+            'tabel' => $statusTabel
+        ]);
+    }
 }

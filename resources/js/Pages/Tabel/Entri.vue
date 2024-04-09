@@ -243,7 +243,7 @@ const submit = function (decision) {
 }
 
 #RowTabel td:first-child {
-    width: 10%;
+    width: 12px;
 }
 
 #RowTabel thead,

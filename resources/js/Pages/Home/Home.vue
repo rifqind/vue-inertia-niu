@@ -30,6 +30,7 @@ const form = useForm({
     desa: [],
     dinas: ['all'],
     subject: [],
+    label: [],
 })
 var all = [{ label: 'Pilih Semua', value: 'all' }]
 const yearDrop = ref({
@@ -50,11 +51,6 @@ visibleDesa.value = page.props.desa.map((desa, index) => ({
     parent_code: desa.parent_code,
     value: false
 }))
-onMounted(() => {
-    wilayahCheckBox.value = Array(page.props.wilayahs.length).fill(false)
-    kecamatanCheckBox.value = Array(page.props.kecs.length).fill(false)
-    desaCheckBox.value = Array(page.props.desa.length).fill(false)
-})
 const isVisibleKecs = (parent_code) => {
     const theIndex = visibleKecs.value.findIndex(x => x.parent_code === parent_code)
     return visibleKecs.value[theIndex].value
@@ -85,12 +81,12 @@ const submit = () => {
     searchWilayah = [...wilayahSelected.value]
     if (kecamatanSelected.value.length > 0) {
         let parentDeleted = kecamatanSelected.value.map(obj => obj.wilayah_fullcode.substring(0, 4) + '000000')
-        searchWilayah = [...searchWilayah,...kecamatanSelected.value]
+        searchWilayah = [...searchWilayah, ...kecamatanSelected.value]
         searchWilayah = searchWilayah.filter(item => !parentDeleted.includes(item.wilayah_fullcode))
     }
     if (desaSelected.value.length > 0) {
         let parentDeleted = desaSelected.value.map(obj => obj.wilayah_fullcode.substring(0, 7) + '000')
-        searchWilayah = [...searchWilayah,...desaSelected.value]
+        searchWilayah = [...searchWilayah, ...desaSelected.value]
         searchWilayah = searchWilayah.filter(item => !parentDeleted.includes(item.wilayah_fullcode))
     }
     let isDinasAll = false
@@ -111,15 +107,18 @@ const submit = () => {
         { key: 'tahun', valueFilter: form.year },
         { key: 'kode_wilayah', valueFilter: form.wilayah },
         { key: 'id_dinas', valueFilter: form.dinas },
-        { key: 'id_subjek', valueFilter: form.subject }
+        { key: 'id_subjek', valueFilter: form.subject },
+        { key: 'label', valueFilter: form.label }
     ]
     let filters = ArrayBigObjects.filter(obj => obj.valueFilter)
     let result = dataFiltered.value.filter(item => {
         let isValid = true;
         filters.forEach(filter => {
             const tempt = filter.valueFilter;
-            if (tempt.length > 0 && !tempt.includes(item[filter.key])) {
-                isValid = false;
+            if (filter.key == 'label' && tempt.length > 0) {
+                if (!item[filter.key].toLowerCase().includes(tempt.toLowerCase())) isValid = false
+            } else {
+                if (tempt.length > 0 && !tempt.includes(item[filter.key])) isValid = false
             }
         });
         return isValid;
@@ -129,6 +128,24 @@ const submit = () => {
     setTimeout(() => {
         if (isYearAll) form.year.push('all')
         if (isDinasAll) form.dinas.push('all')
+        triggerSpinner.value = false
+    }, 500);
+}
+const reset = () => {
+    triggerSpinner.value = true
+    form.reset()
+    wilayahSelected.value = []
+    subjectSelected.value = []
+    kecamatanSelected.value = []
+    desaSelected.value = []
+
+    if (wilayahCheckBox.value.length > 0) wilayahCheckBox.value = Array(wilayahCheckBox.value.length).fill(false)
+    if (kecamatanCheckBox.value.length > 0) kecamatanCheckBox.value = Array(kecamatanCheckBox.value.length).fill(false)
+    if (desaCheckBox.value.length > 0) desaCheckBox.value = Array(desaCheckBox.value.length).fill(false)
+    if (subjectCheckBox.value.length > 0) subjectCheckBox.value = Array(subjectCheckBox.value.length).fill(false)
+    dataFiltered.value = page.props.tabels
+    countDataFiltered.value = dataFiltered.value.length
+    setTimeout(() => {
         triggerSpinner.value = false
     }, 500);
 }
@@ -216,180 +233,172 @@ const showCard = (targetVisible) => {
     <SpinnerBorder v-if="triggerSpinner" />
     <HomeLayout>
         <div class="container">
-            <div class="row">
-                <div class="col-xl-12 col-lg-7 p-0">
-                    <div class="card shadow mb-4 custom-card">
-                        <!-- Card Body -->
-                        <div class="card-body d-flex align-items-start flex-column">
-                            <div class=" mb-auto p-2"></div>
-                            <div class="p-2" id="header-banner-text">
-                                <div>
-                                    <h1>Selamat datang di <b>For D One
-                                            <br>
-                                            Forum Data Online</b></h1>
-                                    <p class="lead">Temukan data Pemerintah Provinsi Sulawesi Utara dengan mudah!</p>
-                                </div>
+            <div class="col-xl-12 col-lg-7 p-0">
+                <div class="card shadow mb-4 custom-card">
+                    <!-- Card Body -->
+                    <div class="card-body d-flex align-items-start flex-column">
+                        <div class=" mb-auto p-2"></div>
+                        <div class="p-2" id="header-banner-text">
+                            <div>
+                                <h1 class="adjust-text-1">Selamat datang di <b>For D One
+                                        <br>
+                                        Forum Data Online</b></h1>
+                                <p class="lead">Temukan data Pemerintah Provinsi Sulawesi Utara dengan mudah!</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <!-- Area Chart -->
-                    <div class="col-xl-4 col-lg-7">
-                        <form id="search-tabel">
-                            <div class="mb-2">
-                                <Multiselect :options="yearDrop.options" v-model="form.year" :searchable="true"
-                                    mode="tags" placeholder="-- Pilih Tahun --" />
-                            </div>
-                            <div class="card shadow mb-2">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold heading-card">Berdasarkan Daerah</h6>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="card-large-homepage">
-                                        <div v-if="page.props.wilayahs.length > 0"
-                                            v-for="(node, index) in page.props.wilayahs" class="my-2 d-flex">
-                                            <input :id="'checkbox-wilayah-' + index"
-                                                @change="handleChangeCheckBoxKab(index, wilayahCheckBox)"
-                                                type="checkbox" ref="checkbox" v-model="wilayahCheckBox[index]"
-                                                :value="index">
-                                            <label :for="'checkbox-wilayah-' + index" class="ml-3 mb-0 text-capitalize"
-                                                :title="node.label">{{ node.label
-                                                }}</label>
-                                        </div>
-                                        <div class="my-2" v-else>
-                                            <label class="ml-3 mb-0 text-capitalize" data-target=""> Data belum ada yang
-                                                final
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-if="showCard(visibleKecs)" id="card-kecs" class="card shadow mb-2">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold heading-card">Kecamatan</h6>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="card-small-homepage">
-                                        <template v-for="(node, index) in page.props.kecs" :key="index">
-                                            <div v-if="isVisibleKecs(node.parent_code)" class="d-flex my-2" id="">
-                                                <input type="checkbox" :id="'checkbox-kecs-' + index"
-                                                    @change="handleChangeCheckBoxKec(index, kecamatanCheckBox)"
-                                                    v-model="kecamatanCheckBox[index]">
-                                                <label class="ml-3 mb-0 text-capitalize" :for="'checkbox-kecs-' + index"
-                                                    :title="node.label">
-                                                    {{ node.label }}
-                                                </label>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-if="showCard(visibleDesa)" id="card-desa" class="card shadow mb-2">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold heading-card">Desa/Kelurahan</h6>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <!-- <div class="text-center card-overlay" id="spinner-desa">
-                                        <div class="spinner-border text-info" role="status">
-                                            <span class="sr-only">Loading...</span>
-                                        </div>
-                                    </div> -->
-                                    <div class="card-small-homepage">
-                                        <template v-for="(node, index) in page.props.desa" :key="index">
-                                            <div v-if="isVisibleDesa(node.parent_code)" class="d-flex my-2" id="">
-                                                <input type="checkbox" :id="'checkbox-desa-' + index"
-                                                    class="desa-checkbox" v-model="desaCheckBox[index]">
-                                                <label class="ml-3 mb-0 text-capitalize" :for="'checkbox-desa-' + index"
-                                                    :title="node.label">
-                                                    {{ node.label }}
-                                                </label>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card shadow mb-2">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold heading-card">Berdasarkan Produsen Data</h6>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="card-small-homepage">
-                                        <div class="row">
-                                            <div class="col-sm-12">
-                                                <Multiselect :options="dinasDrop.options" v-model="form.dinas"
-                                                    placeholder="-- Pilih Produsen Data --" :searchable="true"
-                                                    mode="tags" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card shadow mb-2">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold heading-card">Berdasarkan Subjek Data</h6>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="card-large-homepage">
-                                        <div v-if="page.props.subjects.length > 0"
-                                            v-for="(node, index) in page.props.subjects" class="my-2 d-flex">
-                                            <input type="checkbox" ref="checkbox" v-model="subjectCheckBox[index]"
-                                                :value="index">
-                                            <label @click="toggleCheck(index, subjectCheckBox)"
-                                                class="ml-3 mb-0 text-capitalize" :title="node.label">{{ node.label
-                                                }}</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="d-flex">
-                                <input type="text" name="searchData" placeholder="Cari dengan Kata Kunci"
-                                    class="form-control mb-3 mr-2 w-75">
-                                <!-- {{-- <div class="row pr-3 pb-2"> --}} -->
-                                <div @click.prevent="submit" class="btn ml-auto mb-3 w-25 button-search">
-                                    <div class="text-white">
-                                        <i class="fa-brands fa-searchengin"></i> Cari
-                                    </div>
-                                </div>
-                                <!-- {{-- </div> --}} -->
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Pie Chart -->
-                    <div class="col-xl-8 col-lg-5">
-                        <div class="card shadow" id="tabel-list">
-                            <TabelListTimeline :count-tabels="countDataFiltered" :data="dataFiltered" />
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="row p-0">
+                <!-- Area Chart -->
+                <div class="col-xl-4 col-lg-7">
+                    <form id="search-tabel">
+                        <div class="mb-2">
+                            <Multiselect :options="yearDrop.options" v-model="form.year" :searchable="true" mode="tags"
+                                placeholder="-- Pilih Tahun --" />
+                        </div>
+                        <div class="card shadow mb-2">
+                            <!-- Card Header - Dropdown -->
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold heading-card">Berdasarkan Daerah</h6>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="card-large-homepage">
+                                    <div v-if="page.props.wilayahs.length > 0"
+                                        v-for="(node, index) in page.props.wilayahs" class="my-2 d-flex">
+                                        <input :id="'checkbox-wilayah-' + index"
+                                            @change="handleChangeCheckBoxKab(index, wilayahCheckBox)" type="checkbox"
+                                            ref="checkbox" v-model="wilayahCheckBox[index]" :value="index">
+                                        <label :for="'checkbox-wilayah-' + index" class="ml-3 mb-0 text-capitalize"
+                                            :title="node.label">{{ node.label
+                                            }}</label>
+                                    </div>
+                                    <div class="my-2" v-else>
+                                        <label class="ml-3 mb-0 text-capitalize" data-target=""> Data belum ada yang
+                                            final
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="showCard(visibleKecs)" id="card-kecs" class="card shadow mb-2">
+                            <!-- Card Header - Dropdown -->
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold heading-card">Kecamatan</h6>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="card-small-homepage">
+                                    <template v-for="(node, index) in page.props.kecs" :key="index">
+                                        <div v-if="isVisibleKecs(node.parent_code)" class="d-flex my-2" id="">
+                                            <input type="checkbox" :id="'checkbox-kecs-' + index"
+                                                @change="handleChangeCheckBoxKec(index, kecamatanCheckBox)"
+                                                v-model="kecamatanCheckBox[index]">
+                                            <label class="ml-3 mb-0 text-capitalize" :for="'checkbox-kecs-' + index"
+                                                :title="node.label">
+                                                {{ node.label }}
+                                            </label>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="showCard(visibleDesa)" id="card-desa" class="card shadow mb-2">
+                            <!-- Card Header - Dropdown -->
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold heading-card">Desa/Kelurahan</h6>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <!-- <div class="text-center card-overlay" id="spinner-desa">
+                                        <div class="spinner-border text-info" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                    </div> -->
+                                <div class="card-small-homepage">
+                                    <template v-for="(node, index) in page.props.desa" :key="index">
+                                        <div v-if="isVisibleDesa(node.parent_code)" class="d-flex my-2" id="">
+                                            <input type="checkbox" :id="'checkbox-desa-' + index" class="desa-checkbox"
+                                                v-model="desaCheckBox[index]">
+                                            <label class="ml-3 mb-0 text-capitalize" :for="'checkbox-desa-' + index"
+                                                :title="node.label">
+                                                {{ node.label }}
+                                            </label>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card shadow mb-2">
+                            <!-- Card Header - Dropdown -->
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold heading-card">Berdasarkan Produsen Data</h6>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="card-small-homepage">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <Multiselect :options="dinasDrop.options" v-model="form.dinas"
+                                                placeholder="-- Pilih Produsen Data --" :searchable="true"
+                                                mode="tags" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card shadow mb-2">
+                            <!-- Card Header - Dropdown -->
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold heading-card">Berdasarkan Subjek Data</h6>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="card-large-homepage">
+                                    <div v-if="page.props.subjects.length > 0"
+                                        v-for="(node, index) in page.props.subjects" class="my-2 d-flex">
+                                        <input type="checkbox" ref="checkbox" v-model="subjectCheckBox[index]"
+                                            :value="index">
+                                        <label @click="toggleCheck(index, subjectCheckBox)"
+                                            class="ml-3 mb-0 text-capitalize" :title="node.label">{{ node.label
+                                            }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex">
+                            <input type="text" v-model="form.label" name="searchData"
+                                placeholder="Cari dengan Kata Kunci" class="form-control mb-3 mr-2 w-75">
+                            <!-- {{-- <div class="row pr-3 pb-2"> --}} -->
+                            <div @click.prevent="submit" class="btn ml-auto mb-3 w-25 button-search">
+                                <div class="text-white">
+                                    <i class="fa-brands fa-searchengin"></i> Cari
+                                </div>
+                            </div>
+                            <div class="btn button-search mb-3 ml-1" @click="reset" title="Reset">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </div>
+                            <!-- {{-- </div> --}} -->
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Pie Chart -->
+                <div class="col-xl-8 col-lg-5">
+                    <div class="card shadow" id="tabel-list">
+                        <TabelListTimeline :count-tabels="countDataFiltered" :data="dataFiltered" />
+                    </div>
+                </div>
+            </div>
+
         </div>
     </HomeLayout>
 </template>
 <style>
 .multiselect-tag {
     background: #a80606 !important;
-}
-
-#navbar-front {
-    background-color: #a80606;
 }
 
 .red-bg-homepage {
@@ -454,5 +463,8 @@ const showCard = (targetVisible) => {
     background-repeat: no-repeat;
     background-size: cover;
     background-position: 50% 50%;
+}
+.adjust-text-1 {
+    font-size: 2em;
 }
 </style>

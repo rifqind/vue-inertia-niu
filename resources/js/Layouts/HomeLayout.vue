@@ -70,3 +70,10 @@ if (page.props.auth.user) {
     </body>
 </template>
 <style src="@vueform/multiselect/themes/default.css"></style>
+<style scoped>
+
+#navbar-front {
+    background-color: #a80606;
+}
+
+</style>
