@@ -135,8 +135,10 @@ const submit = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Tabel
                 </div>
-                <a href="#" class="btn bg-success-fordone" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i> Download</a>
+                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
+                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
+                <Link :href="route('tabel.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
+                Tambah Tabel Baru</Link>
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />

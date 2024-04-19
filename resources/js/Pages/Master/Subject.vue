@@ -17,6 +17,7 @@ const toggleFlash = ref(false)
 const searchLabel = ref(null)
 const triggerSpinner = ref(false)
 const subjectFetched = ref(null)
+const modalTitle = ref('Tambah Subjek Baru')
 
 //pagination
 const tabelSubjek = ref(null)
@@ -75,6 +76,7 @@ const form = useForm({
 const toggleUpdateModal = function (id) {
     if (id) {
         fetchSubject(id).then(function () {
+            modalTitle.value = 'Update Subjek'
             triggerSpinner.value = false
             createModalStatus.value = true
         })
@@ -176,7 +178,7 @@ const deleteForm = function () {
             </tbody>
         </table>
         <Teleport to="body">
-            <ModalBs :ModalStatus="createModalStatus" @close="createModalStatus = false" :title="'Tambah Subjek Baru'">
+            <ModalBs :ModalStatus="createModalStatus" @close="()=>{createModalStatus = false; form.reset(); modalTitle= 'Tambah Subjek Baru'}" :title="modalTitle">
                 <template #modalBody>
                     <form>
                         <div class="form-group">

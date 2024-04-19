@@ -17,6 +17,7 @@ const toggleFlash = ref(false)
 const searchLabel = ref(null)
 const triggerSpinner = ref(false)
 const rowGroupFetched = ref(null)
+const modalTitle = ref('Tambah Kelompok Baris Baru')
 
 //pagination
 const tabelRowGroup = ref(null)
@@ -75,6 +76,7 @@ const form = useForm({
 const toggleUpdateModal = function (id) {
     if (id) {
         fetchColumnGroup(id).then(function () {
+            modalTitle.value = 'Update Kelompok Baris'
             triggerSpinner.value = false
             createModalStatus.value = true
         })
@@ -181,7 +183,8 @@ const deleteForm = function () {
             <ModalBs :ModalStatus="createModalStatus" @close="function () {
         createModalStatus = false
         form.reset()
-    }" :title="'Tambah Kelompok Baris Baru'">
+        modalTitle = 'Tambah Kelompok Baris Baru'
+    }" :title="modalTitle">
                 <template #modalBody>
                     <form>
                         <div class="form-group">

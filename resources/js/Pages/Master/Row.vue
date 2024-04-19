@@ -23,6 +23,7 @@ const searchLabel = ref(null)
 const searchRowGroup = ref(null)
 const triggerSpinner = ref(false)
 const rowsFetched = ref(null)
+const modalTitle = ref('Tambah Baris Baru')
 const rowGroupsDrop = ref({
     value: null,
     options: row_groups
@@ -88,6 +89,7 @@ const form = useForm({
 const toggleUpdateModal = function (id) {
     if (id) {
         fetchRows(id).then(function () {
+            modalTitle.value = 'Update Baris'
             triggerSpinner.value = false
             createModalStatus.value = true
         })
@@ -199,7 +201,8 @@ const deleteForm = function () {
             <ModalBs :ModalStatus="createModalStatus" @close="function () {
         createModalStatus = false
         form.reset()
-    }" :title="'Tambah Baris Baru'">
+        modalTitle = 'Tambah Baris Baru'
+    }" :title="modalTitle">
                 <template #modalBody>
                     <form>
                         <div class="form-group">

@@ -23,6 +23,7 @@ const searchLabel = ref(null)
 const searchColumnGroup = ref(null)
 const triggerSpinner = ref(false)
 const columnsFetched = ref(null)
+const modalTitle = ref('Tambah Kolom Baru')
 const colGroupsDrop = ref({
     value: null,
     options: columnGroups
@@ -88,6 +89,7 @@ const form = useForm({
 const toggleUpdateModal = function (id) {
     if (id) {
         fetchColumns(id).then(function () {
+            modalTitle.value = 'Update Kolom'
             triggerSpinner.value = false
             createModalStatus.value = true
         })
@@ -199,7 +201,8 @@ const deleteForm = function () {
             <ModalBs :ModalStatus="createModalStatus" @close="function () {
         createModalStatus = false
         form.reset()
-    }" :title="'Tambah Kolom Baru'">
+        modalTitle = 'Tambah Kolom Baru'
+    }" :title="modalTitle">
                 <template #modalBody>
                     <form>
                         <div class="form-group">
