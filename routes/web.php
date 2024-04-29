@@ -11,6 +11,7 @@ use App\Http\Controllers\ColumnGroupController;
 use App\Http\Controllers\RowController;
 use App\Http\Controllers\RowGroupController;
 use App\Http\Controllers\TabelController;
+use App\Http\Controllers\MetadataVariabelController;
 use App\Models\Turtahun;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -128,6 +129,21 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/tabel/statusDestroy', [TabelController::class, 'statusDestroy'])->name('tabel.statusDestroy');
     Route::post('/tabel/destroy', [TabelController::class, 'destroy'])->name('tabel.destroy');
 });
+
+//metadata-variabel
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('metavar/index', [MetadataVariabelController::class, 'index'])->name('metavar.index');
+    Route::get('metavar/lists/{id}', [MetadataVariabelController::class, 'lists'])->name('metavar.lists');
+    Route::post('metavar/store', [MetadataVariabelController::class, 'store'])->name('metavar.store');
+    Route::post('metavar/update', [MetadataVariabelController::class, 'update'])->name('metavar.update');
+    Route::get('metavar/fetchMaster/{id}', [MetadataVariabelController::class, 'fetchMaster'])->name('metavar.fetchMaster');
+    Route::get('metavar/fetchData/{id}', [MetadataVariabelController::class, 'fetchData'])->name('metavar.fetchData');
+    Route::post('metavar/destroy', [MetadataVariabelController::class, 'destroy'])->name('metavar.destroy');
+    Route::get('metavar/metavarSend/{id}', [MetadataVariabelController::class, 'metavarSend'])->name('metavar.metavarSend');
+});
+Route::get('metavar/adminHandleMetavar', [MetadataVariabelController::class, 'adminHandleMetavar'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('metavar.adminHandleMetavar');
+Route::get('metavar/show', [MetadataVariabelController::class, 'show'])->name('metavar.show');
+
 
 Route::get('fetch/data', [TabelController::class, 'getDatacontent'])->name('tabel.getDatacontent');
 Route::get('/turtahun/fetch/{id}', function (string $id) {

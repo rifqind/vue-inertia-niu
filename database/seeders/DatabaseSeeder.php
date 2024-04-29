@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         // ]);
         // $this->call(UserSeeder::class);
         // $this->call(TabelSeeder::class);
-        $this->call(StatustableSeeder::class);
+        // $this->call(StatustableSeeder::class);
+        $this->call(MetavarSeeder::class);
     }
 }

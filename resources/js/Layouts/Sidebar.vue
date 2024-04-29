@@ -40,8 +40,9 @@ const toggleMenuOpen = function (x) {
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                     data-accordion="false">
-                    <NavLinkSidebar :nav-icon="'fas fa-tachometer-alt'" :current-route="currentRoute == 'home.dashboard'"
-                        :href="route('home.dashboard')"> Dashboard</NavLinkSidebar>
+                    <NavLinkSidebar :nav-icon="'fas fa-tachometer-alt'"
+                        :current-route="currentRoute == 'home.dashboard'" :href="route('home.dashboard')"> Dashboard
+                    </NavLinkSidebar>
                     <NavLinkSidebar :currentRoute="currentRoute == 'home.monitoring'" :role="role == 'admin'"
                         :href="route('home.monitoring')" :navIcon="'fa-solid fa-display'"> Monitoring
                     </NavLinkSidebar>
@@ -61,12 +62,15 @@ const toggleMenuOpen = function (x) {
                                 Recycle Bin</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
-                    <NavLinkParentSidebar :navIcon="'fa-solid fa-building'" :toggleMenuOpen="toggleMenuOpen">
+                    <NavLinkParentSidebar :navIcon="'fa-solid fa-building'"
+                        :menuOpen="menuOpenMetadata || currentRoute == 'metavar.index'" :toggleMenuOpen="toggleMenuOpen"
+                        :params="'meta'">
 
                         <template v-slot:label> Kelola Metadata</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :navIcon="'fa-solid fa-list-ol'"> Variabel</NavLinkSidebar>
+                            <NavLinkSidebar :navIcon="'fa-solid fa-list-ol'" :href="route('metavar.index')"
+                                :currentRoute="currentRoute == 'metavar.index'"> Variabel</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-users'"
@@ -100,7 +104,8 @@ const toggleMenuOpen = function (x) {
                         <template v-slot:label> Kelola Master</template>
 
                         <template v-slot:content>
-                            <NavLinkSidebar :href="route('tabel.master')" :currentRoute="currentRoute == 'tabel.master'" :navIcon="'fas fa-table'"> Tabel</NavLinkSidebar>
+                            <NavLinkSidebar :href="route('tabel.master')" :currentRoute="currentRoute == 'tabel.master'"
+                                :navIcon="'fas fa-table'"> Tabel</NavLinkSidebar>
                             <NavLinkSidebar :href="route('subject.index')" :navIcon="'fa-solid fa-tags'"
                                 :currentRoute="currentRoute == 'subject.index'"> Subjek
                             </NavLinkSidebar>
