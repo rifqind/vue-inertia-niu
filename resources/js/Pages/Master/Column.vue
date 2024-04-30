@@ -8,6 +8,7 @@ import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import Multiselect from '@vueform/multiselect';
+import { GoDownload } from '@/download'
 
 defineComponent({
     Multiselect
@@ -24,6 +25,8 @@ const searchColumnGroup = ref(null)
 const triggerSpinner = ref(false)
 const columnsFetched = ref(null)
 const modalTitle = ref('Tambah Kolom Baru')
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 const colGroupsDrop = ref({
     value: null,
     options: columnGroups
@@ -150,8 +153,8 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Kolom
                 </div>
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i></button>
                 <a @click="createModalStatus = true" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                     Tambah Kolom Baru</a>
             </div>
@@ -198,6 +201,16 @@ const deleteForm = function () {
             </tbody>
         </table>
         <Teleport to="body">
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="GoDownload('tabel-kolom', downloadTitle)">Simpan</button>
+                </template>
+            </ModalBs>
             <ModalBs :ModalStatus="createModalStatus" @close="function () {
         createModalStatus = false
         form.reset()

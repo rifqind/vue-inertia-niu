@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\MetaDataExport;
 use App\Models\MasterWilayah;
 use App\Models\MetadataVariabel;
 use App\Models\MetadataVariabelStatus;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MetadataVariabelController extends Controller
 {
@@ -48,7 +50,8 @@ class MetadataVariabelController extends Controller
                 $tabel->who_updated = "-";
             } else {
                 $tabel->status_metavar = $checkMetavar->status;
-                $tabel->when_updated = $checkMetavar->status_updated;
+                $checkRealMetavar = MetadataVariabel::where('id_tabel', $tabel->id)->latest('updated_at')->first('updated_at as status_updated');
+                $tabel->when_updated = $checkRealMetavar->status_updated;
                 $tabel->who_updated = User::where('id', $checkMetavar->edited_by)->value('username');
             }
         }
@@ -127,7 +130,7 @@ class MetadataVariabelController extends Controller
                 'r111' => $request->r111,
                 'r112' => $request->r112,
             ]);
-            
+
             $check_metavar_status = MetadataVariabelStatus::where('id_tabel', $id_tabel)->first();
             if (!$check_metavar_status) {
                 # code...
@@ -137,8 +140,9 @@ class MetadataVariabelController extends Controller
                     'edited_by' => auth()->user()->id,
                 ]);
             } else {
+                // dd($check_metavar_status);
                 $check_metavar_status->update([
-                    'status' => 4,
+                    'status' => 2,
                     'edited_by' => auth()->user()->id,
                 ]);
             }
@@ -160,6 +164,10 @@ class MetadataVariabelController extends Controller
     public function create()
     {
         //
+    }
+
+    public function export($id) {
+        return Excel::download(new MetaDataExport($id), "test.xlsx");
     }
 
     /**
@@ -248,25 +256,23 @@ class MetadataVariabelController extends Controller
 
     public function metavarSend(string $id)
     {
-        $decryptedId = decrypt($id);
-        $this_metavar_status = MetadataVariabelStatus::where('id_tabel', $decryptedId)->update([
+        $this_metavar_status = MetadataVariabelStatus::where('id_tabel', $id)->update([
             'status' => 3,
             'edited_by' => auth()->user()->id,
         ]);
-        return redirect()->route('metavar.index');
+               
+        return redirect()->route('metavar.lists', ['id' => $id])->with('message', 'Berhasil mengirim metadata untuk diperiksa');
     }
 
     public function adminHandleMetavar(Request $request)
     {
-        $decryptedId = decrypt($request->id);
         $decisions = $request->decisions;
 
-        $this_metavar_status = MetadataVariabelStatus::where('id_tabel', $decryptedId)->update([
-            'status' => ($decisions == "reject-metavar") ? 4 : 5,
+        $this_metavar_status = MetadataVariabelStatus::where('id_tabel', $request->id_tabel)->update([
+            'status' => ($decisions == "reject") ? 4 : 5,
             'edited_by' => auth()->user()->id,
         ]);
-
-        return redirect()->route('metavar.index');
+        return redirect()->route('metavar.lists', ['id' => $request->id_tabel])->with('message', 'Berhasil');
     }
 
     /**
@@ -275,14 +281,8 @@ class MetadataVariabelController extends Controller
     public function destroy(Request $request)
     {
         //
-        $decryptedId = decrypt($request->id);
-        $get_idTabel = MetadataVariabel::where('id', $decryptedId)->pluck('id_tabel');
-        MetadataVariabel::destroy($decryptedId);
-        $metavars = MetadataVariabel::where('id_tabel', $get_idTabel[0])->get();
-        $satuan = Tabel::where('id', $get_idTabel[0])->pluck('unit');
-        return view('metadata_variabel.list-tabel', compact(
-            'metavars',
-            'satuan'
-        ))->render();
+        $get_idTabel = MetadataVariabel::where('id', $request->id)->value('id_tabel');
+        MetadataVariabel::destroy($request->id);
+        return redirect()->route('metavar.lists', ['id' => $get_idTabel])->with('message', 'Berhasil menghapus data tersebut');
     }
 }

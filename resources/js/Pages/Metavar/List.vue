@@ -5,32 +5,76 @@ import { clickSortProperties } from '@/sortAttribute'
 import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
-import { searchCell } from '@/searchCell'
-import { getPagination } from '@/pagination'
 import Multiselect from '@vueform/multiselect'
-import { ref, watch, onMounted, defineComponent } from 'vue'
+import { ref, watch, onMounted, defineComponent, onUpdated } from 'vue'
 import axios from 'axios'
 
 const page = usePage()
-const master = page.props.master_metavar.map((obj) => ({
+var master = page.props.master_metavar.map((obj) => ({
     value: obj.id,
     label: obj.r101,
 }))
-const masterDrop = ref({
+var masterDrop = ref({
     value: null,
     options: [...[{ label: 'Baru/Tidak Menggunakan Master', value: 0 }], ...master]
 })
+var mvObject = page.props.metavars
+var metavars = ref(mvObject)
 defineComponent({
     Multiselect
 })
 const triggerSpinner = ref(false)
+const toggleFlash = ref(false)
 const createModalStatus = ref(false)
 const masterModalStatus = ref(false)
+const deleteModalStatus = ref(false)
 const searchR101 = ref(null)
 const searchR102 = ref(null)
 const searchR103 = ref(null)
 const searchR104 = ref(null)
 const searchSatuan = ref(null)
+const ArrayBigObjects = [
+    { key: 'r101', valueFilter: searchR101 },
+    { key: 'r102', valueFilter: searchR102 },
+    { key: 'r103', valueFilter: searchR103 },
+    { key: 'r104', valueFilter: searchR104 },
+    { key: 'satuan', valueFilter: searchSatuan },
+]
+const buttonMapping = {
+    'admin': false,
+    'kominfo': false,
+    'produsen': true,
+}
+const defineButton = function (role, position) {
+    const isAdmin = buttonMapping[role]
+    const status = page.props.status_desc[0]
+    if (isAdmin) {
+        if (position == 'right') return false
+        else {
+            if (status == 3 || status > 4) return false
+            else return true
+        }
+    } else {
+        if (position == 'left') return false
+        else {
+            if (status < 3) return false
+            else return true
+        }
+    }
+}
+watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+    let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
+    if (filters.length === 0) {
+        metavars.value = mvObject
+        return
+    }
+    metavars.value = mvObject.filter(item => {
+        return filters.every(obj => {
+            const filterValue = obj.valueFilter.value.toLowerCase()
+            return item[obj.key].toLowerCase().includes(filterValue)
+        })
+    })
+})
 
 const form = useForm({
     id: '',
@@ -48,13 +92,16 @@ const form = useForm({
     r111: '',
     r112: '',
 })
+const manageForm = useForm({
+    id_tabel: '',
+    decisions: '',
+})
 
 const fetchMastertoApply = async function () {
     try {
-        masterModalStatus.value = false
         triggerSpinner.value = true
+        masterModalStatus.value = false
         const response = await axios.get(route('metavar.fetchMaster', { id: masterDrop.value.value }))
-        console.log(response.data)
         form.r101 = response.data.r101
         form.r102 = response.data.r102
         form.r103 = response.data.r103
@@ -85,16 +132,34 @@ const submit = () => {
         },
         onSuccess: () => {
             form.reset()
+            toggleFlash.value = true
         },
         onError: () => {
             createModalStatus.value = true
         }
     })
 }
+const manageData = (decision) => {
+    manageForm.decisions = decision
+    manageForm.id_tabel = page.props.id_tabel
+    if (decision == 'send') {
+        manageForm.post(route('metavar.metavarSend', { id: page.props.id_tabel }), {
+            onSuccess: () => {
+                toggleFlash.value = true
+            }
+        })
+    } else {
+        manageForm.post(route('metavar.adminHandleMetavar'), {
+            onSuccess: () => {
+                toggleFlash.value = true
+            }
+        })
+    }
+}
 const toggleUpdateModal = async function (id) {
+    createModalStatus.value = true
     try {
         const response = await axios.get(route('metavar.fetchData', { id: id }))
-        createModalStatus.value = true
         form.id = id
         form.id_tabel = page.props.id_tabel
         form.r101 = response.data.r101
@@ -113,6 +178,39 @@ const toggleUpdateModal = async function (id) {
         console.error("Error fetching data:", error)
     }
 }
+const toggleDeleteModal = (id) => {
+    deleteModalStatus.value = true
+    form.id = id
+}
+const deleteData = () => {
+    form.post(route('metavar.destroy'), {
+        onBefore: () => {
+            triggerSpinner.value = true
+            deleteModalStatus.value = false
+        },
+        onFinish: () => {
+            triggerSpinner.value = false
+        },
+        onSuccess: () => {
+            toggleFlash.value = true
+            form.reset()
+        },
+        onError: () => {
+            deleteModalStatus.value = true
+        }
+    })
+}
+onUpdated(async () => {
+    let response = await axios.get(route('updateMasterMetavar'))
+    master = response.data.map((obj) => ({
+        value: obj.id,
+        label: obj.r101,
+    }))
+    masterDrop = ref({
+        value: null,
+        options: [...[{ label: 'Baru/Tidak Menggunakan Master', value: 0 }], ...master]
+    })
+})
 </script>
 
 <template>
@@ -127,12 +225,15 @@ const toggleUpdateModal = async function (id) {
                     <span v-if="page.props.status_desc">{{ page.props.status_desc }}</span>
                     <span v-else>Kosong</span>
                 </div>
+            </div>
+            <div class="d-flex justify-content-end mb-2">
                 <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
                     data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
                 <a @click="masterModalStatus = true" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                     Tambah Metadata Variabel Baru</a>
             </div>
         </div>
+        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
         <table class="table table-sorted table-hover table-bordered table-search" ref="tabelListMetavar"
             id="tabel-user">
             <thead>
@@ -167,7 +268,7 @@ const toggleUpdateModal = async function (id) {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(node, index) in page.props.metavars" :key="node.id">
+                <tr v-for="(node, index) in metavars" :key="node.id">
                     <td>{{ node.number }}</td>
                     <td>{{ node.r101 }}</td>
                     <td>{{ node.r102 }}</td>
@@ -179,13 +280,15 @@ const toggleUpdateModal = async function (id) {
                                 title="Edit Data"></i></a>
                     </td>
                     <td class="text-center deleted">
-
+                        <a @click.prevent="toggleDeleteModal(node.id)" class="delete-trash">
+                            <i class="fa-solid fa-trash-can icon-trash-color"></i>
+                        </a>
                     </td>
                 </tr>
             </tbody>
         </table>
         <Teleport to="body">
-            <ModalBs :ModalStatus="createModalStatus" @close="createModalStatus = false"
+            <ModalBs :ModalStatus="createModalStatus" @close="() => { createModalStatus = false; form.reset() }"
                 :modalSize="'modal-xl modal-dialog-scrollable'">
                 <template #modalBody>
                     <div class="form-group">
@@ -234,7 +337,7 @@ const toggleUpdateModal = async function (id) {
                         @click.prevent="submit">Simpan</button>
                 </template>
             </ModalBs>
-            <ModalBs :ModalStatus="masterModalStatus" @close="masterModalStatus = false"
+            <ModalBs :ModalStatus="masterModalStatus" @close="() => { masterModalStatus = false; form.reset() }"
                 :title="'Master Metadata Variabel'">
                 <template #modalBody>
                     <div class="form-group">
@@ -250,6 +353,31 @@ const toggleUpdateModal = async function (id) {
                         @click.prevent="fetchMastertoApply">Simpan</button>
                 </template>
             </ModalBs>
+            <ModalBs :ModalStatus="deleteModalStatus" @close="() => { deleteModalStatus = false; form.reset() }"
+                :title="'Delete Metadata Variabel'">
+                <template #modalBody>
+                    <label>Apakah Anda yakin akan menghapus Metadata Variabel ini?</label>
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm badge-status-empat" :disabled="form.processing"
+                        @click.prevent="deleteData">Hapus</button>
+                </template>
+            </ModalBs>
         </Teleport>
+        <div class="mb-2 d-flex">
+            <div class="flex-grow-1">
+                <Link :href="route('metavar.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
+                Kembali
+                </Link>
+            </div>
+            <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="manageData(decision = 'send')"
+                class="btn bg-success-fordone save-send" id="save-table">Kirim <i
+                    class="fas fa-paper-plane"></i></button>
+            <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="manageData(decision = 'reject')"
+                class="btn badge-status-empat mr-2" id="save-table">Reject <i class="fas fa-ban"></i></button>
+            <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="manageData(decision = 'final')"
+                class="btn bg-success-fordone" id="save-table">Final <i class="fas fa-flag-checkered"></i></button>
+        </div>
+
     </GeneralLayout>
 </template>

@@ -9,6 +9,7 @@ import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import Multiselect from "@vueform/multiselect";
+import { GoDownload } from '@/download'
 
 defineComponent({
     Multiselect,
@@ -38,6 +39,8 @@ const toggleFlashError = ref(false)
 const deleteModalStatus = ref(false)
 const addYearModalStatus = ref(false)
 const flashType = ref(null)
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 
 const searchLabel = ref(null)
 const searchLabelDinas = ref(null)
@@ -135,8 +138,8 @@ const submit = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Tabel
                 </div>
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i></button>
                 <Link :href="route('tabel.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                 Tambah Tabel Baru</Link>
             </div>
@@ -144,7 +147,7 @@ const submit = function () {
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
         <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
             :types="'alert-danger'" />
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelTabels" id="tabel-kolom">
+        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelTabels" id="tabel-master">
             <thead>
                 <tr class="bg-info-fordone">
                     <th class="first-column text-center align-middle" @click="clickSortProperties(tables, 'number')">No.
@@ -212,6 +215,16 @@ const submit = function () {
             </tbody>
         </table>
         <Teleport to="body">
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="GoDownload('tabel-master', downloadTitle)">Simpan</button>
+                </template>
+            </ModalBs>
             <ModalBs :ModalStatus="addYearModalStatus" @close="() => { addYearModalStatus = false; form.reset() }"
                 :title="'Tambah Tahun'">
                 <template #modalBody>

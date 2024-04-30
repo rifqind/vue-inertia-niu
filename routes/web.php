@@ -12,6 +12,7 @@ use App\Http\Controllers\RowController;
 use App\Http\Controllers\RowGroupController;
 use App\Http\Controllers\TabelController;
 use App\Http\Controllers\MetadataVariabelController;
+use App\Models\MetadataVariabel;
 use App\Models\Turtahun;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -139,9 +140,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('metavar/fetchMaster/{id}', [MetadataVariabelController::class, 'fetchMaster'])->name('metavar.fetchMaster');
     Route::get('metavar/fetchData/{id}', [MetadataVariabelController::class, 'fetchData'])->name('metavar.fetchData');
     Route::post('metavar/destroy', [MetadataVariabelController::class, 'destroy'])->name('metavar.destroy');
-    Route::get('metavar/metavarSend/{id}', [MetadataVariabelController::class, 'metavarSend'])->name('metavar.metavarSend');
+    Route::post('metavar/metavarSend/{id}', [MetadataVariabelController::class, 'metavarSend'])->name('metavar.metavarSend');
 });
-Route::get('metavar/adminHandleMetavar', [MetadataVariabelController::class, 'adminHandleMetavar'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('metavar.adminHandleMetavar');
+Route::post('metavar/adminHandleMetavar', [MetadataVariabelController::class, 'adminHandleMetavar'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('metavar.adminHandleMetavar');
 Route::get('metavar/show', [MetadataVariabelController::class, 'show'])->name('metavar.show');
 
 
@@ -152,4 +153,9 @@ Route::get('/turtahun/fetch/{id}', function (string $id) {
         ->get(['turtahuns.id as value', 'turtahuns.label as label', 'tg.label as tipe']);
     return response()->json(['data' => $target]);
 })->name('turtahun.fetch');
+Route::get('/master_metavar/fetch', function () {
+    $target = MetadataVariabel::selectRaw('MIN(id) as id, r101')->groupBy('r101')->get();
+    return response()->json($target);
+})->name('updateMasterMetavar');
+Route::get('/export/{id}', [MetadataVariabelController::class, 'export'])->name('export');
 require __DIR__ . '/auth.php';

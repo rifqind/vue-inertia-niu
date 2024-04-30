@@ -47,7 +47,7 @@ const toggleMenuOpen = function (x) {
                         :href="route('home.monitoring')" :navIcon="'fa-solid fa-display'"> Monitoring
                     </NavLinkSidebar>
                     <NavLinkParentSidebar :navIcon="'fa-solid fa-building'"
-                        :menuOpen="menuOpenTabel || currentRoute == 'tabel.index' || currentRoute == 'tabel.create' || currentRoute == 'tabel.deletedList'"
+                        :menuOpen="menuOpenTabel || currentRoute == 'tabel.index' || currentRoute == 'tabel.create' || currentRoute == 'tabel.deletedList' || currentRoute == 'tabel.entri'"
                         :toggleMenuOpen="toggleMenuOpen" :params="'tbl'">
                         <template v-slot:label> Kelola Tabel</template>
 
@@ -63,14 +63,14 @@ const toggleMenuOpen = function (x) {
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :navIcon="'fa-solid fa-building'"
-                        :menuOpen="menuOpenMetadata || currentRoute == 'metavar.index'" :toggleMenuOpen="toggleMenuOpen"
+                        :menuOpen="menuOpenMetadata || currentRoute == 'metavar.index' || currentRoute == 'metavar.lists'" :toggleMenuOpen="toggleMenuOpen"
                         :params="'meta'">
 
                         <template v-slot:label> Kelola Metadata</template>
 
                         <template v-slot:content>
                             <NavLinkSidebar :navIcon="'fa-solid fa-list-ol'" :href="route('metavar.index')"
-                                :currentRoute="currentRoute == 'metavar.index'"> Variabel</NavLinkSidebar>
+                                :currentRoute="currentRoute == 'metavar.index' || currentRoute == 'metavar.lists'"> Variabel</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-users'"

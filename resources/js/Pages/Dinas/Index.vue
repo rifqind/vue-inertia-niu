@@ -8,6 +8,7 @@ import { Link, useForm, usePage, Head } from '@inertiajs/vue3'
 import { getPagination } from '@/pagination';
 import { ref, onMounted, onUpdated, defineComponent, watch } from 'vue'
 import { clickSortProperties } from '@/sortAttribute';
+import { GoDownload } from '@/download'
 
 const page = usePage()
 const tabelDinas = ref(null)
@@ -21,6 +22,8 @@ const toggleFlash = ref(false)
 const searchNama = ref(null)
 const searchWilayah = ref(null)
 const triggerSpinner = ref(false)
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 const produsenFetched = ref({
     data: [],
     kabs: [],
@@ -224,8 +227,8 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Produsen Data
                 </div>
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i></button>
                 <Link :href="route('dinas.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                 Tambah Produsen Data Baru</Link>
             </div>
@@ -271,6 +274,16 @@ const deleteForm = function () {
             </table>
         </div>
         <Teleport to="body">
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="GoDownload('tabel-dinas', downloadTitle)">Simpan</button>
+                </template>
+            </ModalBs>
             <ModalBs v-if="DOMLoaded" :ModalStatus="updateModalStatus" @close="updateModalStatus = false"
                 :title="'Update Produsen Data'">
                 <template v-slot:modalBody>

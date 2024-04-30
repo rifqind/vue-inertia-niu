@@ -137,89 +137,6 @@ class HomeController extends Controller
         ]);
     }
 
-    //     public function getSearch(Request $request)
-    //     {
-    //         $kecs = $request->input('kecs', []);
-    //         $desa = $request->input('desa', []);
-    //         if ($kecs) {
-    //             # code...
-    //             if ($desa) {
-    //                 # code...
-    //                 $wilayah = $desa;
-    //             } else {
-    //                 $wilayah = $kecs;
-    //             }
-    //         } else {
-    //             $wilayah = $request->input('wilayah', []);
-    //         }
-
-    //         $dinas = $request->input('dinas', []);
-    //         $subject = $request->input('subject', []);
-    //         $tahuns = $request->input('tahuns', []);
-
-    //         $searchWord = $request->input('searchData');
-
-    //         $tabels = Statustables::when(!empty($wilayah), function ($query) use ($wilayah) {
-    //             $query->whereIn('master_wilayah.wilayah_fullcode', $wilayah);
-    //         })
-    //             ->when(!empty($dinas), function ($query) use ($dinas) {
-    //                 $query->whereIn('dinas.id', $dinas);
-    //             })
-    //             ->when(!empty($subject), function ($query) use ($subject) {
-    //                 $query->whereIn('subjects.id', $subject);
-    //             })
-    //             ->when(!empty($tahuns), function ($query) use ($tahuns) {
-    //                 $query->whereIn('tahun', $tahuns);
-    //             })
-    //             ->when($searchWord, function ($query) use ($searchWord) {
-    //                 $query->where(function ($query) use ($searchWord) {
-    //                     $query->where('tabels.label', 'like', '%' . $searchWord . '%')
-    //                         ->orWhere('dinas.nama', 'like', '%' . $searchWord . '%')
-    //                         ->orWhere('master_wilayah.label', 'like', '%' . $searchWord . '%')
-    //                         ->orWhere('subjects.label', 'like', '%' . $searchWord . '%');
-    //                 });
-    //             })
-    //             ->where('status', 5)
-    //             ->leftJoin('tabels', 'statustables.id_tabel', '=', 'tabels.id')
-    //             ->leftJoin('dinas', 'tabels.id_dinas', '=', 'dinas.id')
-    //             ->leftJoin('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
-    //             ->leftJoin('subjects', 'tabels.id_subjek', '=', 'subjects.id')
-    //             ->get([
-    //                 'statustables.tahun',
-    //                 'tabels.*',
-    //                 'dinas.nama as nama_dinas',
-    //                 'master_wilayah.label as nama_regions',
-    //                 'subjects.label as nama_subjects',
-    //                 'statustables.updated_at as status_updated',
-    //             ]);
-
-
-    //         $counttabels = $tabels->count();
-    //         return view('tabel-list', compact('tabels', 'counttabels'))->render();
-    //     }
-
-    //     public function getMetaVariabel(Request $request)
-    //     {
-    //         $id_tabel = $request->id_tabel;
-    //         // dd($id_tabel);
-    //         $metavars = MetadataVariabel::join('metadata_variabel_status as mts', 'mts.id_tabel', '=', 'metadata_variabel.id_tabel')
-    //             ->where('metadata_variabel.id_tabel', $id_tabel)
-    //             ->where('mts.status', 5)
-    //             ->get([
-    //                 'metadata_variabel.*'
-    //             ]);
-    //         $satuan = Tabel::where('id', $id_tabel)->pluck('unit');
-    //         if (sizeof($metavars) == 0) {
-    //             # code...
-    //             return response()->json([
-    //                 'messages' => 'not',
-    //             ]);
-    //         }
-    //         return view('show-metadata-variabel', compact(
-    //             'metavars',
-    //             'satuan',
-    //         ));
-    //     }
 
     public function monitoring()
     {
@@ -602,6 +519,12 @@ class HomeController extends Controller
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
+        $this_metavar = MetadataVariabel::where('id_tabel', $id_tabel)->get();
+        foreach ($this_metavar as $key => $value) {
+            # code...
+            $value->number = $key + 1;
+            $value->satuan = $tabels->unit;
+        }
         return Inertia::render('Home/View', [
             'datacontents' => $datacontents,
             'tabels' => $tabels,
@@ -611,7 +534,8 @@ class HomeController extends Controller
             'row_label' => $rowLabel,
             'columns' => $columns,
             'turtahuns' => $turtahuns,
-            'tabel' => $statusTabel
+            'tabel' => $statusTabel,
+            'metavars' => $this_metavar,
         ]);
     }
 }

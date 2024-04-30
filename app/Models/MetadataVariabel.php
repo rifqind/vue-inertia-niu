@@ -10,10 +10,12 @@ class MetadataVariabel extends Model
 {
     use HasFactory, HasUuids;
     protected $table = 'metadata_variabel';
+    public $timestamps = true;
     public function tabel()
     {
         return $this->belongsTo(Tabel::class, 'id_tabel', 'id');
     }
+
     protected $fillable = [
         'id_tabel',
         'r101',
@@ -28,5 +30,6 @@ class MetadataVariabel extends Model
         'r110',
         'r111',
         'r112',
+        'updated_at'
     ];
 }

@@ -4,6 +4,8 @@ import FlashMessage from '@/Components/FlashMessage.vue';
 import SpinnerBorder from '@/Components/SpinnerBorder.vue';
 import { usePage, useForm, Head, Link } from '@inertiajs/vue3'
 import { onMounted, ref, onUpdated } from 'vue';
+import ModalBs from '@/Components/ModalBs.vue';
+import { downloadTabel } from '@/download'
 
 const page = usePage()
 const form = useForm({
@@ -15,6 +17,8 @@ const badges = ref(null)
 const toggleFlash = ref(false)
 const triggerSpinner = ref(false)
 const inputDisabled = ref(false)
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 
 var columnComponents, rowComponents
 var status = page.props.status_desc
@@ -219,6 +223,8 @@ const submit = function (decision) {
                     Kembali
                     </Link>
                 </div>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i> Download</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'save')"
                     class="btn bg-primary-fordone save-send mr-2" id="save-table">Simpan <i
                         class="fas fa-save"></i></button>
@@ -230,6 +236,19 @@ const submit = function (decision) {
                 <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'final')"
                     class="btn bg-success-fordone" id="save-table">Final <i class="fas fa-flag-checkered"></i></button>
             </div>
+            <Teleport to="body">
+                <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false"
+                    :title="'Download Data'">
+                    <template #modalBody>
+                        <label>Masukkan Judul File</label>
+                        <input type="text" v-model="downloadTitle" class="form-control" />
+                    </template>
+                    <template #modalFunction>
+                        <button type="button" class="btn btn-sm bg-success-fordone"
+                            @click.prevent="downloadTabel(downloadTitle)">Simpan</button>
+                    </template>
+                </ModalBs>
+            </Teleport>
         </div>
     </GeneralLayout>
 </template>

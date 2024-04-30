@@ -8,6 +8,7 @@ import GeneralLayout from '@/Layouts/GeneralLayout.vue'
 import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
+import { GoDownload } from '@/download'
 
 const page = usePage()
 var tGroup = page.props.tables
@@ -20,6 +21,8 @@ const currentRoute = page.props.route
 const triggerSpinner = ref(false)
 const toggleFlash = ref(false)
 const deleteModalStatus = ref(false)
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 
 const searchLabel = ref(null)
 const searchLabelDinas = ref(null)
@@ -102,8 +105,8 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Tabel
                 </div>
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i> Download</a>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i> Download</button>
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
@@ -167,7 +170,7 @@ const deleteForm = function () {
                     <td class="align-middle">{{ table.tahun }}</td>
                     <td class="align-middle">{{ table.status }}</td>
                     <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated
-                            }}</span><br>{{ table.status_updated }}</td>
+                            }}</span><br><span>{{ table.status_updated }}</span></td>
                     <td class="text-center align-middle deleted">
                         <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mr-5">
                         <i class="fa-solid fa-pencil" title="Cek/Edit"></i>
@@ -183,6 +186,16 @@ const deleteForm = function () {
             </tbody>
         </table>
         <Teleport to="body">
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="GoDownload('tabel-kolom', downloadTitle)">Simpan</button>
+                </template>
+            </ModalBs>
             <ModalBs :ModalStatus="deleteModalStatus" @close="function () {
         deleteModalStatus = false
         form.reset()

@@ -7,7 +7,7 @@ import { getPagination } from '@/pagination'
 import { Head, usePage, Link, useForm } from '@inertiajs/vue3'
 import { onMounted, ref, watch, onUpdated } from 'vue';
 import { clickSortProperties } from '@/sortAttribute';
-
+import { GoDownload } from '@/download'
 const page = usePage()
 var uObject = page.props.users
 var users = ref(uObject)
@@ -18,8 +18,10 @@ const searchInstansi = ref(null)
 const searchWilayah = ref(null)
 const searchNoHp = ref(null)
 const searchRole = ref(null)
+const downloadTitle = ref(null)
 const triggerSpinner = ref(false)
 const deleteModalStatus = ref(false)
+const downloadModalStatus = ref(false)
 
 //pagination
 const tabelUser = ref(null)
@@ -141,6 +143,9 @@ const deleteForm = function () {
         onError: function () { deleteModalStatus.value = true }
     })
 }
+const changeNumber = (number) => {
+    return number.replace(/^0/, '+62')
+}
 </script>
 <template>
 
@@ -152,8 +157,8 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Pengguna
                 </div>
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i></button>
                 <Link :href="route('users.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                 Tambah Pengguna Baru</Link>
             </div>
@@ -200,7 +205,7 @@ const deleteForm = function () {
                     <td>{{ user.name }}</td>
                     <td>{{ user.nama_dinas }}</td>
                     <td>{{ user.wilayah_label }}</td>
-                    <td>{{ user.noHp }}</td>
+                    <td>{{ changeNumber(user.noHp) }}</td>
                     <td>{{ user.role }}</td>
                     <td class="text-center deleted">
                         <a @click.prevent="resetPasswordLink(user.id)" class="update-pen mx-1">
@@ -228,6 +233,16 @@ const deleteForm = function () {
                 <template v-slot:modalFunction>
                     <button type="button" class="btn btn-sm badge-status-empat" :disabled="form.processing"
                         @click.prevent="deleteForm">Hapus</button>
+                </template>
+            </ModalBs>
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="GoDownload('tabel-user', downloadTitle)">Simpan</button>
                 </template>
             </ModalBs>
         </Teleport>

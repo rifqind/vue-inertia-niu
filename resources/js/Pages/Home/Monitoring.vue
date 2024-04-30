@@ -6,6 +6,8 @@ import { Head, usePage } from '@inertiajs/vue3'
 import { defineComponent, watch, ref, onMounted, onUpdated } from 'vue'
 import { getPagination } from '@/pagination'
 import axios from 'axios'
+import { GoDownload } from '@/download'
+import ModalBs from '@/Components/ModalBs.vue';
 
 defineComponent({
     Multiselect
@@ -15,6 +17,8 @@ var mObject = page.props.this_monitoring
 const monitoring = ref(mObject)
 const searchLabel = ref(null)
 const triggerSpinner = ref(false)
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 
 var valueChanged = 10
 var currentStatusText = null
@@ -80,8 +84,8 @@ onUpdated(() => {
                     <Multiselect @change="changeYearList" :options="yearDrop.options" v-model="yearDrop.value"
                         placeholder="-- Pilih Tahun --" />
                 </div>
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i> Download</a>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i> Download</button>
             </div>
         </div>
         <table class="table table-hover table-bordered" id="tabel-monitoring" ref="tabelMonitoring">
@@ -148,6 +152,18 @@ onUpdated(() => {
                 </nav>
             </div>
         </div>
+        <Teleport to="body">
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="GoDownload('tabel-monitoring', downloadTitle)">Simpan</button>
+                </template>
+            </ModalBs>
+        </Teleport>
     </GeneralLayout>
 </template>
 <style scoped>
