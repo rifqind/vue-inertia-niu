@@ -27,11 +27,11 @@ const toggleMenuOpen = function (x) {
 <template>
     <aside class="main-sidebar sidebar-light-success elevation-4">
         <!-- Brand Logo -->
-        <a href="{{ url('') }}" class="brand-link">
+        <div class="brand-link">
             <img src="../../images/favicon2.ico" id="icon-sidebar" alt="Nothing"
                 class="brand-image img-circle elevation-3">
             <span class="brand-text font-weight-bold">For D One</span>
-        </a>
+        </div>
 
         <!-- Sidebar -->
         <div class="sidebar">

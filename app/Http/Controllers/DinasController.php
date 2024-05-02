@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
-use App\Models\Region;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -175,6 +173,5 @@ class DinasController extends Controller
         $id = $request->id;
         Dinas::destroy($id);
         return redirect()->route('dinas.index')->with('message', 'Berhasil menghapus data');
-        // return response()->json('Berhasil Hapus');
     }
 }

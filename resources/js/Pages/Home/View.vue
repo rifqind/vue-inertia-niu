@@ -3,6 +3,7 @@ import HomeLayout from '@/Layouts/HomeLayout.vue'
 import { usePage, useForm, Link, Head } from '@inertiajs/vue3'
 import { clickSortProperties } from '@/sortAttribute'
 import ModalBs from '@/Components/ModalBs.vue';
+import { downloadTabel } from '@/download'
 import { ref } from 'vue';
 
 const page = usePage()
@@ -11,6 +12,10 @@ var metavars = ref(mvObject)
 
 const createModalStatus = ref(false)
 const ViewMetavar = ref(false)
+const metavarModalStatus = ref(false)
+const downloadModalStatus = ref(false)
+const check = ref(false)
+const downloadTitle = ref(null)
 var columnComponents, rowComponents
 const form = useForm({
     id: '',
@@ -62,6 +67,11 @@ const toggleUpdateModal = async function (id) {
 }
 const showMetavar = () => {
     ViewMetavar.value = !ViewMetavar.value
+    metavarModalStatus.value = true
+}
+const download = (titles) => {
+    window.location.href = `/export-view/${page.props.tabel.id_tabel}/${titles}`
+    downloadModalStatus.value = false
 }
 </script>
 <template>
@@ -169,6 +179,19 @@ const showMetavar = () => {
                         </div>
                     </template>
                 </ModalBs>
+                <ModalBs :-modal-status="downloadModalStatus"
+                    @close="() => { downloadModalStatus = false; downloadTitle = null }" :title="'Download Data'">
+                    <template #modalBody>
+                        <label>Masukkan Judul File</label>
+                        <input type="text" v-model="downloadTitle" class="form-control" />
+                    </template>
+                    <template #modalFunction>
+                        <button v-if="check" type="button" class="btn btn-sm bg-success-fordone"
+                            @click.prevent="downloadTabel(downloadTitle)">Simpan</button>
+                        <button v-else type="button" class="btn btn-sm bg-success-fordone"
+                            @click.prevent="download(downloadTitle)">Simpan</button>
+                    </template>
+                </ModalBs>
             </Teleport>
             <div class="card">
                 <div class="card-header">
@@ -203,8 +226,8 @@ const showMetavar = () => {
                 </div>
             </div>
             <div class="metavar-container" v-if="ViewMetavar">
-                <table class="table table-sorted table-hover table-bordered table-search" ref="tabelListMetavar"
-                    id="tabel-user">
+                <table v-if="metavars.length > 0" class="table table-sorted table-hover table-bordered table-search"
+                    ref="tabelListMetavar" id="tabel-user">
                     <thead>
                         <tr class="bg-info-fordone">
                             <th class="first-column" @click="clickSortProperties(page.props.metavars, 'number')">No.
@@ -241,6 +264,13 @@ const showMetavar = () => {
                         </tr>
                     </tbody>
                 </table>
+                <Teleport v-else to="body">
+                    <ModalBs :-modal-status="metavarModalStatus" @close="metavarModalStatus = false">
+                        <template #modalBody>
+                            <label>Data ini belum ada Metadata Variabelnya</label>
+                        </template>
+                    </ModalBs>
+                </Teleport>
             </div>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
@@ -248,6 +278,14 @@ const showMetavar = () => {
                     Kembali
                     </Link>
                 </div>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="() => { downloadModalStatus = true; check = true }"><i class="fa-solid fa-circle-down"></i>
+                    Download
+                    Data</button>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="() => { downloadModalStatus = true; check = false }"><i class="fa-solid fa-circle-down"></i>
+                    Download
+                    Metadata</button>
                 <button @click="showMetavar" class="btn bg-info-fordone" id="showMetavar"><i
                         class="fa-solid mr-1 fa-book-bookmark"></i>
                     Metadata Variabel</button>
@@ -256,15 +294,26 @@ const showMetavar = () => {
     </HomeLayout>
 </template>
 <style scoped>
+.bg-success-fordone {
+    background-color: #1D845B;
+    color: whitesmoke;
+}
+
+.bg-success-fordone:hover {
+    background-color: #385d4e;
+    color: whitesmoke;
+}
+
 .bg-info-fordone {
     background-color: #3d3b8e;
     color: whitesmoke;
 }
 
-.bg-info-fordone:hover{
+.bg-info-fordone:hover {
     background-color: #434272;
     color: whitesmoke;
 }
+
 .table thead tr th {
     background-color: #3d3b8e;
     color: whitesmoke;

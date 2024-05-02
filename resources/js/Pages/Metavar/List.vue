@@ -8,6 +8,7 @@ import FlashMessage from '@/Components/FlashMessage.vue';
 import Multiselect from '@vueform/multiselect'
 import { ref, watch, onMounted, defineComponent, onUpdated } from 'vue'
 import axios from 'axios'
+import { GoDownload } from '@/download'
 
 const page = usePage()
 var master = page.props.master_metavar.map((obj) => ({
@@ -28,6 +29,8 @@ const toggleFlash = ref(false)
 const createModalStatus = ref(false)
 const masterModalStatus = ref(false)
 const deleteModalStatus = ref(false)
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 const searchR101 = ref(null)
 const searchR102 = ref(null)
 const searchR103 = ref(null)
@@ -211,6 +214,10 @@ onUpdated(async () => {
         options: [...[{ label: 'Baru/Tidak Menggunakan Master', value: 0 }], ...master]
     })
 })
+const download = (titles) => {
+    window.location.href = `/export/${page.props.id_tabel}/${titles}`
+    downloadModalStatus.value = false
+}
 </script>
 
 <template>
@@ -227,8 +234,8 @@ onUpdated(async () => {
                 </div>
             </div>
             <div class="d-flex justify-content-end mb-2">
-                <a href="#" class="btn bg-success-fordone mr-2" title="Download" data-target="#downloadModal"
-                    data-toggle="modal"><i class="fa-solid fa-circle-down"></i></a>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i></button>
                 <a @click="masterModalStatus = true" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
                     Tambah Metadata Variabel Baru</a>
             </div>
@@ -288,6 +295,16 @@ onUpdated(async () => {
             </tbody>
         </table>
         <Teleport to="body">
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="download(downloadTitle)">Simpan</button>
+                </template>
+            </ModalBs>
             <ModalBs :ModalStatus="createModalStatus" @close="() => { createModalStatus = false; form.reset() }"
                 :modalSize="'modal-xl modal-dialog-scrollable'">
                 <template #modalBody>

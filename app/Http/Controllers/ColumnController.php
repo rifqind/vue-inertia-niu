@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Column;
 use App\Models\ColumnGroup;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ColumnController extends Controller
@@ -17,7 +15,6 @@ class ColumnController extends Controller
     public function index()
     {
         // get the resource
-        // $columns = Column::join('column_groups', 'columns.id_columns_group', 'column_groups.id')->select('columns.id', 'columns.label', 'column_groups.label as tipe')->get();
         $columns = Column::leftJoin('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')
             ->get([
                 'columns.*',

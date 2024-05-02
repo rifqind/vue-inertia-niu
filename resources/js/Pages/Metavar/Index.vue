@@ -5,6 +5,8 @@ import { clickSortProperties } from '@/sortAttribute'
 import { searchCell } from '@/searchCell'
 import { getPagination } from '@/pagination'
 import { ref, watch, onMounted } from 'vue'
+import { GoDownload } from '@/download'
+import ModalBs from '@/Components/ModalBs.vue';
 
 const page = usePage()
 var mvGroup = page.props.tabels
@@ -16,6 +18,8 @@ const tabelMetavars = ref(null)
 const statusText = ref(null)
 const maxRows = ref(null)
 const currentPagination = ref(null)
+const downloadModalStatus = ref(false)
+const downloadTitle = ref(null)
 
 const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel },
@@ -57,9 +61,11 @@ onMounted(() => {
                 <div class="h4 flex-grow-1">
                     Daftar Metadata
                 </div>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
+                        class="fa-solid fa-circle-down"></i> Download</button>
             </div>
         </div>
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelMetavars" id="tabel-kolom">
+        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelMetavars" id="tabel-metavar">
             <thead>
                 <tr class="bg-info-fordone">
                     <th class="first-column text-center align-middle"
@@ -103,7 +109,7 @@ onMounted(() => {
                     <td v-if="node.status_metavar == 0" class="align-middle">Belum di Entri</td>
                     <td v-else class="align-middle">{{ node.status_desc }}</td>
                     <td class="text-center align-middle"><span class="badge badge-info">{{ node.who_updated
-                            }}</span><br>{{ node.when_updated }}</td>
+                            }}</span><br><span>{{ node.when_updated }}</span></td>
                     <td class="text-center align-middle deleted">
                         <Link :href="route('metavar.lists', { id: node.id })">
                         <i class="fa-solid fa-eye" title="Cek"></i>
@@ -112,6 +118,18 @@ onMounted(() => {
                 </tr>
             </tbody>
         </table>
+        <Teleport to="body">
+            <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
+                <template #modalBody>
+                    <label>Masukkan Judul File</label>
+                    <input type="text" v-model="downloadTitle" class="form-control" />
+                </template>
+                <template #modalFunction>
+                    <button type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="GoDownload('tabel-metavar', downloadTitle)">Simpan</button>
+                </template>
+            </ModalBs>
+        </Teleport>
         <div class="d-flex justify-content-end align-items-center">
             <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
                 <span id="showTotal"></span>

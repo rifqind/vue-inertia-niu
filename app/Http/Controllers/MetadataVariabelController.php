@@ -9,7 +9,6 @@ use App\Models\MetadataVariabelStatus;
 use App\Models\Tabel;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -158,16 +157,10 @@ class MetadataVariabelController extends Controller
             ], 500);
         }
     }
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
-    public function export($id) {
-        return Excel::download(new MetaDataExport($id), "test.xlsx");
+    public function export(string $id, $title)
+    {
+        return Excel::download(new MetaDataExport($id), $title . ".xlsx");
     }
 
     /**
@@ -202,65 +195,13 @@ class MetadataVariabelController extends Controller
         return response()->json($this_metavar);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request)
-    {
-        //
-        $request->validate([
-            'r101' => 'required',
-            'r102' => 'required',
-            'r103' => 'required',
-            'r104' => 'required',
-            'r105' => 'required',
-            'r106' => 'required',
-            'r107' => 'required',
-            'r108' => 'required',
-            'r109' => 'required',
-            'r110' => 'required',
-            'r111' => 'required',
-            'r112' => 'required',
-        ]);
-        $metavar = MetadataVariabel::where('id', $request->id)->update([
-            'id_tabel' => $request->id_tabel,
-            'r101' => $request->r101,
-            'r102' => $request->r102,
-            'r103' => $request->r103,
-            'r104' => $request->r104,
-            'r105' => $request->r105,
-            'r106' => $request->r106,
-            'r107' => $request->r107,
-            'r108' => $request->r108,
-            'r109' => $request->r109,
-            'r110' => $request->r110,
-            'r111' => $request->r111,
-            'r112' => $request->r112,
-        ]);
-        $metavars = MetadataVariabel::where('id_tabel', $request->id_tabel)->get();
-        $satuan = Tabel::where('id', $request->id_tabel)->pluck('unit');
-        // return response()->json("Berhasil");
-        return view('metadata_variabel.list-tabel', compact(
-            'metavars',
-            'satuan'
-        ))->render();
-    }
-
     public function metavarSend(string $id)
     {
         $this_metavar_status = MetadataVariabelStatus::where('id_tabel', $id)->update([
             'status' => 3,
             'edited_by' => auth()->user()->id,
         ]);
-               
+
         return redirect()->route('metavar.lists', ['id' => $id])->with('message', 'Berhasil mengirim metadata untuk diperiksa');
     }
 

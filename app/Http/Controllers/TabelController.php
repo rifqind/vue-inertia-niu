@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreUpdateTabelRequest;
 use App\Models\Catatan;
 use App\Models\Column;
 use App\Models\ColumnGroup;
@@ -11,18 +10,15 @@ use App\Models\Datacontent;
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
 use App\Models\Notifikasi;
-use App\Models\Region;
 use App\Models\Row;
 use App\Models\RowGroup;
 use App\Models\Tabel;
-use App\Models\Rowlabel;
 use App\Models\Statustables;
 use App\Models\Subject;
 use App\Models\Turtahun;
 use App\Models\TurTahunGroup;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -223,46 +219,6 @@ class TabelController extends Controller
             'tables' => $table_objects,
         ]);
     }
-
-    //     public function getDatacontent(Request $request)
-    //     {
-    //         $tabel_id = $request->query('tabel_id');
-    //         $data = Datacontent::where('label', 'LIKE', $tabel_id . '%')->get();
-    //         $id_rows = [];
-    //         $id_columns = [];
-    //         foreach ($data as $dat) {
-    //             $split = explode("-", $dat->label);
-    //             array_push($id_rows, $split[1]);
-    //             array_push($id_columns, $split[2]);
-    //             $tahun = $split[3];
-    //             $turtahuns = $split[4];
-    //         }
-    //         $tabels = Tabel::where('id', $tabel_id)->get();
-    //         $rows = Row::whereIn('id', $id_rows)->get();
-    //         $rowLabel = RowLabel::where('id', $rows[0]->id_rowlabels)->get();
-    //         $columns = Column::whereIn('id', $id_columns)->get();
-
-    //         return response()->json([
-    //             'datacontents' => $data,
-    //             'tabels' => $tabels,
-    //             'rows' => $rows,
-    //             'row_label' => $rowLabel,
-    //             'columns' => $columns,
-    //             'tahun' => $tahun,
-    //             'turtahuns' => $turtahuns,
-    //         ]);
-    //     }
-
-    //     /**
-    //      * Show the form for creating a new resource.
-    //      */
-    //     public function get_rows_by_row_labels($id_rowLabels)
-    //     {
-    //         return Row::join('rowlabels', 'rows.id_rowlabels', '=', 'rowlabels.id')
-    //             ->where('rows.id_rowlabels', $id_rowLabels) // tbd
-    //             ->select('rows.id', 'rows.label', 'rowlabels.label as tipe')
-    //             ->get();
-    //     }
 
     public function create()
     {
@@ -679,68 +635,10 @@ class TabelController extends Controller
         return redirect()->route('tabel.entri', ['id' => $status->id])->with('message', 'Berhasil');
     }
 
-    //     /**
-    //      * Remove the specified resource from storage.
-    //      */
-    //     public function destroy(Request $request)
-    //     {
-    //         $id = $request->id;
-    //         $decryptedId = Crypt::decrypt($id);
-
-    //         try {
-    //             DB::beginTransaction();
-    //             $thisTabel = Tabel::where('id', $decryptedId)->first();
-    //             $thisStatusTabel = Statustables::where('id_tabel', $decryptedId)->get();
-    //             $thisDataContents = Datacontent::where('id_tabel', $decryptedId)->get();
-
-    //             foreach ($thisDataContents as $value) {
-    //                 # code...
-    //                 $value->delete();
-    //             }
-
-    //             // $thisDataContents->delete();
-
-    //             foreach ($thisStatusTabel as $value) {
-    //                 # code...
-    //                 $value->delete();
-    //             }
-    //             // $thisStatusTabel->delete();
-    //             $thisTabel->delete();
-    //             DB::commit();
-    //             // hapus tabel status
-    //         } catch (\Throwable $th) {
-    //             DB::rollBack();
-    //             return response()->json([
-    //                 'object' => $th,
-    //                 'message' => 'sorry u cant do something like this',
-    //             ]);
-    //         }
-    //         return response()->json([
-    //             'messages' => 'Berhasil dihapus'
-    //         ]);
-    //     }
-
     public function statusDestroy(Request $request)
     {
         $thisStatus = Statustables::where('id', $request->id);
         $thisStatus->update(['status' => '6']);
         return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
     }
-
-    //     public function fetchMasterKecamatan($kab)
-    //     {
-    //         $daftar_kecamatan = MasterWilayah::where('kab', 'like', $kab)->where('kec', 'not like', '000')->where('desa', 'like', '000')->get();
-    //         return response()->json([
-    //             'data' => $daftar_kecamatan,
-    //             'status_code' => 200
-    //         ]);
-    //     }
-    //     public function fetchMasterDesa($kab, $kec)
-    //     {
-    //         $daftar_desa = MasterWilayah::where('kab', 'like', $kab)->where('kec', 'like', $kec)->where('kec', 'not like', '000')->where('desa', 'not like', '000')->get();
-    //         return response()->json([
-    //             'data' => $daftar_desa,
-    //             'status_code' => 200
-    //         ]);
-    //     }
 }

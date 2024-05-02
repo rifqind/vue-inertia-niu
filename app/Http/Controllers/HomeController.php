@@ -8,28 +8,17 @@ use App\Models\Dinas;
 use App\Models\MasterWilayah;
 use App\Models\MetadataVariabel;
 use App\Models\Notifikasi;
-use App\Models\Region;
 use App\Models\Row;
 use App\Models\RowGroup;
-use App\Models\Rowlabel;
 use App\Models\Statustables;
-use App\Models\Subject;
 use App\Models\Tabel;
 use App\Models\Turtahun;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class HomeController extends Controller
 {
-    //     /**
-    //      * Display a listing of the resource.
-    //      */
-    // public function index()
-    // {
-    //     return Inertia::render('Home/Home');
-    // }
     public function index()
     {
         //
@@ -119,12 +108,10 @@ class HomeController extends Controller
         $desa = array_values(array_unique($desa, SORT_REGULAR));
         $wilayahs = (sizeof($tabels) > 0) ? array_merge($provs, $kabs) : [];
         $subjects = array_values(array_unique($subjects, SORT_REGULAR));
-        // $subjects = Subject::all();
         $tahuns = Statustables::where('status', 5)->distinct()->get(['tahun as value', 'tahun as label']);
         $countfinals = Statustables::where('status', 5)->count();
         $counttabels = $tabels->count();
         return Inertia::render('Home/Home', [
-            // 'kabs' => $kabs,
             'kecs' => $kecs,
             'desa' => $desa,
             'wilayahs' => $wilayahs,
@@ -192,54 +179,6 @@ class HomeController extends Controller
 
         return response()->json($this_monitoring);
     }
-
-    //     /**
-    //      * Show the form for creating a new resource.
-    //      */
-    //     public function create()
-    //     {
-    //         //
-    //     }
-
-    //     /**
-    //      * Store a newly created resource in storage.
-    //      */
-    //     public function store(Request $request)
-    //     {
-    //         //
-    //     }
-
-    //     /**
-    //      * Display the specified resource.
-    //      */
-    //     // public function show(string $id)
-    //     // {
-    //     //     //
-    //     // }
-
-    //     /**
-    //      * Show the form for editing the specified resource.
-    //      */
-    //     public function edit(string $id)
-    //     {
-    //         //
-    //     }
-
-    //     /**
-    //      * Update the specified resource in storage.
-    //      */
-    //     public function update(Request $request, string $id)
-    //     {
-    //         //
-    //     }
-
-    //     /**
-    //      * Remove the specified resource from storage.
-    //      */
-    //     public function destroy(string $id)
-    //     {
-    //         //
-    //     }
 
     public function dashboard()
     {
@@ -325,7 +264,6 @@ class HomeController extends Controller
 
     public function getDashboard(string $years, string $wilayah)
     {
-        // dd($years, $wilayah);
 
         if (auth()->user()->role != 'produsen') {
             # code...
@@ -407,35 +345,6 @@ class HomeController extends Controller
             'totalTabels' => $totalTabels,
         ]);
     }
-
-    //     public function getDatacontent(Request $request)
-    //     {
-    //         $tabel_id = $request->query('tabel_id');
-    //         $data = Datacontent::where('label', 'LIKE', $tabel_id . '%')->get();
-    //         $id_rows = [];
-    //         $id_columns = [];
-    //         foreach ($data as $dat) {
-    //             $split = explode("-", $dat->label);
-    //             array_push($id_rows, $split[1]);
-    //             array_push($id_columns, $split[2]);
-    //             $tahun = $split[3];
-    //             $turtahuns = $split[4];
-    //         }
-    //         $tabels = Tabel::where('id', $tabel_id)->get();
-    //         $rows = Row::whereIn('id', $id_rows)->get();
-    //         $rowLabel = Rowlabel::where('id', $rows[0]->id_rowlabels)->get();
-    //         $columns = Column::whereIn('id', $id_columns)->get();
-
-    //         return response()->json([
-    //             'datacontents' => $data,
-    //             'tabels' => $tabels,
-    //             'rows' => $rows,
-    //             'row_label' => $rowLabel,
-    //             'columns' => $columns,
-    //             'tahun' => $tahun,
-    //             'turtahuns' => $turtahuns,
-    //         ]);
-    //     }
 
     public function show(Request $request)
     {

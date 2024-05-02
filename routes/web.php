@@ -1,5 +1,6 @@
 <?php
 
+use App\Exports\BatchViewExport;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\DinasController;
 use App\Http\Controllers\HomeController;
@@ -14,9 +15,9 @@ use App\Http\Controllers\TabelController;
 use App\Http\Controllers\MetadataVariabelController;
 use App\Models\MetadataVariabel;
 use App\Models\Turtahun;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 /*
 |--------------------------------------------------------------------------
@@ -157,5 +158,8 @@ Route::get('/master_metavar/fetch', function () {
     $target = MetadataVariabel::selectRaw('MIN(id) as id, r101')->groupBy('r101')->get();
     return response()->json($target);
 })->name('updateMasterMetavar');
-Route::get('/export/{id}', [MetadataVariabelController::class, 'export'])->name('export');
+Route::get('/export/{id}/{title}', [MetadataVariabelController::class, 'export'])->name('export');
+Route::get('/export-view/{id}/{title}', function (string $id, $title) {
+    return Excel::download(new BatchViewExport($id), $title . ".xlsx");
+})->name('exportView');
 require __DIR__ . '/auth.php';

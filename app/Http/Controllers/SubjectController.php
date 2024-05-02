@@ -2,13 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
-use Illuminate\Support\Facades\Crypt;
-
-
 use App\Models\Subject;
-use App\Http\Requests\StoreSubjectRequest;
-use App\Http\Requests\UpdateSubjectRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -39,7 +33,7 @@ class SubjectController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreSubjectRequest $request)
+    public function store(Request $request)
     {
         // dd($request);
         if ($request->id) {

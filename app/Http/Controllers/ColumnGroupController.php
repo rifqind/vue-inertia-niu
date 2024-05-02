@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ColumnGroup;
-use App\Http\Requests\StoreColumnGroupRequest;
-use App\Http\Requests\UpdateColumnGroupRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Inertia\Inertia;
 
 class ColumnGroupController extends Controller
