@@ -16,7 +16,7 @@ class CorsGuard
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-        $response->headers->set('Access-Control-Allow-Origin', 'cdn.jsdelivr.net fonts.googleapis.com *.fontawesome.com unpkg.com fonts.gstatic.com');
+        $response->headers->set('Access-Control-Allow-Origin', 'cdn.jsdelivr.net fonts.googleapis.com *.fontawesome.com unpkg.com fonts.gstatic.com fonts.bunny.net');
         return $response;
     }
 }

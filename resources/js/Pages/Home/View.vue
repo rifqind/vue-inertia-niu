@@ -258,8 +258,8 @@ const download = (titles) => {
                             <td>{{ node.r104 }}</td>
                             <td>{{ node.satuan }}</td>
                             <td class="text-center deleted">
-                                <a @click.prevent="toggleUpdateModal(node.id)" class="edit-pen"><i
-                                        class="fa-solid fa-eye" title="Cek"></i></a>
+                                <a @click.prevent="toggleUpdateModal(node.id)" class="edit-pen"><font-awesome-icon
+                                        icon="fa-solid fa-eye" title="Cek" /></a>
                             </td>
                         </tr>
                     </tbody>
@@ -274,20 +274,23 @@ const download = (titles) => {
             </div>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
-                    <Link :href="route('home')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
+                    <Link :href="route('home')" class="btn btn-light border"><font-awesome-icon
+                        icon="fas fa-chevron-left" />
                     Kembali
                     </Link>
                 </div>
                 <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="() => { downloadModalStatus = true; check = true }"><i class="fa-solid fa-circle-down"></i>
+                    @click="() => { downloadModalStatus = true; check = true }"><font-awesome-icon
+                        icon="fa-solid fa-circle-down" />
                     Download
                     Data</button>
                 <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="() => { downloadModalStatus = true; check = false }"><i class="fa-solid fa-circle-down"></i>
+                    @click="() => { downloadModalStatus = true; check = false }"><font-awesome-icon
+                        icon="fa-solid fa-circle-down" />
                     Download
                     Metadata</button>
-                <button @click="showMetavar" class="btn bg-info-fordone" id="showMetavar"><i
-                        class="fa-solid mr-1 fa-book-bookmark"></i>
+                <button @click="showMetavar" class="btn bg-info-fordone" id="showMetavar"><font-awesome-icon
+                        icon="fa-solid mr-1 fa-book-bookmark" />
                     Metadata Variabel</button>
             </div>
         </div>

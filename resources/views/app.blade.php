@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css" />
     <link rel="icon" href="{{ url('') }}/images/favicon2.ico"/>
     <!-- Scripts -->
-    @routes
+    @routes(nonce: Vite::cspNonce())
     @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
     @inertiaHead
 </head>

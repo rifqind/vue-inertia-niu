@@ -26,7 +26,7 @@ class ViteSecurity
         $cspDirectives = [
             'base-uri' => "'self'",
             'script-src' => "'self' kit.fontawesome.com 'nonce-$nonce' cdn.jsdelivr.net",
-            'style-src' => "'self' 'nonce-$nonce' fonts.googleapis.com cdn.jsdelivr.net kit.fontawesome.com",
+            'style-src' => "'self' 'nonce-$nonce' fonts.googleapis.com cdn.jsdelivr.net kit.fontawesome.com fonts.bunny.net cdnjs.cloudflare.com",
             'connect-src' => "'self' ka-f.fontawesome.com",
             // 'default-src' => "default-src 'self' fonts.gstatic.com cdn.jsdelivr.net",
             'form-action' => "'self'",
@@ -35,7 +35,7 @@ class ViteSecurity
             'object-src' => "'self'",
             'frame-src' => "'self'",
             'frame-ancestors' => "'self'",
-            'font-src' => "'self' fonts.gstatic.com fonts.googleapis.com *.fontawesome.com cdn.jsdelivr.net",
+            'font-src' => "'self' fonts.gstatic.com fonts.googleapis.com *.fontawesome.com cdn.jsdelivr.net fonts.bunny.net",
             'manifest-src' => "'self'",
             // Add other directives as needed
         ];

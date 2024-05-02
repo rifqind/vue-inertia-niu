@@ -41,10 +41,10 @@ const submit = function () {
                                     </div>
                                 </div>
                                 <div class="mx-2">
-                                    <button id="login" class="mb-2 btn bg-success-fordone form-login"><i
-                                            class="fa-solid fa-right-to-bracket"></i> Masuk</button>
-                                    <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')"><i
-                                        class="fa-solid fa-rotate-left"></i> Kembali ke Beranda</Link>
+                                    <button id="login" class="mb-2 btn bg-success-fordone form-login"><font-awesome-icon
+                                            icon="fa-solid fa-right-to-bracket"/> Masuk</button>
+                                    <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')"><font-awesome-icon
+                                        icon="fa-solid fa-rotate-left"/> Kembali ke Beranda</Link>
                                 </div>
                             </form>
                         </div>

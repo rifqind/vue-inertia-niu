@@ -84,8 +84,8 @@ const getDashboard = async function () {
                 <Multiselect :options="kabsDrop.options" v-model="kabsDrop.value" placeholder="-- Pilih Wilayah --" />
             </div>
             <div class="">
-                <button @click.prevent="getDashboard" type="submit" class="btn bg-info-fordone"><i
-                        class="fa-solid fa-magnifying-glass"></i></button>
+                <button @click.prevent="getDashboard" type="submit" class="btn bg-info-fordone"><font-awesome-icon
+                        icon="fa-solid fa-magnifying-glass" /></button>
             </div>
         </div>
         <div class="row d-flex justify-content-start">
@@ -96,7 +96,8 @@ const getDashboard = async function () {
                             <div class="text-bold mb-2 text-satu">JUMLAH TABEL BARU</div>
                             <div class="h5 text-bold">{{ newTabels }} Tabel</div>
                         </div>
-                        <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-bars-staggered text-satu"></i>
+                        <div class="col-auto align-middle"><font-awesome-icon icon="fa-solid fa-bars-staggered"
+                                size="2x" class="text-satu" />
                         </div>
                     </div>
                 </div>
@@ -108,7 +109,8 @@ const getDashboard = async function () {
                             <div class="text-bold mb-2 text-lima">RILIS</div>
                             <div class="h5 text-bold">{{ finalTabels }} Tabel</div>
                         </div>
-                        <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-check-double text-lima"></i>
+                        <div class="col-auto align-middle"><font-awesome-icon size="2x" icon="fa-solid fa-check-double"
+                                class="text-lima" />
                         </div>
                     </div>
                 </div>
@@ -122,7 +124,8 @@ const getDashboard = async function () {
                             <div class="text-bold mb-2 text-dua">DALAM PROSES ENTRI</div>
                             <div class="h5 text-bold">{{ entriTabels }} Tabel</div>
                         </div>
-                        <div class="col-auto align-middle"><i class="fa-solid fa-2x fa-pen-nib text-dua"></i>
+                        <div class="col-auto align-middle"><font-awesome-icon size="2x" icon="fa-solid fa-pen-nib"
+                                class="text-dua" />
                         </div>
                     </div>
                 </div>
@@ -134,7 +137,8 @@ const getDashboard = async function () {
                             <div class="text-bold mb-2 text-tiga">DIPERIKSA</div>
                             <div class="h5 text-bold">{{ verifyTabels }} Tabel</div>
                         </div>
-                        <div class="col-auto align-middle"><i class="fa-regular fa-2x fa-hourglass-half text-tiga"></i>
+                        <div class="col-auto align-middle"><font-awesome-icon size="2x"
+                                icon="fa-solid fa-hourglass-half" class="text-tiga" />
                         </div>
                     </div>
                 </div>
@@ -146,8 +150,8 @@ const getDashboard = async function () {
                             <div class="text-bold mb-2 text-empat">PERLU PERBAIKAN</div>
                             <div class="h5 text-bold">{{ repairTabels }} Tabel</div>
                         </div>
-                        <div class="col-auto align-middle"><i
-                                class="fa-solid fa-2x fa-screwdriver-wrench text-empat"></i></div>
+                        <div class="col-auto align-middle"><font-awesome-icon size="2x"
+                                icon="fa-solid fa-screwdriver-wrench" class="text-empat" /></div>
                     </div>
                 </div>
             </div>
@@ -164,29 +168,29 @@ const getDashboard = async function () {
                             <!-- <canvas id="pie-chart"></canvas> -->
                         </div>
                         <div class="row p-2">
-                            <div class="col">
+                            <div class="col p-0">
                                 <div class="small mr-3">
-                                    <i class="fa-solid fa-circle text-satu"></i>
+                                    <font-awesome-icon icon="fa-solid fa-circle" class="text-satu" />
                                     Tabel Baru
                                 </div>
                                 <div class="small mr-3">
-                                    <i class="fa-solid fa-circle text-lima"></i>
+                                    <font-awesome-icon icon="fa-solid fa-circle" class="text-lima" />
                                     Rilis
                                 </div>
                             </div>
-                            <div class="col">
+                            <div class="col p-0">
                                 <div class="small mr-3">
-                                    <i class="fa-solid fa-circle text-dua"></i>
+                                    <font-awesome-icon icon="fa-solid fa-circle" class="text-dua" />
                                     Proses Entri
                                 </div>
                                 <div class="small mr-3">
-                                    <i class="fa-solid fa-circle text-tiga"></i>
+                                    <font-awesome-icon icon="fa-solid fa-circle" class="text-tiga" />
                                     Diperiksa
                                 </div>
                             </div>
-                            <div class="col">
+                            <div class="col p-0">
                                 <div class="small">
-                                    <i class="fa-solid fa-circle text-empat"></i>
+                                    <font-awesome-icon icon="fa-solid fa-circle" class="text-empat" />
                                     Perbaikan
                                 </div>
                             </div>

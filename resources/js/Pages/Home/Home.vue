@@ -374,11 +374,11 @@ const showCard = (targetVisible) => {
                             <!-- {{-- <div class="row pr-3 pb-2"> --}} -->
                             <div @click.prevent="submit" class="btn ml-auto mb-3 w-25 button-search">
                                 <div class="text-white">
-                                    <i class="fa-brands fa-searchengin"></i> Cari
+                                    <font-awesome-icon icon="fa-brands fa-searchengin" /> Cari
                                 </div>
                             </div>
                             <div class="btn button-search mb-3 ml-1" @click="reset" title="Reset">
-                                <i class="fa-solid fa-rotate-right"></i>
+                                <font-awesome-icon icon="fa-solid fa-rotate-right" />
                             </div>
                             <!-- {{-- </div> --}} -->
                         </div>

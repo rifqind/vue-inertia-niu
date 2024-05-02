@@ -125,7 +125,7 @@ const toggleMenuOpen = function (x) {
                         Profile</NavLinkSidebar>
                     <li class="nav-item">
                         <Link :href="route('/')" class="nav-link">
-                        <i class="nav-icon fa-solid fa-home"></i>
+                        <font-awesome-icon icon="nav-icon fa-solid fa-home" />
                         <p class="text-bold">
                             Kembali ke Beranda
                         </p>

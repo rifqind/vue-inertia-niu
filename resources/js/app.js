@@ -1,5 +1,5 @@
 import "./bootstrap";
-import "./fontawesome";
+// import "./fontawesome";
 import "../css/app.css";
 
 import "bootstrap/dist/css/bootstrap.css";
@@ -14,6 +14,84 @@ import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
+import { library } from "@fortawesome/fontawesome-svg-core";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { faSearchengin } from "@fortawesome/free-brands-svg-icons";
+import {
+    faAngleLeft,
+    faBars,
+    faBarsStaggered,
+    faBookBookmark,
+    faBuilding,
+    faCheck,
+    faCheckDouble,
+    faChevronLeft,
+    faCircle,
+    faCircleDown,
+    faDisplay,
+    faEye,
+    faHome,
+    faHourglassHalf,
+    faKey,
+    faListOl,
+    faLock,
+    faMagnifyingGlass,
+    faPen,
+    faPenNib,
+    faPencil,
+    faPlus,
+    faRecycle,
+    faRightToBracket,
+    faRotateLeft,
+    faRotateRight,
+    faSave,
+    faScrewdriverWrench,
+    faTable,
+    faTachometerAlt,
+    faTags,
+    faThList,
+    faTrashCan,
+    faUser,
+    faUsers,
+} from "@fortawesome/free-solid-svg-icons";
+library.add(
+    faAngleLeft,
+    faBars,
+    faBarsStaggered,
+    faBookBookmark,
+    faBuilding,
+    faCheck,
+    faCheckDouble,
+    faChevronLeft,
+    faCircle,
+    faCircleDown,
+    faDisplay,
+    faEye,
+    faHome,
+    faHourglassHalf,
+    faKey,
+    faListOl,
+    faLock,
+    faMagnifyingGlass,
+    faPen,
+    faPenNib,
+    faPencil,
+    faPlus,
+    faRecycle,
+    faRightToBracket,
+    faRotateLeft,
+    faRotateRight,
+    faSave,
+    faScrewdriverWrench,
+    faSearchengin,
+    faTable,
+    faTachometerAlt,
+    faTags,
+    faThList,
+    faTrashCan,
+    faUser,
+    faUsers
+);
 // import NProgress from "nprogress";
 // import { router } from "@inertiajs/vue3";
 
@@ -56,6 +134,7 @@ createInertiaApp({
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
+            .component('font-awesome-icon', FontAwesomeIcon)
             .mount(el);
     },
     // progress: false,

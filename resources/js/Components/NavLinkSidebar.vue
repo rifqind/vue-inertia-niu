@@ -24,7 +24,7 @@ const props = defineProps({
 <template>
     <li v-if="role" class="nav-item">
         <Link :href="href" class="nav-link" :class="{ 'active': currentRoute }">
-        <i class="nav-icon" :class="navIcon"></i>
+        <font-awesome-icon class="nav-icon" :icon="navIcon" />
         <p>
             <slot />
         </p>
