@@ -458,7 +458,8 @@ const showCard = (targetVisible) => {
 }
 
 .custom-card {
-    background-image: url("../images/banner.png");
+    /* background-image: url("../images/banner.png"); */
+    background-image: url("../../../images/banner.png");
     height: 300px;
     background-repeat: no-repeat;
     background-size: cover;

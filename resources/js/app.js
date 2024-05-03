@@ -14,7 +14,7 @@ import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
-import { library } from "@fortawesome/fontawesome-svg-core";
+import { library, config } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faSearchengin } from "@fortawesome/free-brands-svg-icons";
 import {
@@ -104,6 +104,7 @@ library.add(
     faUserTie,
     faUsers
 );
+config.autoAddCss = false;
 // import NProgress from "nprogress";
 // import { router } from "@inertiajs/vue3";
 
@@ -146,7 +147,7 @@ createInertiaApp({
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .component('font-awesome-icon', FontAwesomeIcon)
+            .component("font-awesome-icon", FontAwesomeIcon)
             .mount(el);
     },
     // progress: false,
@@ -154,6 +155,6 @@ createInertiaApp({
         color: "#8B1E3F",
         showSpinner: true,
         delay: 250,
-        includeCSS: true,
+        includeCSS: false,
     },
 });

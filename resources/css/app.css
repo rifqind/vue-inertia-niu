@@ -1,9 +1,17 @@
 /* @tailwind base; */
 /* @tailwind components; */
 /* @tailwind utilities; */
-body{
+@import url('/node_modules/@fortawesome/fontawesome-svg-core/styles.css');
+
+body {
     font-family: "Poppins", sans-serif !important;
 }
+
 #nprogress .bar {
     background: #fe2e6c !important;
-  }
+    z-index: 2000 !important;
+}
+
+#nprogress .spinner {
+    z-index: 2000 !important;
+}
