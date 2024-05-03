@@ -378,7 +378,7 @@ onMounted(() => {
                                             <th>
                                                 <div class="btn btn-sm bg-success-fordone mr-1"
                                                     @click="toggleAll(rowsCheckBox)">
-                                                    <i class="fa fa-check"></i>
+                                                    <font-awesome-icon icon="fa fa-check"/>
                                                 </div>
                                                 Pilih Semua
                                             </th>
@@ -427,7 +427,7 @@ onMounted(() => {
                                             <th>
                                                 <div class="btn btn-sm bg-success-fordone mr-1"
                                                     @click="toggleAll(columnsCheckBox)">
-                                                    <i class="fa fa-check"></i>
+                                                    <font-awesome-icon icon="fa fa-check"/>
                                                 </div>
                                                 Pilih Semua
                                             </th>
@@ -497,7 +497,7 @@ onMounted(() => {
                     </div>
                     <div class="card">
                         <div class="card-body text-right">
-                            <div @click="buildValue" class="btn bg-info-fordone"><i class="fa fa-save"></i> Buat
+                            <div @click="buildValue" class="btn bg-info-fordone"><font-awesome-icon icon="fa fa-save"/> Buat
                                 Tabel</div>
                         </div>
                     </div>

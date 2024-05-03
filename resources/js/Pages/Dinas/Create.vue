@@ -114,7 +114,7 @@ const submit = function () {
                     </form>
                 </div>
             </div>
-            <Link :href="route('dinas.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i> Kembali
+            <Link :href="route('dinas.index')" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left"/> Kembali
             </Link>
         </div>
     </GeneralLayout>

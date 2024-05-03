@@ -139,9 +139,10 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Kelompok Kolom
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i></button>
-                <a @click="createModalStatus = true" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                <a @click="createModalStatus = true" class="btn bg-info-fordone"><font-awesome-icon
+                        icon="fa-solid fa-plus" />
                     Tambah Kelompok Kolom Baru</a>
             </div>
         </div>
@@ -166,18 +167,23 @@ const deleteForm = function () {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="columnG in columnGroup" :key="columnG.id">
+                <tr v-for="columnG in columnGroup" :key="columnG.id" v-if="columnGroup.length > 0">
                     <td>{{ columnG.number }}</td>
                     <td>{{ columnG.label }}</td>
                     <td class="text-center deleted">
                         <a @click.prevent="toggleUpdateModal(columnG.id)" class="edit-pen mx-1">
-                            <i class="fa-solid fa-pencil" title="Edit Pengguna"></i>
+                            <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />
                         </a>
                     </td>
                     <td class="text-center deleted">
                         <a @click.prevent="toggleDeleteModal(columnG.id)" class="delete-trash">
-                            <i class="fa-solid fa-trash-can icon-trash-color"></i>
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
                         </a>
+                    </td>
+                </tr>
+                <tr v-else>
+                    <td class="text-center" colspan="4">
+                        Tidak ada data
                     </td>
                 </tr>
             </tbody>

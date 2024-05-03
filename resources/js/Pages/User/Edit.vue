@@ -120,11 +120,12 @@ const goBack = function () {
                             </div>
                         </div>
                         <div class="text-right">
-                            <button class="btn btn-sm bg-success-fordone editButton mr-2"> <i
-                                    class="fa-solid fa-check mr-2"></i>Simpan
+                            <button class="btn btn-sm bg-success-fordone editButton mr-2"> <font-awesome-icon
+                                    icon="fa-solid fa-check mr-2" /> Simpan
                             </button>
                             <div id="changePassword" class="btn btn-sm btn-warning"
-                                @click="changePassword = !changePassword"> <i class="fa-solid fa-key mr-2"></i>Ganti
+                                @click="changePassword = !changePassword"> <font-awesome-icon
+                                    icon="fa-solid fa-key mr-2" /> Ganti
                                 Password</div>
                         </div>
                     </div>
@@ -151,13 +152,13 @@ const goBack = function () {
                             </div>
                         </div>
                         <div class="text-right">
-                            <button id="addUsers" class="btn btn-sm btn-warning"> <i class="fa-solid fa-save"></i>
-                                Simpan Password Baru</button>
+                            <button id="addUsers" class="btn btn-sm btn-warning"> <font-awesome-icon
+                                    icon="fa-solid fa-save" /> Simpan Password Baru</button>
                         </div>
                     </div>
                 </div>
             </form>
-            <a @click="goBack" class="btn btn-light border"><i class="fas fa-chevron-left"></i> Kembali
+            <a @click="goBack" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left" /> Kembali
             </a>
         </div>
     </GeneralLayout>

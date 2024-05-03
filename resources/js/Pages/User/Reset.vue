@@ -69,13 +69,13 @@ const submit = function() {
                             </div>
                         </div>
                         <div class="text-right">
-                            <button id="resetPassword" class="btn btn-sm btn-warning"> <i class="fa-solid fa-key"></i>
+                            <button id="resetPassword" class="btn btn-sm btn-warning"> <font-awesome-icon icon="fa-solid fa-key"/>
                                 Reset Password</button>
                         </div>
                     </div>
                 </div>
             </form>
-            <Link :href="route('users.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i> Kembali
+            <Link :href="route('users.index')" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left"/> Kembali
             </Link>
         </div>
     </GeneralLayout>

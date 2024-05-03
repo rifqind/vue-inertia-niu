@@ -68,10 +68,10 @@ const toggleDeleteModal = function (id) {
 
 const changeRoles = function (roles) {
     if (roles == 'produsen') {
-        return "fa-graduation-cap"
+        return "fa-solid fa-graduation-cap"
     } else if (roles == 'kominfo') {
-        return "fa-computer"
-    } else return "fa-user-tie"
+        return "fa-solid fa-computer"
+    } else return "fa-solid fa-user-tie"
 }
 
 const ArrayBigObjects = [
@@ -157,9 +157,10 @@ const changeNumber = (number) => {
                 <div class="h4 flex-grow-1">
                     Daftar Pengguna
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i></button>
-                <Link :href="route('users.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                <Link :href="route('users.create')" class="btn bg-info-fordone"><font-awesome-icon
+                    icon="fa-solid fa-plus" />
                 Tambah Pengguna Baru</Link>
             </div>
         </div>
@@ -199,7 +200,7 @@ const changeNumber = (number) => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="user in users" :key="user.id">
+                <tr v-if="users.length > 0" v-for="user in users" :key="user.id">
                     <td>{{ user.number }}</td>
                     <td>{{ user.username }}</td>
                     <td>{{ user.name }}</td>
@@ -209,19 +210,22 @@ const changeNumber = (number) => {
                     <td>{{ user.role }}</td>
                     <td class="text-center deleted">
                         <a @click.prevent="resetPasswordLink(user.id)" class="update-pen mx-1">
-                            <i class="fa-solid fa-lock" title="Reset Password"></i>
+                            <font-awesome-icon icon="fa-solid fa-lock" title="Reset Password" />
                         </a>
-                        <a @click.prevent="changeRolesLink(user.id)" class="mx-1 role-update"><i class="fa-solid"
-                                :class="changeRoles(user.role)" title="Ubah Role"></i></a>
+                        <a @click.prevent="changeRolesLink(user.id)" class="mx-1 role-update"><font-awesome-icon
+                                :icon="changeRoles(user.role)" title="Ubah Role" /></a>
                         <a @click.prevent="editUser(user.id)" class="edit-pen mx-1">
-                            <i class="fa-solid fa-pencil" title="Edit Pengguna"></i>
+                            <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />
                         </a>
                     </td>
                     <td class="text-center deleted">
                         <a @click.prevent="toggleDeleteModal(user.id)" class="delete-trash">
-                            <i class="fa-solid fa-trash-can icon-trash-color"></i>
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
                         </a>
                     </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="9" class="text-center">Tidak ada data</td>
                 </tr>
             </tbody>
         </table>

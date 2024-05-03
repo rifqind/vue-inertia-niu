@@ -234,9 +234,10 @@ const download = (titles) => {
                 </div>
             </div>
             <div class="d-flex justify-content-end mb-2">
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i></button>
-                <a @click="masterModalStatus = true" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                <a @click="masterModalStatus = true" class="btn bg-info-fordone"><font-awesome-icon
+                        icon="fa-solid fa-plus" />
                     Tambah Metadata Variabel Baru</a>
             </div>
         </div>
@@ -283,12 +284,12 @@ const download = (titles) => {
                     <td>{{ node.r104 }}</td>
                     <td>{{ node.satuan }}</td>
                     <td class="text-center deleted">
-                        <a @click.prevent="toggleUpdateModal(node.id)" class="edit-pen"><i class="fa-solid fa-pencil"
-                                title="Edit Data"></i></a>
+                        <a @click.prevent="toggleUpdateModal(node.id)" class="edit-pen"><font-awesome-icon
+                                icon="fa-solid fa-pencil" title="Edit Data" /></a>
                     </td>
                     <td class="text-center deleted">
                         <a @click.prevent="toggleDeleteModal(node.id)" class="delete-trash">
-                            <i class="fa-solid fa-trash-can icon-trash-color"></i>
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
                         </a>
                     </td>
                 </tr>
@@ -383,17 +384,20 @@ const download = (titles) => {
         </Teleport>
         <div class="mb-2 d-flex">
             <div class="flex-grow-1">
-                <Link :href="route('metavar.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
+                <Link :href="route('metavar.index')" class="btn btn-light border"><font-awesome-icon
+                    icon="fas fa-chevron-left" />
                 Kembali
                 </Link>
             </div>
             <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="manageData(decision = 'send')"
-                class="btn bg-success-fordone save-send" id="save-table">Kirim <i
-                    class="fas fa-paper-plane"></i></button>
+                class="btn bg-success-fordone save-send" id="save-table"><font-awesome-icon icon="fas fa-paper-plane" />
+                Kirim</button>
             <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="manageData(decision = 'reject')"
-                class="btn badge-status-empat mr-2" id="save-table">Reject <i class="fas fa-ban"></i></button>
+                class="btn badge-status-empat mr-2" id="save-table"><font-awesome-icon icon="fas fa-ban" />
+                Reject</button>
             <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="manageData(decision = 'final')"
-                class="btn bg-success-fordone" id="save-table">Final <i class="fas fa-flag-checkered"></i></button>
+                class="btn bg-success-fordone" id="save-table"><font-awesome-icon icon="fas fa-flag-checkered" />
+                Final</button>
         </div>
 
     </GeneralLayout>

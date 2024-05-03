@@ -18,7 +18,7 @@ const submit = function() {
         <!-- Left navbar links -->
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><font-awesome-icon icon="fas fa-bars"/></a>
             </li>
         </ul>
 
@@ -30,11 +30,11 @@ const submit = function() {
                     {{ page.props.auth.user.name }}
                 </a>
                 <div class="dropdown-menu d-block dropdown-menu-right" v-if="logoutDropdown" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item"><i class="nav-icon fas fa-user"></i>
+                    <a class="dropdown-item"><font-awesome-icon icon="nav-icon fas fa-user"/>
                         Profile</a>
 
                     <form @submit.prevent="submit" id="logoutButton">
-                        <button type="submit" class="dropdown-item" href=""><i class="nav-icon fas fa-sign-out-alt"></i> Log
+                        <button type="submit" class="dropdown-item" href=""><font-awesome-icon icon="nav-icon fas fa-sign-out-alt"/> Log
                             Out</button>
                     </form>
                     <!-- <ResponsiveNavLink :href="route('logout')" method="post" as="button">

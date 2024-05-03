@@ -105,8 +105,9 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Tabel
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i> Download</button>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" />
+                    Download</button>
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
@@ -159,7 +160,7 @@ const deleteForm = function () {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(table, index) in tables" :key="index">
+                <tr v-if="tables.length > 0" v-for="(table, index) in tables" :key="index">
                     <td class="align-middle">{{ table.number }}</td>
                     <td class="align-middle">{{ table.label }}</td>
                     <td class="align-middle">{{ table.nama_dinas }}</td>
@@ -173,15 +174,18 @@ const deleteForm = function () {
                             }}</span><br><span>{{ table.status_updated }}</span></td>
                     <td class="text-center align-middle deleted">
                         <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mr-5">
-                        <i class="fa-solid fa-pencil" title="Cek/Edit"></i>
+                        <font-awesome-icon icon="fa-solid fa-pencil" title="Cek/Edit" />
                         </Link>
                         <a v-if="currentRoute == 'tabel.index'" @click.prevent="() => {
         deleteModalStatus = true;
         form.id = table.id_statustables
     }" class="delete-trash">
-                            <i class="fa-solid fa-trash-can icon-trash-color" title="Hapus"></i>
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" title="Hapus" />
                         </a>
                     </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="9" class="text-center">Tidak Ada Data</td>
                 </tr>
             </tbody>
         </table>

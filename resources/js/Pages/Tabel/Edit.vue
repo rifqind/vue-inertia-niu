@@ -99,11 +99,11 @@ const submit = function () {
             </form>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
-                    <Link :href="route('tabel.master')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
+                    <Link :href="route('tabel.master')" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left"/>
                         Kembali
                     </Link>
                 </div>
-                <a @click.prevent="submit" class="btn bg-success-fordone"><i class="fa-solid fa-save"></i>
+                <a @click.prevent="submit" class="btn bg-success-fordone"><font-awesome-icon icon="fa-solid fa-save"/>
                     Simpan</a>
             </div>
         </div>

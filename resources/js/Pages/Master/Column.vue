@@ -153,9 +153,10 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Kolom
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i></button>
-                <a @click="createModalStatus = true" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                <a @click="createModalStatus = true" class="btn bg-info-fordone"><font-awesome-icon
+                        icon="fa-solid fa-plus" />
                     Tambah Kolom Baru</a>
             </div>
         </div>
@@ -183,20 +184,23 @@ const deleteForm = function () {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="column in columns" :key="column.id">
+                <tr v-for="column in columns" :key="column.id" v-if="columns.length > 0">
                     <td>{{ column.number }}</td>
                     <td>{{ column.label }}</td>
                     <td>{{ column.columnGroupsLabel }}</td>
                     <td class="text-center deleted">
                         <a @click.prevent="toggleUpdateModal(column.id)" class="edit-pen mx-1">
-                            <i class="fa-solid fa-pencil" title="Edit Pengguna"></i>
+                            <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />
                         </a>
                     </td>
                     <td class="text-center deleted">
                         <a @click.prevent="toggleDeleteModal(column.id)" class="delete-trash">
-                            <i class="fa-solid fa-trash-can icon-trash-color"></i>
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
                         </a>
                     </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="5" class="text-center">Data Tidak Ada</td>
                 </tr>
             </tbody>
         </table>

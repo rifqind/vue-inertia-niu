@@ -219,22 +219,22 @@ const submit = function (decision) {
             </div>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
-                    <Link :href="route('tabel.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i>
+                    <Link :href="route('tabel.index')" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left"/>
                     Kembali
                     </Link>
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i> Download</button>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><font-awesome-icon
+                        icon="fa-solid fa-circle-down"/> Download</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'save')"
-                    class="btn bg-primary-fordone save-send mr-2" id="save-table">Simpan <i
-                        class="fas fa-save"></i></button>
+                    class="btn bg-primary-fordone save-send mr-2" id="save-table"><font-awesome-icon
+                        icon="fas fa-save" /> Simpan</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'send')"
-                    class="btn bg-success-fordone save-send" id="save-table">Kirim <i
-                        class="fas fa-paper-plane"></i></button>
+                    class="btn bg-success-fordone save-send" id="save-table"><font-awesome-icon
+                        icon="fas fa-paper-plane"/> Kirim</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'reject')"
-                    class="btn badge-status-empat mr-2" id="save-table">Reject <i class="fas fa-ban"></i></button>
+                    class="btn badge-status-empat mr-2" id="save-table"><font-awesome-icon icon="fas fa-ban"/> Reject</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'final')"
-                    class="btn bg-success-fordone" id="save-table">Final <i class="fas fa-flag-checkered"></i></button>
+                    class="btn bg-success-fordone" id="save-table"><font-awesome-icon icon="fas fa-flag-checkered"/> Final</button>
             </div>
             <Teleport to="body">
                 <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false"

@@ -123,13 +123,13 @@ const submit = function() {
                             </div>
                         </div>
                         <div class="text-right">
-                            <button id="addUsers" class="btn btn-sm bg-info-fordone"> <i class="fa-solid fa-save"></i>
+                            <button id="addUsers" class="btn btn-sm bg-info-fordone"> <font-awesome-icon icon="fa-solid fa-save"/>
                                 Simpan</button>
                         </div>
                     </div>
                 </div>
             </form>
-            <Link :href="route('users.index')" class="btn btn-light border"><i class="fas fa-chevron-left"></i> Kembali
+            <Link :href="route('users.index')" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left"/> Kembali
             </Link>
         </div>
     </GeneralLayout>

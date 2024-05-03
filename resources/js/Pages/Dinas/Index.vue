@@ -227,9 +227,9 @@ const deleteForm = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Produsen Data
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i></button>
-                <Link :href="route('dinas.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><font-awesome-icon
+                        icon="fa-solid fa-circle-down"/></button>
+                <Link :href="route('dinas.create')" class="btn bg-info-fordone"><font-awesome-icon icon="fa-solid fa-plus"/>
                 Tambah Produsen Data Baru</Link>
             </div>
             <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
@@ -255,20 +255,23 @@ const deleteForm = function () {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="din in d" :key="din.id">
+                    <tr v-if="d.length > 0" v-for="din in d" :key="din.id">
                         <td>{{ din.number }}</td>
                         <td>{{ din.nama }}</td>
                         <td class="">{{ din.wilayah_label }}</td>
                         <td class="text-center deleted">
                             <a @click.prevent="toggleUpdateModal(din.id)" class="update-pen">
-                                <i class="fa-solid fa-pen"></i>
+                                <font-awesome-icon icon="fa-solid fa-pen"/>
                             </a>
                         </td>
                         <td class="text-center deleted">
                             <a @click.prevent="toggleDeleteModal(din.id)" class="delete-trash">
-                                <i class="fa-solid fa-trash-can icon-trash-color"></i>
+                                <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color"/>
                             </a>
                         </td>
+                    </tr>
+                    <tr v-else>
+                        <td colspan="5" class="text-center">Tidak ada data</td>
                     </tr>
                 </tbody>
             </table>

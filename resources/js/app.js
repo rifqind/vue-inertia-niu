@@ -19,6 +19,7 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faSearchengin } from "@fortawesome/free-brands-svg-icons";
 import {
     faAngleLeft,
+    faBan,
     faBars,
     faBarsStaggered,
     faBookBookmark,
@@ -28,8 +29,11 @@ import {
     faChevronLeft,
     faCircle,
     faCircleDown,
+    faComputer,
     faDisplay,
     faEye,
+    faFlagCheckered,
+    faGraduationCap,
     faHome,
     faHourglassHalf,
     faKey,
@@ -40,6 +44,7 @@ import {
     faPenNib,
     faPencil,
     faPlus,
+    faPlusCircle,
     faRecycle,
     faRightToBracket,
     faRotateLeft,
@@ -52,10 +57,12 @@ import {
     faThList,
     faTrashCan,
     faUser,
+    faUserTie,
     faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 library.add(
     faAngleLeft,
+    faBan,
     faBars,
     faBarsStaggered,
     faBookBookmark,
@@ -65,8 +72,11 @@ library.add(
     faChevronLeft,
     faCircle,
     faCircleDown,
+    faComputer,
     faDisplay,
     faEye,
+    faFlagCheckered,
+    faGraduationCap,
     faHome,
     faHourglassHalf,
     faKey,
@@ -77,6 +87,7 @@ library.add(
     faPenNib,
     faPencil,
     faPlus,
+    faPlusCircle,
     faRecycle,
     faRightToBracket,
     faRotateLeft,
@@ -90,6 +101,7 @@ library.add(
     faThList,
     faTrashCan,
     faUser,
+    faUserTie,
     faUsers
 );
 // import NProgress from "nprogress";

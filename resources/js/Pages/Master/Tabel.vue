@@ -138,9 +138,10 @@ const submit = function () {
                 <div class="h4 flex-grow-1">
                     Daftar Tabel
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i></button>
-                <Link :href="route('tabel.create')" class="btn bg-info-fordone"><i class="fa-solid fa-plus"></i>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                <Link :href="route('tabel.create')" class="btn bg-info-fordone"><font-awesome-icon
+                    icon="fa-solid fa-plus" />
                 Tambah Tabel Baru</Link>
             </div>
         </div>
@@ -185,7 +186,7 @@ const submit = function () {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(table, index) in tables" :key="index">
+                <tr v-if="tables.length > 0" v-for="(table, index) in tables" :key="index">
                     <td class="align-middle">{{ table.number }}</td>
                     <td class="align-middle">{{ table.label }}</td>
                     <td class="align-middle">{{ table.nama_dinas }}</td>
@@ -199,17 +200,22 @@ const submit = function () {
                     <td class="text-center align-middle deleted">
                         <a @click.prevent="() => { addYearModalStatus = true; form.id = table.id }"
                             class="edit-pen mr-2">
-                            <i class="fas fa-plus-circle" title="Tambah Tahun"></i>
+                            <font-awesome-icon icon="fas fa-plus-circle" title="Tambah Tahun" />
                         </a>
                         <Link :href="route('tabel.edit', { id: table.id })" class="edit-pen mx-1">
-                        <i class="fa-solid fa-pencil" title="Edit Tabel"></i>
+                        <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Tabel" />
                         </Link>
                         <a v-if="false" @click.prevent="() => {
         deleteModalStatus = true;
         form.id = table.id_statustables
     }" class="delete-trash">
-                            <i class="fa-solid fa-trash-can icon-trash-color" title="Hapus"></i>
+                            <font-awesome-icon icon="fa-solid fa-trash-can icon-trash-color" title="Hapus" />
                         </a>
+                    </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="7" class="text-center align-middle">
+                        Tidak ada data
                     </td>
                 </tr>
             </tbody>

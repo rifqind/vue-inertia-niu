@@ -61,11 +61,13 @@ onMounted(() => {
                 <div class="h4 flex-grow-1">
                     Daftar Metadata
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i> Download</button>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" />
+                    Download</button>
             </div>
         </div>
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelMetavars" id="tabel-metavar">
+        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelMetavars"
+            id="tabel-metavar">
             <thead>
                 <tr class="bg-info-fordone">
                     <th class="first-column text-center align-middle"
@@ -102,7 +104,7 @@ onMounted(() => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(node, index) in tabels" :key="index">
+                <tr v-if="tabels.length > 0" v-for="(node, index) in tabels" :key="index">
                     <td class="align-middle">{{ node.number }}</td>
                     <td class="align-middle">{{ node.label }}</td>
                     <td class="align-middle">{{ node.nama_dinas }}</td>
@@ -112,9 +114,12 @@ onMounted(() => {
                             }}</span><br><span>{{ node.when_updated }}</span></td>
                     <td class="text-center align-middle deleted">
                         <Link :href="route('metavar.lists', { id: node.id })">
-                        <i class="fa-solid fa-eye" title="Cek"></i>
+                        <font-awesome-icon icon="fa-solid fa-eye" title="Cek" />
                         </Link>
                     </td>
+                </tr>
+                <tr v-else>
+                    <td class="align-middle" colspan="7">Data Tidak Ada</td>
                 </tr>
             </tbody>
         </table>

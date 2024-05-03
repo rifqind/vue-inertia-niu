@@ -84,8 +84,8 @@ onUpdated(() => {
                     <Multiselect @change="changeYearList" :options="yearDrop.options" v-model="yearDrop.value"
                         placeholder="-- Pilih Tahun --" />
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><i
-                        class="fa-solid fa-circle-down"></i> Download</button>
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><font-awesome-icon
+                        icon="fa-solid fa-circle-down" /> Download</button>
             </div>
         </div>
         <table class="table table-hover table-bordered" id="tabel-monitoring" ref="tabelMonitoring">
