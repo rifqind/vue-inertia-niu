@@ -8,8 +8,10 @@ const logoutDropdown = ref(false);
 const toggleDropdown = function() {
     logoutDropdown.value = !logoutDropdown.value;
 }
-const form = useForm({})
-const submit = function() {
+const form = useForm({_token: ''})
+const submit = async function() {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('logout'))
 }
 </script>

@@ -94,10 +94,12 @@ const form = useForm({
     r110: '',
     r111: '',
     r112: '',
+    _token: null,
 })
 const manageForm = useForm({
     id_tabel: '',
     decisions: '',
+    _token: null,
 })
 
 const fetchMastertoApply = async function () {
@@ -123,8 +125,10 @@ const fetchMastertoApply = async function () {
     triggerSpinner.value = false
     createModalStatus.value = true
 }
-const submit = () => {
+const submit = async () => {
     form.id_tabel = page.props.id_tabel
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('metavar.store'), {
         onBefore: () => {
             triggerSpinner.value = true
@@ -142,16 +146,20 @@ const submit = () => {
         }
     })
 }
-const manageData = (decision) => {
+const manageData = async (decision) => {
     manageForm.decisions = decision
     manageForm.id_tabel = page.props.id_tabel
     if (decision == 'send') {
+        const response = await axios.get(route('token'))
+        manageForm._token = response.data
         manageForm.post(route('metavar.metavarSend', { id: page.props.id_tabel }), {
             onSuccess: () => {
                 toggleFlash.value = true
             }
         })
     } else {
+        const response = await axios.get(route('token'))
+        manageForm._token = response.data
         manageForm.post(route('metavar.adminHandleMetavar'), {
             onSuccess: () => {
                 toggleFlash.value = true
@@ -185,7 +193,9 @@ const toggleDeleteModal = (id) => {
     deleteModalStatus.value = true
     form.id = id
 }
-const deleteData = () => {
+const deleteData = async () => {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('metavar.destroy'), {
         onBefore: () => {
             triggerSpinner.value = true

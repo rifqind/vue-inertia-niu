@@ -38,6 +38,9 @@ use Maatwebsite\Excel\Facades\Excel;
 //         'phpVersion' => PHP_VERSION,
 //     ]);
 // })->name('/');
+Route::get('/token', function () {
+    return csrf_token();
+})->name('token');
 Route::get('/', [HomeController::class, 'index'])->name('/');
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/show', [HomeController::class, 'show'])->name('home.show');

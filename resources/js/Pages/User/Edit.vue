@@ -29,9 +29,12 @@ const form = useForm({
     noHp: user.noHp,
     password: null,
     password_confirmation: null,
+    _token: null,
 })
 
-const submit = function () {
+const submit = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('users.editProfile'), {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () {

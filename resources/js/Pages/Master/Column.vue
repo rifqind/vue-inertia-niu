@@ -88,6 +88,7 @@ const form = useForm({
     id: null,
     label: null,
     id_column_groups: null,
+    _token: null,
 })
 const toggleUpdateModal = function (id) {
     if (id) {
@@ -114,7 +115,9 @@ const fetchColumns = async function (id) {
         console.error('Error Fetching Column: ', error)
     }
 }
-const submit = function () {
+const submit = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('columns.store'), {
         onBefore: function () {
             triggerSpinner.value = true
@@ -128,7 +131,9 @@ const submit = function () {
         onError: function () { createModalStatus.value = true }
     })
 }
-const deleteForm = function () {
+const deleteForm = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('columns.destroy'), {
         onBefore: function () {
             triggerSpinner.value = true

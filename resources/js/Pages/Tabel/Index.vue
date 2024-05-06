@@ -15,6 +15,7 @@ var tGroup = page.props.tables
 var tables = ref(tGroup)
 const form = useForm({
     id: null,
+    _token: null,
 })
 const currentRoute = page.props.route
 
@@ -80,7 +81,9 @@ onUpdated(() => {
     tGroup = page.props.tables
     tables = ref(tGroup)
 })
-const deleteForm = function () {
+const deleteForm = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('tabel.statusDestroy'), {
         onBefore: function () {
             triggerSpinner.value = true

@@ -31,6 +31,7 @@ const currentPagination = ref(null)
 
 const form = useForm({
     id: null,
+    _token: null,
 })
 
 const resetPasswordLink = function (id) {
@@ -40,8 +41,10 @@ const resetPasswordLink = function (id) {
     })
 }
 
-const changeRolesLink = function (id) {
+const changeRolesLink = async function (id) {
     form.id = id
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('users.roleChange'), {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
@@ -127,7 +130,9 @@ onUpdated(() => {
             currentStatusText, rowsTabel)
     })
 })
-const deleteForm = function () {
+const deleteForm = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('users.delete'), {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true

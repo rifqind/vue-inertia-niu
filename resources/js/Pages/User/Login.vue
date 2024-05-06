@@ -3,10 +3,13 @@ import { Head, useForm, Link } from '@inertiajs/vue3';
 
 const form = useForm({
     username: '',
-    password: ''
+    password: '',
+    _token: null,
 })
 
-const submit = function () {
+const submit = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('login'))
 }
 
@@ -35,16 +38,16 @@ const submit = function () {
                                     <div class="row mx-2 mb-2">
                                         <input v-model="form.password" type="password" id="password" name="password"
                                             class="form-control form-login" placeholder="Password">
-                                        <div class="text-danger text-left" v-if="form.errors.email"
-                                            id="error">{{ form.errors.email }}</div>
+                                        <div class="text-danger text-left" v-if="form.errors.email" id="error">{{
+                                            form.errors.email }}</div>
 
                                     </div>
                                 </div>
                                 <div class="mx-2">
                                     <button id="login" class="mb-2 btn bg-success-fordone form-login"><font-awesome-icon
-                                            icon="fa-solid fa-right-to-bracket"/> Masuk</button>
-                                    <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')"><font-awesome-icon
-                                        icon="fa-solid fa-rotate-left"/> Kembali ke Beranda</Link>
+                                            icon="fa-solid fa-right-to-bracket" /> Masuk</button>
+                                    <Link id="home" class="btn bg-info-fordone form-login" :href="route('/')">
+                                    <font-awesome-icon icon="fa-solid fa-rotate-left" /> Kembali ke Beranda</Link>
                                 </div>
                             </form>
                         </div>

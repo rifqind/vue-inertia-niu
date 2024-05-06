@@ -62,8 +62,11 @@ const form = useForm({
     kab: '',
     kec: '',
     desa: '',
+    _token: '',
 })
-const submit = function () {
+const submit = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('dinas.store'))
 }
 </script>

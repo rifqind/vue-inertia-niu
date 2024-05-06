@@ -52,6 +52,7 @@ const form = useForm({
     kab: null,
     kec: null,
     desa: null,
+    _token: null,
 })
 const kecsDrop = ref({
     value: null,
@@ -183,7 +184,9 @@ onUpdated(() => {
 defineComponent({
     Multiselect
 })
-const submit = function () {
+const submit = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('dinas.update'), {
         onBefore: function () {
             triggerSpinner.value = true
@@ -199,7 +202,9 @@ const submit = function () {
         onError: function () { updateModalStatus.value = true }
     })
 }
-const deleteForm = function () {
+const deleteForm = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('dinas.delete'), {
         onBefore: function () {
             triggerSpinner.value = true

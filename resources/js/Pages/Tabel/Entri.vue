@@ -11,7 +11,8 @@ const page = usePage()
 const form = useForm({
     dataContents: page.props.datacontents,
     decisions: null,
-    catatans: page.props.catatans
+    catatans: page.props.catatans,
+    _token: null,
 })
 const badges = ref(null)
 const toggleFlash = ref(false)
@@ -95,8 +96,10 @@ onUpdated(() => {
     defineInputDisable(status[0], page.props.auth.user.role)
 })
 
-const submit = function (decision) {
+const submit = async function (decision) {
     form.decisions = decision
+    const response = await axios.get(route('token'))
+    form._token = response.data
     if (decision == 'save' || decision == 'send') {
         form.post(route('tabel.update_content'), {
             onSuccess: function () { toggleFlash.value = true },

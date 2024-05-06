@@ -258,10 +258,13 @@ const form = useForm({
     columns: [],
     tahun: null,
     id_turtahun: null,
+    _token: null,
 })
 
-const submit = function () {
+const submit = async function () {
     previewModalStatus.value = false
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('tabel.store'), {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () { triggerSpinner.value = false },
@@ -378,7 +381,7 @@ onMounted(() => {
                                             <th>
                                                 <div class="btn btn-sm bg-success-fordone mr-1"
                                                     @click="toggleAll(rowsCheckBox)">
-                                                    <font-awesome-icon icon="fa fa-check"/>
+                                                    <font-awesome-icon icon="fa fa-check" />
                                                 </div>
                                                 Pilih Semua
                                             </th>
@@ -427,7 +430,7 @@ onMounted(() => {
                                             <th>
                                                 <div class="btn btn-sm bg-success-fordone mr-1"
                                                     @click="toggleAll(columnsCheckBox)">
-                                                    <font-awesome-icon icon="fa fa-check"/>
+                                                    <font-awesome-icon icon="fa fa-check" />
                                                 </div>
                                                 Pilih Semua
                                             </th>
@@ -497,7 +500,8 @@ onMounted(() => {
                     </div>
                     <div class="card">
                         <div class="card-body text-right">
-                            <div @click="buildValue" class="btn bg-info-fordone"><font-awesome-icon icon="fa fa-save"/> Buat
+                            <div @click="buildValue" class="btn bg-info-fordone"><font-awesome-icon icon="fa fa-save" />
+                                Buat
                                 Tabel</div>
                         </div>
                     </div>

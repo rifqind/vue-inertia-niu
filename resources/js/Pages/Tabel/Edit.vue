@@ -34,10 +34,13 @@ const form = useForm({
         unit: page.props.tabel.unit,
         id_dinas: page.props.tabel.id_dinas,
         id_subjek: page.props.tabel.id_subjek
-    }
+    },
+    _token: null,
 })
 
-const submit = function () {
+const submit = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('tabel.update'), {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () { triggerSpinner.value = false },
@@ -99,11 +102,12 @@ const submit = function () {
             </form>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
-                    <Link :href="route('tabel.master')" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left"/>
-                        Kembali
+                    <Link :href="route('tabel.master')" class="btn btn-light border"><font-awesome-icon
+                        icon="fas fa-chevron-left" />
+                    Kembali
                     </Link>
                 </div>
-                <a @click.prevent="submit" class="btn bg-success-fordone"><font-awesome-icon icon="fa-solid fa-save"/>
+                <a @click.prevent="submit" class="btn bg-success-fordone"><font-awesome-icon icon="fa-solid fa-save" />
                     Simpan</a>
             </div>
         </div>

@@ -6,8 +6,11 @@ const page = usePage()
 const user = page.props.user
 const form = useForm({
     id: user.id,
+    _token : null,
 })
-const submit = function() {
+const submit = async function() {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('users.default'))
 }
 </script>

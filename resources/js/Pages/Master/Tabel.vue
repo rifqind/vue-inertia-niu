@@ -21,6 +21,7 @@ var tables = ref(tGroup)
 const form = useForm({
     id: null,
     tahun: null,
+    _token: null,
 })
 const yearDrop = ref({
     value: null,
@@ -98,7 +99,9 @@ onUpdated(() => {
     tGroup = page.props.tables
     tables = ref(tGroup)
 })
-const deleteForm = function () {
+const deleteForm = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('tabel.statusDestroy'), {
         onBefore: function () {
             triggerSpinner.value = true
@@ -112,7 +115,9 @@ const deleteForm = function () {
         onError: function () { deleteModalStatus.value = true }
     })
 }
-const submit = function () {
+const submit = async function () {
+    const response = await axios.get(route('token'))
+    form._token = response.data
     form.post(route('tabel.storeCopy'), {
         onBefore: function () {
             triggerSpinner.value = true

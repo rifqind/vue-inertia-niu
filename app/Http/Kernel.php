@@ -21,6 +21,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\HttpOnlyFalseMaybe::class,
     ];
 
     /**
@@ -38,9 +39,9 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
-            \App\Http\Middleware\FrameGuard::class,
-            \App\Http\Middleware\ViteSecurity::class,
-            \App\Http\Middleware\CorsGuard::class,
+            // \App\Http\Middleware\FrameGuard::class,
+            // \App\Http\Middleware\ViteSecurity::class,
+            // \App\Http\Middleware\CorsGuard::class,
         ],
 
         'api' => [
