@@ -1,15 +1,14 @@
 <script setup>
 import { Link, Head, usePage, useForm } from '@inertiajs/vue3';
-import { Teleport, defineComponent, onMounted, onUpdated, ref, watch } from 'vue';
-import { getPagination } from '@/pagination';
+import { Teleport, defineComponent, computed, ref, watch } from 'vue';
 import { clickSortProperties } from '@/sortAttribute';
-import { searchCell } from '@/searchCell'
 import GeneralLayout from '@/Layouts/GeneralLayout.vue'
 import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import Multiselect from "@vueform/multiselect";
 import { GoDownload } from '@/download'
+import Pagination from '@/Components/Pagination.vue';
 
 defineComponent({
     Multiselect,
@@ -49,18 +48,17 @@ const searchColumnList = ref(null)
 const searchTahun = ref(null)
 const searchStatus = ref(null)
 const searchUpdated = ref(null)
+const searchRowLabel = ref(null)
 
 const tabelTabels = ref(null)
-const statusText = ref(false)
-const maxRows = ref(null)
-const currentPagination = ref(null)
 
 const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel },
     { key: 'nama_dinas', valueFilter: searchLabelDinas },
     { key: 'columns', valueFilter: searchColumnList },
-    { key: 'tahun', valueFilter: searchTahun },
+    { key: 'tahuns', valueFilter: searchTahun },
     { key: 'status', valueFilter: searchStatus },
+    { key: 'row_label', valueFilter: searchRowLabel },
     { key: 'updated', valueFilter: searchUpdated },
 ]
 watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
@@ -74,30 +72,24 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
             const filterValue = obj.valueFilter.value.toLowerCase()
             if (obj.key == 'updated') {
                 return `${item['who_updated']} ${item['status_updated']}`.toLowerCase().includes(filterValue);
-            } else {
+            } else if (obj.key == 'columns') {
+                let check = item[obj.key].filter(X => {
+                    let result = X.label.toLowerCase().includes(filterValue)
+                    return result
+                })
+                if (check.length > 0) return true
+            } else if (obj.key == 'tahuns') {
+                let check = item[obj.key].filter(X => {
+                    let result = X.toLowerCase().includes(filterValue)
+                    return result
+                })
+                if (check.length > 0) return true
+            }
+            else {
                 return item[obj.key].toLowerCase().includes(filterValue)
             }
         })
     })
-})
-onMounted(() => {
-    if (page.props.flash.message) {
-        toggleFlash.value = true
-    }
-    searchCell(tabelTabels.value, 10)
-    let currentStatusText = statusText.value
-    var rowsTabel = tabelTabels.value.querySelectorAll('tbody tr').length
-    getPagination(tabelTabels, currentPagination, 10, statusText,
-        currentStatusText, rowsTabel)
-    maxRows.value.addEventListener("change", function (e) {
-        let valueChanged = this.value
-        getPagination(tabelTabels, currentPagination, valueChanged, statusText,
-            currentStatusText, rowsTabel)
-    })
-})
-onUpdated(() => {
-    tGroup = page.props.tables
-    tables = ref(tGroup)
 })
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
@@ -132,6 +124,24 @@ const submit = async function () {
         onError: function () { addYearModalStatus.value = true }
     })
 }
+//new Pagination
+const showItems = ref(10)
+const currentPage = ref(1)
+
+const updateShowItems = (value) => {
+    showItems.value = value
+}
+const updateCurrentPage = (value) => {
+    currentPage.value = value
+}
+const paginatedData = computed(() => {
+    const start = (currentPage.value - 1) * showItems.value
+    const end = start + showItems.value
+    return tables.value.slice(start, end)
+})
+watch(() => page.props.tables, (value) => {
+    tables.value = [...value]
+})
 </script>
 <template>
 
@@ -168,7 +178,7 @@ const submit = async function () {
                     <th class="text-center align-middle">
                         Daftar Kolom
                     </th>
-                    <th class="text-center align-middle">
+                    <th class="text-center align-middle" @click="clickSortProperties(tables, 'row_label')">
                         Daftar Baris
                     </th>
                     <th class="text-center align-middle">
@@ -184,14 +194,17 @@ const submit = async function () {
                             class="search-input form-control"></td>
                     <td class="search-header"><input v-model.trim="searchLabelDinas" type="text"
                             class="search-input form-control"></td>
-                    <td class="search-header"><input type="text" class="search-input form-control"></td>
-                    <td class="search-header"><input type="text" class="search-input form-control"></td>
-                    <td class="search-header"><input type="text" class="search-input form-control"></td>
+                    <td class="search-header"><input type="text" class="search-input form-control"
+                            v-model.trim="searchColumnList"></td>
+                    <td class="search-header"><input type="text" class="search-input form-control"
+                            v-model.trim="searchRowLabel"></td>
+                    <td class="search-header"><input type="text" class="search-input form-control"
+                            v-model.trim="searchTahun"></td>
                     <td class="search-header deleted"></td>
                 </tr>
             </thead>
             <tbody>
-                <tr v-if="tables.length > 0" v-for="(table, index) in tables" :key="index">
+                <tr v-if="tables.length > 0" v-for="(table, index) in paginatedData" :key="index">
                     <td class="align-middle">{{ table.number }}</td>
                     <td class="align-middle">{{ table.label }}</td>
                     <td class="align-middle">{{ table.nama_dinas }}</td>
@@ -267,33 +280,7 @@ const submit = async function () {
                 </template>
             </ModalBs>
         </Teleport>
-        <div class="d-flex justify-content-end align-items-center">
-            <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
-                <span id="showTotal"></span>
-            </div>
-            <div class="form-group"> <!--		Show Numbers Of Rows 		-->
-                <select class="form-control" ref="maxRows" name="state" id="maxRows">
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            <div class="pagination-container">
-                <nav>
-                    <ul class="pagination" id="currentPagination" ref="currentPagination">
-                        <li data-page="prev" id="next">
-                            <span>
-                                < <span class="sr-only">(current)
-                            </span></span>
-                        </li>
-                        <!--	Here the JS Function Will Add the Rows -->
-                        <li data-page="next" id="prev">
-                            <span> > <span class="sr-only">(current)</span></span>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+        <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
+            :total-items="tables.length" :current-page="currentPage" />
     </GeneralLayout>
 </template>

@@ -20,6 +20,7 @@ const triggerSpinner = ref(false)
 const inputDisabled = ref(false)
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
+const TabelData = ref(null)
 
 var columnComponents, rowComponents
 var status = page.props.status_desc
@@ -88,6 +89,7 @@ const handleInput = function (event, row, column) {
 onMounted(() => {
     defineBadges(status[0])
     defineInputDisable(status[0], page.props.auth.user.role)
+    // pasteDoc(TabelData.value)
 })
 
 onUpdated(() => {
@@ -115,6 +117,57 @@ const submit = async function (decision) {
             onError: function () { triggerSpinner.value = false }
         })
     }
+}
+const handlePaste = (event, row, column) => {
+    const items = event.clipboardData.items
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type === "text/plain") {
+            items[i].getAsString((text) => {
+                const columnIndex = event.target.closest("td").cellIndex;
+                const rowIndex = event.target.closest("tr").rowIndex;
+                const lines = text.trim().split("\n")
+                lines.forEach((line, index) => {
+                    const cells = line.trim().split("\t")
+                    cells.forEach((cell, subIndex) => {
+                        const row = rowIndex + index;
+                        const col = columnIndex + subIndex;
+                        const table = event.target.closest("table");
+                        const tableRow = table.rows[row];
+                        if (tableRow) {
+                            const tableCell = tableRow.cells[col];
+                            if (tableCell) {
+                                const input =
+                                    tableCell.querySelector(
+                                        'input:not([type="hidden"])'
+                                    );
+                                if (input) {
+                                    const rowComponents = input.id.split("-")[1]
+                                    const columnComponents = input.id.split("-")[2]
+                                    console.log({ rowComponents, columnComponents })
+                                    input.value = cell;
+                                    const theIndex = form.dataContents.findIndex(x => {
+                                        let founded = (x.id_row == rowComponents || x.wilayah_fullcode == rowComponents) && x.id_column == columnComponents
+                                        return founded
+                                    })
+                                    if (theIndex !== -1) {
+                                        form.dataContents[theIndex].value = cell
+                                    }
+                                }
+                            }
+                        }
+                    })
+                })
+            })
+        }
+    }
+}
+
+const setId = (row, column) => {
+    columnComponents = column.id
+    if (row.id) {
+        rowComponents = row.id
+    } else rowComponents = row.wilayah_fullcode
+    return 'cell-' + rowComponents + '-' + columnComponents
 }
 </script>
 <template>
@@ -152,7 +205,7 @@ const submit = async function (decision) {
                         </tbody>
                     </table>
 
-                    <div class="table-data-wrapper">
+                    <div class="table-data-wrapper" ref="TabelData" id="TabelData">
                         <table class="table table-bordered" id="ColumnTabel">
                             <thead>
                                 <tr>
@@ -171,8 +224,9 @@ const submit = async function (decision) {
                                 <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                                            <input type="text" class="form-control"
+                                            <input type="text" class="form-control" :id="setId(nodeRow, nodeColumn)"
                                                 :value="getData(nodeRow, nodeColumn)" :disabled="inputDisabled"
+                                                @paste="(event) => { handlePaste(event, nodeRow, nodeColumn) }"
                                                 @input="(event) => { handleInput(event, nodeRow, nodeColumn) }">
                                         </td>
                                     </template>
@@ -222,22 +276,28 @@ const submit = async function (decision) {
             </div>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
-                    <Link :href="route('tabel.index')" class="btn btn-light border"><font-awesome-icon icon="fas fa-chevron-left"/>
+                    <Link :href="route('tabel.index')" class="btn btn-light border"><font-awesome-icon
+                        icon="fas fa-chevron-left" />
                     Kembali
                     </Link>
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><font-awesome-icon
-                        icon="fa-solid fa-circle-down"/> Download</button>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" />
+                    Download</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'save')"
                     class="btn bg-primary-fordone save-send mr-2" id="save-table"><font-awesome-icon
-                        icon="fas fa-save" /> Simpan</button>
+                        icon="fas fa-save" />
+                    Simpan</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'send')"
                     class="btn bg-success-fordone save-send" id="save-table"><font-awesome-icon
-                        icon="fas fa-paper-plane"/> Kirim</button>
+                        icon="fas fa-paper-plane" />
+                    Kirim</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'reject')"
-                    class="btn badge-status-empat mr-2" id="save-table"><font-awesome-icon icon="fas fa-ban"/> Reject</button>
+                    class="btn badge-status-empat mr-2" id="save-table"><font-awesome-icon icon="fas fa-ban" />
+                    Reject</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'final')"
-                    class="btn bg-success-fordone" id="save-table"><font-awesome-icon icon="fas fa-flag-checkered"/> Final</button>
+                    class="btn bg-success-fordone" id="save-table"><font-awesome-icon icon="fas fa-flag-checkered" />
+                    Final</button>
             </div>
             <Teleport to="body">
                 <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false"

@@ -222,7 +222,7 @@ const loadKecamatans = async (valueKabs) => {
         );
         let parents = {
             label: tempt[0].label,
-            wilayah_fullcode: tempt[0].value,
+            value: tempt[0].value,
         };
         assignRowListWilayah(2, parents);
     } catch (error) {
@@ -232,12 +232,22 @@ const loadKecamatans = async (valueKabs) => {
 
 const loadDesa = async (valueKecs) => {
     try {
-        let kabs = valueKecs.substring(2, 4);
-        let kecs = valueKecs.substring(4, 7);
+        let kabsFetch = valueKecs.substring(2, 4);
+        let kecsFetch = valueKecs.substring(4, 7);
         const response = await axios.get(
-            "/master/wilayah/desa/" + kabs + "/" + kecs
+            "/master/wilayah/desa/" + kabsFetch + "/" + kecsFetch
         );
         desa.value = response.data.data;
+        // console.log(kecs.value)
+        // let tempt = 
+        let tempt = kecs.value.filter((x) => {
+            return x.value.includes(valueKecs)
+        })
+        let parents = {
+            label: tempt[0].label,
+            value: tempt[0].value,
+        }
+        assignRowListWilayah(3, parents);
     } catch (error) {
         console.error("Error fetching desa:", error);
     }

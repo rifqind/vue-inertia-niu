@@ -278,6 +278,7 @@ class TabelController extends Controller
                 foreach ($request->columns as $column) {
                     foreach ($id_turtahun as $period) {
                         // dd($new_tabel->id, 0, $column['value'], $request->tahun, $period->id, $row['value']);
+                        // dd($is_wilayah);
                         $datacontent = [
                             'id_tabel' => $new_tabel->id,
                             'id_row' =>  $is_wilayah ? 0 : $row['value'],
@@ -442,9 +443,19 @@ class TabelController extends Controller
                 } else if ($kec != '000') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
                     $jenis = $jenis . "KECAMATAN DI ";
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
                 } else if ($kab != '00') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
                     $jenis = $jenis . "KABUPATEN DI ";
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kab = '00' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
                 }
                 if ($wilayah_parent_code == '') {
                     $rowLabel = 'PROVINSI SULAWESI UTARA';

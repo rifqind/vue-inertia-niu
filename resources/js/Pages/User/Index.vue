@@ -3,11 +3,13 @@ import GeneralLayout from '@/Layouts/GeneralLayout.vue';
 import SpinnerBorder from '@/Components/SpinnerBorder.vue';
 import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
-import { getPagination } from '@/pagination'
+import Pagination from '@/Components/Pagination.vue'
 import { Head, usePage, Link, useForm } from '@inertiajs/vue3'
-import { onMounted, ref, watch, onUpdated } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { clickSortProperties } from '@/sortAttribute';
 import { GoDownload } from '@/download'
+import { computed } from 'vue';
+
 const page = usePage()
 var uObject = page.props.users
 var users = ref(uObject)
@@ -25,9 +27,6 @@ const downloadModalStatus = ref(false)
 
 //pagination
 const tabelUser = ref(null)
-const statusText = ref(false)
-const maxRows = ref(null)
-const currentPagination = ref(null)
 
 const form = useForm({
     id: null,
@@ -101,34 +100,6 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
 onMounted(function () {
     //flash
     if (page.props.flash.message) toggleFlash.value = true
-
-    //pagination
-    let currentStatusText = statusText.value
-    var rowsTabel = tabelUser.value.querySelectorAll('tbody tr').length
-    getPagination(tabelUser, currentPagination, 10, statusText,
-        currentStatusText, rowsTabel)
-    maxRows.value.addEventListener("change", function (e) {
-        let valueChanged = this.value
-        getPagination(tabelUser, currentPagination, valueChanged, statusText,
-            currentStatusText, rowsTabel)
-    })
-})
-onUpdated(() => {
-    uObject = page.props.users
-    users = ref(uObject)
-    let currentStatusText = statusText.value
-    var rowsTabel = tabelUser.value.querySelectorAll('tbody tr').length
-    currentStatusText.querySelector('#showTotal').textContent = rowsTabel
-    if (maxRows.value.value > rowsTabel) {
-        currentStatusText.querySelector('#showPage').textContent = rowsTabel
-    } else {
-        currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
-    }
-    maxRows.value.addEventListener("change", function (e) {
-        let valueChanged = this.value
-        getPagination(tabelUser, currentPagination, valueChanged, statusText,
-            currentStatusText, rowsTabel)
-    })
 })
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
@@ -151,6 +122,24 @@ const deleteForm = async function () {
 const changeNumber = (number) => {
     return number.replace(/^0/, '+62')
 }
+//new Pagination
+const showItems = ref(10)
+const currentPage = ref(1)
+
+const updateShowItems = (value) => {
+    showItems.value = value
+}
+const updateCurrentPage = (value) => {
+    currentPage.value = value
+}
+const paginatedData = computed(() => {
+    const start = (currentPage.value - 1) * showItems.value
+    const end = start + showItems.value
+    return users.value.slice(start, end)
+})
+watch(() => page.props.users, (value) => {
+    users.value = [...value]
+})
 </script>
 <template>
 
@@ -205,7 +194,7 @@ const changeNumber = (number) => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-if="users.length > 0" v-for="user in users" :key="user.id">
+                <tr v-if="users.length > 0" v-for="user in paginatedData" :key="user.id">
                     <td>{{ user.number }}</td>
                     <td>{{ user.username }}</td>
                     <td>{{ user.name }}</td>
@@ -255,34 +244,8 @@ const changeNumber = (number) => {
                 </template>
             </ModalBs>
         </Teleport>
-        <div class="d-flex justify-content-end align-items-center">
-            <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
-                <span id="showTotal"></span>
-            </div>
-            <div class="form-group"> <!--		Show Numbers Of Rows 		-->
-                <select class="form-control" ref="maxRows" name="state" id="maxRows">
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            <div class="pagination-container">
-                <nav>
-                    <ul class="pagination" id="currentPagination" ref="currentPagination">
-                        <li data-page="prev" id="next">
-                            <span>
-                                < <span class="sr-only">(current)
-                            </span></span>
-                        </li>
-                        <!--	Here the JS Function Will Add the Rows -->
-                        <li data-page="next" id="prev">
-                            <span> > <span class="sr-only">(current)</span></span>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+        <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
+            :total-items="users.length" :current-page="currentPage" />
     </GeneralLayout>
 </template>
 <style scoped>

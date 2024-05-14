@@ -132,5 +132,13 @@ export function getPagination(
             }
         }
     }
-    return currentMaxRows
+    return currentMaxRows;
+}
+
+export function updateTableView(Object) {
+    let table = Object.querySelectorAll("tbody tr");
+    Object.querySelectorAll("tbody tr").forEach((e, index) => {
+        if (index > 9) e.style.display = "none";
+        else e.style.display = "";
+    });
 }

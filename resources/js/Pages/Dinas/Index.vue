@@ -4,20 +4,17 @@ import ModalBs from '@/Components/ModalBs.vue';
 import Multiselect from '@vueform/multiselect';
 import SpinnerBorder from '@/Components/SpinnerBorder.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
+import Pagination from '@/Components/Pagination.vue'
 import { Link, useForm, usePage, Head } from '@inertiajs/vue3'
-import { getPagination } from '@/pagination';
-import { ref, onMounted, onUpdated, defineComponent, watch } from 'vue'
+import { ref, defineComponent, watch } from 'vue'
 import { clickSortProperties } from '@/sortAttribute';
 import { GoDownload } from '@/download'
+import { computed } from 'vue';
 
 const page = usePage()
 const tabelDinas = ref(null)
-const currentPagination = ref(null)
-const maxRows = ref(null)
-const statusText = ref(null)
 const updateModalStatus = ref(false)
 const deleteModalStatus = ref(false)
-const DOMLoaded = ref(false)
 const toggleFlash = ref(false)
 const searchNama = ref(null)
 const searchWilayah = ref(null)
@@ -133,7 +130,8 @@ const loadDesa = async (valueKecs) => {
     }
 }
 
-watch([searchNama, searchWilayah], function () {
+watch([searchNama, searchWilayah], () => {
+    // filterData()
     if (searchNama.value && !searchWilayah.value) {
         d.value = dObject.filter(x =>
             x.nama.toLowerCase().includes(searchNama.value.toLowerCase()))
@@ -151,36 +149,6 @@ watch([searchNama, searchWilayah], function () {
     }
 })
 
-onMounted(() => {
-    let currentStatusText = statusText.value
-    var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
-    getPagination(tabelDinas, currentPagination, 10, statusText,
-        currentStatusText, rowsTabel)
-    maxRows.value.addEventListener("change", function (e) {
-        let valueChanged = this.value
-        getPagination(tabelDinas, currentPagination, valueChanged, statusText,
-            currentStatusText, rowsTabel)
-    })
-    DOMLoaded.value = true
-})
-
-onUpdated(() => {
-    dObject = page.props.dinas
-    d = ref(dObject)
-    let currentStatusText = statusText.value
-    var rowsTabel = tabelDinas.value.querySelectorAll('tbody tr').length
-    currentStatusText.querySelector('#showTotal').textContent = rowsTabel
-    if (maxRows.value.value > rowsTabel) {
-        currentStatusText.querySelector('#showPage').textContent = rowsTabel
-    } else {
-        currentStatusText.querySelector('#showPage').textContent = maxRows.value.value
-    }
-    maxRows.value.addEventListener("change", function (e) {
-        let valueChanged = this.value
-        getPagination(tabelDinas, currentPagination, valueChanged, statusText,
-            currentStatusText, rowsTabel)
-    })
-})
 defineComponent({
     Multiselect
 })
@@ -220,6 +188,24 @@ const deleteForm = async function () {
         onError: function () { deleteModalStatus.value = true }
     })
 }
+// pagination vue
+const showItems = ref(10)
+const currentPage = ref(1)
+
+const updateShowItems = (value) => {
+    showItems.value = value
+}
+const updateCurrentPage = (value) => {
+    currentPage.value = value
+}
+const paginatedData = computed(() => {
+    const start = (currentPage.value - 1) * showItems.value
+    const end = start + showItems.value
+    return d.value.slice(start, end)
+})
+watch(() => page.props.dinas, (value) => {
+    d.value = [...value]
+})
 </script>
 
 <template>
@@ -232,9 +218,10 @@ const deleteForm = async function () {
                 <div class="h4 flex-grow-1">
                     Daftar Produsen Data
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><font-awesome-icon
-                        icon="fa-solid fa-circle-down"/></button>
-                <Link :href="route('dinas.create')" class="btn bg-info-fordone"><font-awesome-icon icon="fa-solid fa-plus"/>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                <Link :href="route('dinas.create')" class="btn bg-info-fordone"><font-awesome-icon
+                    icon="fa-solid fa-plus" />
                 Tambah Produsen Data Baru</Link>
             </div>
             <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
@@ -260,18 +247,18 @@ const deleteForm = async function () {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-if="d.length > 0" v-for="din in d" :key="din.id">
+                    <tr v-if="d.length > 0" v-for="din in paginatedData" :key="din.id">
                         <td>{{ din.number }}</td>
                         <td>{{ din.nama }}</td>
                         <td class="">{{ din.wilayah_label }}</td>
                         <td class="text-center deleted">
                             <a @click.prevent="toggleUpdateModal(din.id)" class="update-pen">
-                                <font-awesome-icon icon="fa-solid fa-pen"/>
+                                <font-awesome-icon icon="fa-solid fa-pen" />
                             </a>
                         </td>
                         <td class="text-center deleted">
                             <a @click.prevent="toggleDeleteModal(din.id)" class="delete-trash">
-                                <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color"/>
+                                <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
                             </a>
                         </td>
                     </tr>
@@ -281,6 +268,8 @@ const deleteForm = async function () {
                 </tbody>
             </table>
         </div>
+        <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
+            :total-items="d.length" :current-page="currentPage" />
         <Teleport to="body">
             <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
                 <template #modalBody>
@@ -292,7 +281,7 @@ const deleteForm = async function () {
                         @click.prevent="GoDownload('tabel-dinas', downloadTitle)">Simpan</button>
                 </template>
             </ModalBs>
-            <ModalBs v-if="DOMLoaded" :ModalStatus="updateModalStatus" @close="updateModalStatus = false"
+            <ModalBs :ModalStatus="updateModalStatus" @close="updateModalStatus = false"
                 :title="'Update Produsen Data'">
                 <template v-slot:modalBody>
                     <form id="DinasForm" class="form-horizontal mb-3">
@@ -332,8 +321,7 @@ const deleteForm = async function () {
                         @click.prevent="submit">Simpan</button>
                 </template>
             </ModalBs>
-            <ModalBs v-if="DOMLoaded" :ModalStatus="deleteModalStatus" @close="deleteModalStatus = false"
-                :title="'Hapus Produsen Data'">
+            <ModalBs :ModalStatus="deleteModalStatus" @close="deleteModalStatus = false" :title="'Hapus Produsen Data'">
                 <template v-slot:modalBody>
                     <label>Apakah Anda yakin akan menghapus Produsen Data ini?</label>
                 </template>
@@ -342,34 +330,7 @@ const deleteForm = async function () {
                         @click.prevent="deleteForm">Hapus</button>
                 </template>
             </ModalBs>
+
         </Teleport>
-        <div class="d-flex justify-content-end align-items-center">
-            <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
-                <span id="showTotal"></span>
-            </div>
-            <div class="form-group"> <!--		Show Numbers Of Rows 		-->
-                <select class="form-control" ref="maxRows" name="state" id="maxRows">
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            <div class="pagination-container">
-                <nav>
-                    <ul class="pagination" id="currentPagination" ref="currentPagination">
-                        <li data-page="prev" id="next">
-                            <span>
-                                < <span class="sr-only">(current)
-                            </span></span>
-                        </li>
-                        <!--	Here the JS Function Will Add the Rows -->
-                        <li data-page="next" id="prev">
-                            <span> > <span class="sr-only">(current)</span></span>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
     </GeneralLayout>
 </template>
