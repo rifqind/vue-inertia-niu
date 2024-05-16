@@ -4,7 +4,7 @@ import { usePage, useForm, Link, Head } from '@inertiajs/vue3'
 import { clickSortProperties } from '@/sortAttribute'
 import ModalBs from '@/Components/ModalBs.vue';
 import { downloadTabel } from '@/download'
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 const page = usePage()
 var mvObject = page.props.metavars
@@ -16,6 +16,8 @@ const metavarModalStatus = ref(false)
 const downloadModalStatus = ref(false)
 const check = ref(false)
 const downloadTitle = ref(null)
+const Rowee = ref(null)
+const Columnee = ref(null)
 var columnComponents, rowComponents
 const form = useForm({
     id: '',
@@ -32,6 +34,16 @@ const form = useForm({
     r110: '',
     r111: '',
     r112: '',
+})
+onMounted(() => {
+    let RowTheadHeight = Rowee.value.offsetHeight
+    let DatasTheadHeight = Columnee.value.offsetHeight
+    if (RowTheadHeight > DatasTheadHeight) {
+        Columnee.value.style.height = `${RowTheadHeight}px`
+    }
+    else {
+        Rowee.value.style.height = `${DatasTheadHeight}px`
+    }
 })
 const getData = function (row, column) {
     columnComponents = column.id
@@ -90,39 +102,41 @@ const download = (titles) => {
                 </div>
             </div>
             <div class="table-container">
-                <div class="row">
-                    <table class="table table-bordered" id="RowTabel">
-                        <thead>
-                            <tr>
-                                <th class="text-center align-middle tabel-width-15" rowspan="2">#</th>
-                                <th class="text-center align-middle" rowspan="2">{{ page.props.row_label }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
-                                <td>{{ index + 1 }}</td>
-                                <td>{{ nodeRow.label }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="row mb-3">
+                    <div class="overflow-x-scroll p-0" id="imaginer">
+                        <table class="table table-bordered" id="RowTabel">
+                            <thead ref="Rowee">
+                                <tr>
+                                    <th class="text-center align-middle tabel-width-15" rowspan="2">#</th>
+                                    <th class="text-center align-middle" rowspan="2">{{ page.props.row_label }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
+                                    <td>{{ index + 1 }}</td>
+                                    <td>{{ nodeRow.label }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <div class="table-data-wrapper">
                         <table class="table table-bordered" id="ColumnTabel">
-                            <thead>
+                            <thead ref="Columnee">
                                 <tr>
                                     <th class="text-center" :colspan="page.props.columns.length"
                                         v-for="(node, index) in page.props.turtahuns" :key="index">{{ node.label }}</th>
                                 </tr>
                                 <tr>
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
-                                        <th class="text-center" v-for="(node, index) in page.props.columns"
+                                        <th class="text-center align-middle" v-for="(node, index) in page.props.columns"
                                             :key="index">{{
                         node.label }}</th>
                                     </template>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
+                                <tr class="text-center align-middle" v-for="(nodeRow, index) in page.props.rows" :key="index">
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
                                             {{ getData(nodeRow, nodeColumn) }}
@@ -332,6 +346,11 @@ const download = (titles) => {
 
 #RowTabel thead th:first-child {
     width: 50px;
+}
+
+
+#imaginer {
+    width: 400px;
 }
 
 #RowTabel thead,

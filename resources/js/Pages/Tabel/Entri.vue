@@ -21,6 +21,11 @@ const inputDisabled = ref(false)
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
 const TabelData = ref(null)
+const RowTabel = ref(null)
+const Rowee = ref(null)
+const Columnee = ref(null)
+const RowTbody = ref(null)
+const ColumnTbody = ref(null)
 
 var columnComponents, rowComponents
 var status = page.props.status_desc
@@ -89,7 +94,14 @@ const handleInput = function (event, row, column) {
 onMounted(() => {
     defineBadges(status[0])
     defineInputDisable(status[0], page.props.auth.user.role)
-    // pasteDoc(TabelData.value)
+    let RowTheadHeight = Rowee.value.offsetHeight
+    let DatasTheadHeight = Columnee.value.offsetHeight
+    if (RowTheadHeight > DatasTheadHeight) {
+        Columnee.value.style.height = `${RowTheadHeight}px`
+    }
+    else {
+        Rowee.value.style.height = `${DatasTheadHeight}px`
+    }
 })
 
 onUpdated(() => {
@@ -143,7 +155,6 @@ const handlePaste = (event, row, column) => {
                                 if (input) {
                                     const rowComponents = input.id.split("-")[1]
                                     const columnComponents = input.id.split("-")[2]
-                                    console.log({ rowComponents, columnComponents })
                                     input.value = cell;
                                     const theIndex = form.dataContents.findIndex(x => {
                                         let founded = (x.id_row == rowComponents || x.wilayah_fullcode == rowComponents) && x.id_column == columnComponents
@@ -189,38 +200,40 @@ const setId = (row, column) => {
             </div>
             <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
             <div class="table-container">
-                <div class="row">
-                    <table class="table table-bordered" id="RowTabel">
-                        <thead>
-                            <tr>
-                                <th class="text-center align-middle tabel-width-15" rowspan="2">#</th>
-                                <th class="text-center align-middle" rowspan="2">{{ page.props.row_label }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
-                                <td>{{ index + 1 }}</td>
-                                <td>{{ nodeRow.label }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="row mb-3">
+                    <div class="overflow-x-scroll p-0" id="imaginer">
+                        <table class="table table-bordered" id="RowTabel" ref="RowTabel">
+                            <thead ref="Rowee">
+                                <tr>
+                                    <th class="text-center align-middle tabel-width-15" rowspan="2">#</th>
+                                    <th class="text-center align-middle" rowspan="2">{{ page.props.row_label }}</th>
+                                </tr>
+                            </thead>
+                            <tbody ref="RowTbody">
+                                <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
+                                    <td>{{ index + 1 }}</td>
+                                    <td>{{ nodeRow.label }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <div class="table-data-wrapper" ref="TabelData" id="TabelData">
                         <table class="table table-bordered" id="ColumnTabel">
-                            <thead>
+                            <thead ref="Columnee">
                                 <tr>
                                     <th class="text-center" :colspan="page.props.columns.length"
                                         v-for="(node, index) in page.props.turtahuns" :key="index">{{ node.label }}</th>
                                 </tr>
                                 <tr>
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
-                                        <th class="text-center" v-for="(node, index) in page.props.columns"
+                                        <th class="text-center align-middle" v-for="(node, index) in page.props.columns"
                                             :key="index">{{
         node.label }}</th>
                                     </template>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody ref="ColumnTbody">
                                 <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
@@ -322,6 +335,13 @@ const setId = (row, column) => {
     background: #f9fafc;
     border-right: 1px solid #e6eaf0;
     vertical-align: top;
+    /* white-space: nowrap; */
+    /* text-overflow: ellipsis; */
+    /* overflow: hidden; */
+}
+
+#imaginer {
+    width: 400px;
 }
 
 #RowTabel td:first-child {
@@ -331,7 +351,7 @@ const setId = (row, column) => {
 #RowTabel thead,
 #ColumnTabel thead {
     /* min-height: 200px; */
-    height: 100px;
+    /* height: 100px; */
     vertical-align: middle;
     padding: .1rem;
     /* white-space: nowrap; */

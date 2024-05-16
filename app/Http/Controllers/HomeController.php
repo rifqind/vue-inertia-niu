@@ -418,7 +418,7 @@ class HomeController extends Controller
                     $rowLabel = ucwords($rowLabel);
                 }
             } else {
-                $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
+                $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
             }
         } catch (\Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));

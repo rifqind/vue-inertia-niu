@@ -426,6 +426,7 @@ class TabelController extends Controller
         $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->get();
         try {
             //code...
+            // dd($rows[0]);
             if ($rows[0]->id == 0) {
                 $wilayah_parent_code = '';
                 $jenis = "DAFTAR ";
@@ -466,7 +467,7 @@ class TabelController extends Controller
                 }
             } else {
 
-                $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->pluck('label')[0];
+                $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
             }
         } catch (\Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
