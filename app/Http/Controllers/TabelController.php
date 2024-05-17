@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Catatan;
 use App\Models\Column;
 use App\Models\ColumnGroup;
-
+use App\Models\ColumnOrder;
 use App\Models\Datacontent;
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
@@ -400,7 +400,6 @@ class TabelController extends Controller
             ->where('statustables.id', $id)->first();
 
         $catatans = Catatan::where('id_statustabel', $id)->value('catatan');
-
         $id_tabel = $statusTabel->id_tabel;
         $tahun = $statusTabel->tahun;
         $sdesc = $statusTabel->status_desc;
@@ -473,7 +472,14 @@ class TabelController extends Controller
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
         }
 
-        $columns = Column::whereIn('id', $id_columns)->get();
+        //call the orders
+        $orders = ColumnOrder::where('id_statustabel', $id)->value('orders');
+        if ($orders) {
+            $columns = Column::whereIn('id', $id_columns)->orderByRaw("FIELD(id,".$orders.")")->get();
+        } else {
+            $columns = Column::whereIn('id', $id_columns)->get();
+        }
+        // dd($id_columns, $columns, $orders);
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();

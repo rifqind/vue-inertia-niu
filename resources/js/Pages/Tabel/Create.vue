@@ -4,12 +4,13 @@ import Multiselect from "@vueform/multiselect";
 import ModalBs from "@/Components/ModalBs.vue";
 import TabelPreview from "@/Components/TabelPreview.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import draggable from 'vuedraggable';
 
 import { ref, defineComponent, onMounted, watch, onUnmounted } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
 
 defineComponent({
-    Multiselect,
+    Multiselect, draggable
 });
 const page = usePage();
 const subjects = page.props.subjects;
@@ -268,6 +269,8 @@ const form = useForm({
     columns: [],
     tahun: null,
     id_turtahun: null,
+    orderRow: null,
+    orderColumn: null,
     _token: null,
 })
 
@@ -297,6 +300,30 @@ const buildValue = function () {
 onMounted(() => {
     // console.log(tabelRowList.value.querySelectorAll('.row-select'))
 });
+const orderDropRow = ref(2)
+const setupOrderRow = (value) => {
+    if (value == 1) {
+        orderDropRow.value = 1
+        form.orderRow = rowListFetched.value.filter((_, index) => {
+            return rowListFetched.value[index];
+        });
+    } else {
+        orderDropRow.value = 2
+        form.orderRow = null
+    }
+}
+const orderDropColumn = ref(2)
+const setupOrderColumn = (value) => {
+    if (value == 1) {
+        orderDropColumn.value = 1
+        form.orderColumn = columnListFetched.value.filter((_, index) => {
+            return columnsCheckBox.value[index];
+        });
+    } else {
+        orderDropColumn.value = 2
+        form.orderColumn = null
+    }
+}
 </script>
 <template>
 
@@ -417,6 +444,29 @@ onMounted(() => {
                                     </tbody>
                                 </table>
                             </div>
+                            <div class="mb-3">
+                                <label class="mb-0" for="column-groups">Urutan Baris</label>
+                                <div>
+                                    <small>(Abaikan Jika tidak ada perubahan urutan baris)</small>
+                                </div>
+                                <Multiselect class="mb-3" placeholder="Apakah ada perubahan urutan?" :value="2"
+                                    @change="setupOrderRow"
+                                    :options="[{ label: 'Ada perubahan', value: '1' }, { label: 'Sudah sesuai', value: '2' }]" />
+                                <table v-if="orderDropRow == 1" class="table table-hover table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Daftar Baris</th>
+                                        </tr>
+                                    </thead>
+                                    <draggable v-model="form.orderRow" tag="tbody" item-key="label">
+                                        <template #item="{ element }">
+                                            <tr>
+                                                <td>{{ element.label }}</td>
+                                            </tr>
+                                        </template>
+                                    </draggable>
+                                </table>
+                            </div>
                         </div>
                     </div>
                     <div class="card">
@@ -465,6 +515,29 @@ onMounted(() => {
                                             </td>
                                         </tr>
                                     </tbody>
+                                </table>
+                            </div>
+                            <div class="mb-3">
+                                <label class="mb-0" for="column-groups">Urutan Kolom</label>
+                                <div>
+                                    <small>(Abaikan Jika tidak ada perubahan urutan kolom)</small>
+                                </div>
+                                <Multiselect class="mb-3" placeholder="Apakah ada perubahan urutan?" :value="2"
+                                    @change="setupOrderColumn"
+                                    :options="[{ label: 'Ada perubahan', value: '1' }, { label: 'Sudah sesuai', value: '2' }]" />
+                                <table v-if="orderDropColumn == 1" class="table table-hover table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Daftar Kolom</th>
+                                        </tr>
+                                    </thead>
+                                    <draggable v-model="form.orderColumn" tag="tbody" item-key="label">
+                                        <template #item="{ element }">
+                                            <tr>
+                                                <td>{{ element.label }}</td>
+                                            </tr>
+                                        </template>
+                                    </draggable>
                                 </table>
                             </div>
                         </div>
