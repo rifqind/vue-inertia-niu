@@ -12,6 +12,7 @@ use App\Models\MasterWilayah;
 use App\Models\Notifikasi;
 use App\Models\Row;
 use App\Models\RowGroup;
+use App\Models\RowOrder;
 use App\Models\Tabel;
 use App\Models\Statustables;
 use App\Models\Subject;
@@ -252,6 +253,7 @@ class TabelController extends Controller
         // insert table
         // $new_tabel = Tabel::create($request->tabel);
         // dd($new_tabel);
+
         try {
             //code...
             DB::beginTransaction();
@@ -265,6 +267,8 @@ class TabelController extends Controller
             // dd($request);
 
             //tabel create
+            // dd($request->orderRow, $request->orderColumn);
+
             $new_tabel = Tabel::create($request->tabel);
             $id_dinas = $request->tabel["id_dinas"];
             // //debatable
@@ -274,6 +278,20 @@ class TabelController extends Controller
             // // generate datacontents
             $data_contents = [];
             $is_wilayah = $request->rows['tipe'] == 1;
+
+            $rowOrder = [];
+            foreach ($request->orderRow as $key => $value) {
+                # code...
+                array_push($rowOrder, $value['value']);
+            }
+            $rowOrder = implode(',', $rowOrder);
+            $columnOrder = [];
+            foreach ($request->orderColumn as $key => $value) {
+                # code...
+                array_push($columnOrder, $value['value']);
+            }
+            $columnOrder = implode(',', $columnOrder);
+
             foreach ($request->rows['selected'] as $row) {
                 foreach ($request->columns as $column) {
                     foreach ($id_turtahun as $period) {
@@ -301,6 +319,14 @@ class TabelController extends Controller
                     'edited_by' => auth()->user()->id,
                 ]
             );
+            $newRowOrders = RowOrder::create([
+                'id_statustabel' => $newStatusTables->id,
+                'orders' => $rowOrder,
+            ]);
+            $newColumnOrders = ColumnOrder::create([
+                'id_statustabel' => $newStatusTables->id,
+                'orders' => $columnOrder,
+            ]);
             Notifikasi::create([
                 'id_statustabel' => $newStatusTables->id,
                 'id_user' => auth()->user()->id,
@@ -422,7 +448,9 @@ class TabelController extends Controller
             array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
         }
         $rows = Row::whereIn('id', $id_rows)->get();
-        $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->get();
+        $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->get();
+
+        $RowOrders = RowOrder::where('id_statustabel', $id)->value('orders');
         try {
             //code...
             // dd($rows[0]);
@@ -457,6 +485,8 @@ class TabelController extends Controller
                         ->get();
                     $rows = $temp;
                 }
+                if ($RowOrders) $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                    ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
                 if ($wilayah_parent_code == '') {
                     $rowLabel = 'PROVINSI SULAWESI UTARA';
                 } else {
@@ -473,13 +503,14 @@ class TabelController extends Controller
         }
 
         //call the orders
-        $orders = ColumnOrder::where('id_statustabel', $id)->value('orders');
-        if ($orders) {
-            $columns = Column::whereIn('id', $id_columns)->orderByRaw("FIELD(id,".$orders.")")->get();
+        $ColumnOrders = ColumnOrder::where('id_statustabel', $id)->value('orders');
+        if ($ColumnOrders) {
+            $columns = Column::whereIn('id', $id_columns)->orderByRaw("FIELD(id," . $ColumnOrders . ")")->get();
         } else {
             $columns = Column::whereIn('id', $id_columns)->get();
         }
         // dd($id_columns, $columns, $orders);
+        if (!$rows[0]->id == 0) $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
@@ -496,6 +527,96 @@ class TabelController extends Controller
             'status_desc' => [$statusTabel->status, $sdesc],
             'catatans' => $catatans,
         ]);
+    }
+
+    public function fetchOrder(string $id)
+    {
+        $columnOrder = ColumnOrder::where('id_statustabel', $id)->value('orders');
+        $rowOrder = RowOrder::where('id_statustabel', $id)->value('orders');
+        $statustabel = Statustables::where('id', $id)->value('id_tabel');
+        $tabel = Tabel::where('id', $statustabel)->value('id');
+
+        if ($columnOrder) {
+            $columnList = Column::whereIn('id', explode(',', $columnOrder))->orderByRaw("FIELD(id," . $columnOrder . ")")->get();
+        } else {
+            $dc = Datacontent::where('id_tabel', $tabel)->get(['id_column']);
+            $columnList = Column::whereIn('id', $dc)->get();
+        }
+        $dc = Datacontent::where('id_tabel', $tabel)->get(['id_row']);
+        if (!$dc[0]->id_row == 0) {
+            if ($rowOrder) {
+                $rowList = Row::whereIn('id', explode(',', $rowOrder))->orderByRaw("FIELD(id," . $rowOrder . ")")->get();
+            } else {
+                $rowList = Row::whereIn('id', $dc)->get();
+            }
+        } else $rowList = null;
+        $data = [
+            'columnList' => $columnList,
+            'rowList' => $rowList
+        ];
+        return response()->json($data);
+    }
+
+    public function changeOrder(Request $request)
+    {
+        $request->validate([
+            'id' => ['required'],
+            'orders' => ['required']
+        ]);
+        $this_column_order = ColumnOrder::where('id_statustabel', $request->id)->value('id_statustabel');
+        $this_row_order = ColumnOrder::where('id_statustabel', $request->id)->value('id_statustabel');
+        // dd($request->orders);
+        try {
+            //code...
+            DB::beginTransaction();
+            //columns 
+            $requested_column_order = $request->orders['columnOrder'];
+            $this_to_column_order = [];
+            foreach ($requested_column_order as $key => $value) {
+                # code...
+                array_push($this_to_column_order, $value['id']);
+            }
+            $this_to_column_order = implode(',', $this_to_column_order);
+            if ($this_column_order) {
+                ColumnOrder::where('id_statustabel', $this_column_order)->update([
+                    'orders' => $this_to_column_order,
+                ]);
+            } else {
+                ColumnOrder::create([
+                    'id_statustabel' => $request->id,
+                    'orders' => $this_to_column_order,
+                ]);
+            }
+
+            //rows
+            $requested_row_order = $request->orders['rowOrder'];
+            if ($requested_row_order) {
+                $this_to_row_order = [];
+                foreach ($requested_row_order as $key => $value) {
+                    # code...
+                    array_push($this_to_row_order, $value['id']);
+                }
+                $this_to_row_order = implode(',', $this_to_row_order);
+                if ($this_row_order) {
+                    // dd('asu');
+                    RowOrder::where('id_statustabel', $this_row_order)->update([
+                        'orders' => $this_to_row_order,
+                    ]);
+                } else {
+                    RowOrder::create([
+                        'id_statustabel' => $request->id,
+                        'orders' => $this_to_row_order,
+                    ]);
+                }
+            }
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return response()->json($th->getMessage());
+        }
+        return redirect()->route('tabel.index')->with('message', 'berhasil mengubah urutan');
+
     }
 
     //     /**
@@ -515,6 +636,7 @@ class TabelController extends Controller
             'subjects' => $subjects,
         ]);
     }
+
 
     //     /**
     //      * Update the specified resource in storage.

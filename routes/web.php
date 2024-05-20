@@ -13,7 +13,15 @@ use App\Http\Controllers\RowController;
 use App\Http\Controllers\RowGroupController;
 use App\Http\Controllers\TabelController;
 use App\Http\Controllers\MetadataVariabelController;
+use App\Models\Column;
+use App\Models\ColumnOrder;
+use App\Models\Datacontent;
+use App\Models\MasterWilayah;
 use App\Models\MetadataVariabel;
+use App\Models\Row;
+use App\Models\RowOrder;
+use App\Models\Statustables;
+use App\Models\Tabel;
 use App\Models\Turtahun;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -161,6 +169,8 @@ Route::get('/master_metavar/fetch', function () {
     $target = MetadataVariabel::selectRaw('MIN(id) as id, r101')->groupBy('r101')->get();
     return response()->json($target);
 })->name('updateMasterMetavar');
+Route::get('/order/fetch/{id}', [TabelController::class, 'fetchOrder'])->name('order.fetch')->middleware(['auth', 'verified']);
+Route::post('/order/change', [TabelController::class, 'changeOrder'])->middleware(['auth', 'verified'])->name('order.changeOrder');
 Route::get('/export/{id}/{title}', [MetadataVariabelController::class, 'export'])->name('export');
 Route::get('/export-view/{id}/{title}', function (string $id, $title) {
     return Excel::download(new BatchViewExport($id), $title . ".xlsx");

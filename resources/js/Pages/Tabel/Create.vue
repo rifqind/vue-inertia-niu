@@ -593,7 +593,7 @@ const setupOrderColumn = (value) => {
                     <ModalBs :ModalStatus="previewModalStatus" :modalSize="'modal-xl modal-dialog-scrollable'"
                         @close="previewModalStatus = false" :title="'Preview Tabel'">
                         <template #modalBody>
-                            <TabelPreview :rows="form.rows.selected" :columns="form.columns"
+                            <TabelPreview :rows="form.orderRow" :columns="form.orderColumn"
                                 :turtahun="turtahunListFetched" />
                         </template>
                         <template #modalFunction>

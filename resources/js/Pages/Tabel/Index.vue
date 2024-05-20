@@ -1,6 +1,8 @@
 <script setup>
 import { Link, Head, usePage, useForm } from '@inertiajs/vue3';
-import { Teleport, onMounted, ref, watch } from 'vue';
+import { Teleport, onMounted, ref, watch, defineComponent } from 'vue';
+import Multiselect from "@vueform/multiselect";
+import draggable from 'vuedraggable'
 import { clickSortProperties } from '@/sortAttribute';
 import Pagination from '@/Components/Pagination.vue'
 import GeneralLayout from '@/Layouts/GeneralLayout.vue'
@@ -9,7 +11,11 @@ import ModalBs from '@/Components/ModalBs.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 import { GoDownload } from '@/download'
 import { computed } from 'vue';
+import axios from 'axios';
 
+defineComponent({
+    Multiselect, draggable
+})
 const page = usePage()
 var tGroup = page.props.tables
 var tables = ref(tGroup)
@@ -23,6 +29,7 @@ const triggerSpinner = ref(false)
 const toggleFlash = ref(false)
 const deleteModalStatus = ref(false)
 const downloadModalStatus = ref(false)
+const orderModalStatus = ref(false)
 const downloadTitle = ref(null)
 
 const searchLabel = ref(null)
@@ -89,6 +96,64 @@ const deleteForm = async function () {
         },
         onError: function () { deleteModalStatus.value = true }
     })
+}
+const order = useForm({
+    id: null,
+    _token: null,
+    orders: {
+        rowOrder: null,
+        columnOrder: null,
+    }
+})
+const changeOrder = async () => {
+    const response = await axios.get(route('token'))
+    order._token = response.data
+    order.orders.columnOrder = currentColumnOrder.value
+    order.orders.rowOrder = currentRowOrder.value
+    order.post(route('order.changeOrder'), {
+        onBefore: function () {
+            triggerSpinner.value = true
+            orderModalStatus.value = false
+        },
+        onFinish: function () {
+            triggerSpinner.value = false; orderDropColumn.value = 2
+        },
+        onSuccess: function () {
+            if (page.props.flash.message) toggleFlash.value = true
+            order.reset()
+        },
+        onError: function () { orderModalStatus.value = true }
+    })
+}
+const currentColumnOrder = ref(null)
+const currentRowOrder = ref(null)
+const toggleModalOrders = async (id) => {
+    orderModalStatus.value = true
+    order.id = id
+    try {
+        const response = await axios.get('/order/fetch/' + id)
+        // console.log(response.data)
+        currentColumnOrder.value = response.data.columnList
+        if (response.data.rowList) currentRowOrder.value = response.data.rowList
+    } catch (error) {
+        console.error('Error fetching data: ', error)
+    }
+}
+const orderDropColumn = ref(2)
+const setupOrderColumn = (value) => {
+    if (value == 1) {
+        orderDropColumn.value = 1
+    } else {
+        orderDropColumn.value = 2
+    }
+}
+const orderDropRow = ref(2)
+const setupOrderRow = (value) => {
+    if (value == 1) {
+        orderDropRow.value = 1
+    } else {
+        orderDropRow.value = 2
+    }
 }
 //new Pagination
 const showItems = ref(10)
@@ -189,14 +254,18 @@ watch(() => page.props.tables, (value) => {
                     <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated
                             }}</span><br><span>{{ table.status_updated }}</span></td>
                     <td class="text-center align-middle deleted">
-                        <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mr-5">
+                        <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mx-1">
                         <font-awesome-icon icon="fa-solid fa-pencil" title="Cek/Edit" />
                         </Link>
-                        <a v-if="currentRoute == 'tabel.index'" @click.prevent="() => {
+                        <a @click.prevent="toggleModalOrders(table.id_statustables)"><font-awesome-icon
+                                icon="fa-solid fa-sort" class="edit-pen mx-1" title="Edit Urutan Kolom/Baris" /></a>
+                        <a v-if="(currentRoute == 'tabel.index' && (page.props.auth.user.role == 'admin' || page.props.auth.user.role == 'kominfo'))"
+                            @click.prevent="() => {
         deleteModalStatus = true;
         form.id = table.id_statustables
     }" class="delete-trash">
-                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" title="Hapus" />
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color mx-1"
+                                title="Hapus" />
                         </a>
                     </td>
                 </tr>
@@ -226,6 +295,60 @@ watch(() => page.props.tables, (value) => {
                 <template v-slot:modalFunction>
                     <button type="button" class="btn btn-sm badge-status-empat" :disabled="deleteForm.processing"
                         @click.prevent="deleteForm">Hapus</button>
+                </template>
+            </ModalBs>
+            <ModalBs :-modal-status="orderModalStatus"
+                @close="orderModalStatus = false; currentColumnOrder = null; currentRowOrder = null; order.reset(); orderDropColumn = 2; orderDropRow = 2"
+                :title="'Ganti Urutan Kolom atau Baris'">
+                <template #modalBody>
+                    <form>
+                        <div class="form-group">
+                            <div class="mb-3">
+                                <label>Urutan Kolom</label>
+                                <Multiselect class="mb-3" placeholder="Apakah ada perubahan urutan?" :value="2"
+                                    @change="setupOrderColumn"
+                                    :options="[{ label: 'Ada perubahan', value: '1' }, { label: 'Sudah sesuai', value: '2' }]" />
+                                <table v-if="orderDropColumn == 1" class="table table-hover table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Daftar Kolom</th>
+                                        </tr>
+                                    </thead>
+                                    <draggable v-model="currentColumnOrder" tag="tbody" item-key="label">
+                                        <template #item="{ element }">
+                                            <tr>
+                                                <td>{{ element.label }}</td>
+                                            </tr>
+                                        </template>
+                                    </draggable>
+                                </table>
+                            </div>
+                            <div class="mb-3">
+                                <label>Urutan Baris</label>
+                                <Multiselect class="mb-3" placeholder="Apakah ada perubahan urutan?" :value="2"
+                                    @change="setupOrderRow"
+                                    :options="[{ label: 'Ada perubahan', value: '1' }, { label: 'Sudah sesuai', value: '2' }]" />
+                                <table v-if="orderDropRow == 1" class="table table-hover table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Daftar Kolom</th>
+                                        </tr>
+                                    </thead>
+                                    <draggable v-model="currentRowOrder" tag="tbody" item-key="label">
+                                        <template #item="{ element }">
+                                            <tr>
+                                                <td>{{ element.label }}</td>
+                                            </tr>
+                                        </template>
+                                    </draggable>
+                                </table>
+                            </div>
+                        </div>
+                    </form>
+                </template>
+                <template #modalFunction>
+                    <button id="" type="button" class="btn btn-sm bg-success-fordone" :disabled="order.processing"
+                        @click.prevent="changeOrder">Simpan</button>
                 </template>
             </ModalBs>
         </Teleport>
