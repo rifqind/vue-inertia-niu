@@ -285,6 +285,8 @@ const submit = async function () {
     })
 }
 
+const rowPreview = ref(null)
+const columnPreview = ref(null)
 const buildValue = function () {
     rowsSelected.value = rowListFetched.value.filter((_, index) => {
         return rowsCheckBox.value[index];
@@ -294,6 +296,8 @@ const buildValue = function () {
     });
     form.rows.selected = rowsSelected.value
     form.columns = columnsSelected.value
+    if (!form.orderColumn) columnPreview.value = form.columns
+    if (!form.orderRow) rowPreview.value = form.rows.selected
     previewModalStatus.value = true
 }
 
@@ -331,6 +335,7 @@ watch(() => form.rows.tipe, (value) => {
 watch(() => colGroupsDrop.value.value, (value) => {
     if (!value) orderDropColumn.value = 2;
 })
+
 </script>
 <template>
 
@@ -600,7 +605,7 @@ watch(() => colGroupsDrop.value.value, (value) => {
                     <ModalBs :ModalStatus="previewModalStatus" :modalSize="'modal-xl modal-dialog-scrollable'"
                         @close="previewModalStatus = false" :title="'Preview Tabel'">
                         <template #modalBody>
-                            <TabelPreview :rows="form.orderRow" :columns="form.orderColumn"
+                            <TabelPreview :rows="rowPreview" :columns="columnPreview"
                                 :turtahun="turtahunListFetched" />
                         </template>
                         <template #modalFunction>

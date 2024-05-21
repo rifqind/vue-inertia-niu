@@ -72,11 +72,12 @@ function getReady() {
     document.querySelectorAll(`#ColumnTabel tbody tr`).forEach((row) => {
         let data = {};
         row.querySelectorAll("td").forEach((cell, index) => {
-            let input = cell.querySelector('input')
+            let input = cell.querySelector("input");
             let value = input ? input.value : cell.textContent;
             let numericValue = parseFloat(value);
             if (!isNaN(numericValue)) {
-                data[mergedHeaders[index]] = numericValue;
+                let val = value.replace(/[^0-9]/g, '');
+                data[mergedHeaders[index]] = Number(val);
             } else {
                 data[mergedHeaders[index]] = value;
             }

@@ -279,19 +279,6 @@ class TabelController extends Controller
             $data_contents = [];
             $is_wilayah = $request->rows['tipe'] == 1;
 
-            $rowOrder = [];
-            foreach ($request->orderRow as $key => $value) {
-                # code...
-                array_push($rowOrder, $value['value']);
-            }
-            $rowOrder = implode(',', $rowOrder);
-            $columnOrder = [];
-            foreach ($request->orderColumn as $key => $value) {
-                # code...
-                array_push($columnOrder, $value['value']);
-            }
-            $columnOrder = implode(',', $columnOrder);
-
             foreach ($request->rows['selected'] as $row) {
                 foreach ($request->columns as $column) {
                     foreach ($id_turtahun as $period) {
@@ -319,14 +306,30 @@ class TabelController extends Controller
                     'edited_by' => auth()->user()->id,
                 ]
             );
-            $newRowOrders = RowOrder::create([
-                'id_statustabel' => $newStatusTables->id,
-                'orders' => $rowOrder,
-            ]);
-            $newColumnOrders = ColumnOrder::create([
-                'id_statustabel' => $newStatusTables->id,
-                'orders' => $columnOrder,
-            ]);
+            $rowOrder = [];
+            if ($request->orderRow) {
+                foreach ($request->orderRow as $key => $value) {
+                    # code...
+                    array_push($rowOrder, $value['value']);
+                }
+                $rowOrder = implode(',', $rowOrder);
+                $newRowOrders = RowOrder::create([
+                    'id_statustabel' => $newStatusTables->id,
+                    'orders' => $rowOrder,
+                ]);
+            }
+            $columnOrder = [];
+            if ($request->orderColumn) {
+                foreach ($request->orderColumn as $key => $value) {
+                    # code...
+                    array_push($columnOrder, $value['value']);
+                }
+                $columnOrder = implode(',', $columnOrder);
+                $newColumnOrders = ColumnOrder::create([
+                    'id_statustabel' => $newStatusTables->id,
+                    'orders' => $columnOrder,
+                ]);
+            }
             Notifikasi::create([
                 'id_statustabel' => $newStatusTables->id,
                 'id_user' => auth()->user()->id,
@@ -616,7 +619,6 @@ class TabelController extends Controller
             return response()->json($th->getMessage());
         }
         return redirect()->route('tabel.index')->with('message', 'berhasil mengubah urutan');
-
     }
 
     //     /**

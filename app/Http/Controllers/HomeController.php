@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Column;
+use App\Models\ColumnOrder;
 use App\Models\Datacontent;
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
@@ -10,6 +11,7 @@ use App\Models\MetadataVariabel;
 use App\Models\Notifikasi;
 use App\Models\Row;
 use App\Models\RowGroup;
+use App\Models\RowOrder;
 use App\Models\Statustables;
 use App\Models\Tabel;
 use App\Models\Turtahun;
@@ -40,17 +42,20 @@ class HomeController extends Controller
                 'statustables.updated_at as status_updated',
             ]);
         $dinas = [];
+        $tempt_dinas = [];
         $provs = [];
         $kabs = [];
         $kecs = [];
         $desa = [];
         $subjects = [];
-        foreach ($tabels as $tabel) {
+        foreach ($tabels as $key => $tabel) {
             # code...
-            $dinas[] = [
-                'value' => $tabel->id_dinas,
-                'label' => $tabel->nama_dinas,
-            ];
+            if (!isset($tempt_dinas[$tabel->id_dinas])) {
+                $tempt_dinas[$tabel->id_dinas] = [
+                    'value' => $tabel->id_dinas,
+                    'label' => $tabel->nama_dinas,
+                ];
+            }
             $text = $tabel->nama_regions;
             $partOfText = explode(' ', $text);
             array_shift($partOfText);
@@ -111,6 +116,7 @@ class HomeController extends Controller
         $tahuns = Statustables::where('status', 5)->distinct()->get(['tahun as value', 'tahun as label']);
         $countfinals = Statustables::where('status', 5)->count();
         $counttabels = $tabels->count();
+        $dinas = array_values($tempt_dinas);
         return Inertia::render('Home/Home', [
             'kecs' => $kecs,
             'desa' => $desa,
@@ -386,7 +392,8 @@ class HomeController extends Controller
             ->first(['tabels.*', 'sb.label as subject_label', 'd.nama as dinas_label', 'mw.label as wilayah_label']);
 
         $rows = Row::whereIn('id', $id_rows)->get();
-        $rowLabel = RowGroup::where('id', $rows[0]->id_rowlabels)->get();
+        $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->get();
+        $RowOrders = RowOrder::where('id_statustabel', $request->id)->value('orders');
         try {
             //code...
             if ($rows[0]->id == 0) {
@@ -406,10 +413,22 @@ class HomeController extends Controller
                 } else if ($kec != '000') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
                     $jenis = $jenis . "KECAMATAN DI ";
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
                 } else if ($kab != '00') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
                     $jenis = $jenis . "KABUPATEN DI ";
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kab = '00' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
                 }
+                if ($RowOrders) $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                    ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
                 if ($wilayah_parent_code == '') {
                     $rowLabel = 'PROVINSI SULAWESI UTARA';
                 } else {
@@ -423,8 +442,14 @@ class HomeController extends Controller
         } catch (\Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
         }
-
-        $columns = Column::whereIn('id', $id_columns)->get();
+        //call the orders
+        $ColumnOrders = ColumnOrder::where('id_statustabel', $request->id)->value('orders');
+        if ($ColumnOrders) {
+            $columns = Column::whereIn('id', $id_columns)->orderByRaw("FIELD(id," . $ColumnOrders . ")")->get();
+        } else {
+            $columns = Column::whereIn('id', $id_columns)->get();
+        }
+        if (!$rows[0]->id == 0) $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
