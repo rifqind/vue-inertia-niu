@@ -325,23 +325,28 @@ watch(() => page.props.tables, (value) => {
                             </div>
                             <div class="mb-3">
                                 <label>Urutan Baris</label>
-                                <Multiselect class="mb-3" placeholder="Apakah ada perubahan urutan?" :value="2"
-                                    @change="setupOrderRow"
-                                    :options="[{ label: 'Ada perubahan', value: '1' }, { label: 'Sudah sesuai', value: '2' }]" />
-                                <table v-if="orderDropRow == 1" class="table table-hover table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Daftar Kolom</th>
-                                        </tr>
-                                    </thead>
-                                    <draggable v-model="currentRowOrder" tag="tbody" item-key="label">
-                                        <template #item="{ element }">
+                                <template v-if="currentRowOrder" >
+                                    <Multiselect class="mb-3" placeholder="Apakah ada perubahan urutan?" :value="2"
+                                        @change="setupOrderRow"
+                                        :options="[{ label: 'Ada perubahan', value: '1' }, { label: 'Sudah sesuai', value: '2' }]" />
+                                    <table v-if="orderDropRow == 1" class="table table-hover table-bordered">
+                                        <thead>
                                             <tr>
-                                                <td>{{ element.label }}</td>
+                                                <th>Daftar Baris</th>
                                             </tr>
-                                        </template>
-                                    </draggable>
-                                </table>
+                                        </thead>
+                                        <draggable v-model="currentRowOrder" tag="tbody" item-key="label">
+                                            <template #item="{ element }">
+                                                <tr>
+                                                    <td>{{ element.label }}</td>
+                                                </tr>
+                                            </template>
+                                        </draggable>
+                                    </table>
+                                </template>
+                                <template v-else>
+                                    <div>Tidak bisa mengubah urutan baris untuk data ini</div>
+                                </template>
                             </div>
                         </div>
                     </form>

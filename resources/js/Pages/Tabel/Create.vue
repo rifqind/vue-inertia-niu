@@ -324,6 +324,13 @@ const setupOrderColumn = (value) => {
         form.orderColumn = null
     }
 }
+
+watch(() => form.rows.tipe, (value) => {
+    if (!value) rowListFetched.value = []; tingkatanDrop.value.value = null; orderDropRow.value = 2;
+})
+watch(() => colGroupsDrop.value.value, (value) => {
+    if (!value) orderDropColumn.value = 2;
+})
 </script>
 <template>
 

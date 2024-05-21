@@ -50,7 +50,7 @@ const buttonMapping = {
 }
 const defineButton = function (role, position) {
     const isAdmin = buttonMapping[role]
-    const status = page.props.status_desc[0]
+    const status = page.props.status_desc
     if (isAdmin) {
         if (position == 'right') return false
         else {
@@ -228,6 +228,9 @@ const download = (titles) => {
     window.location.href = `/export/${page.props.id_tabel}/${titles}`
     downloadModalStatus.value = false
 }
+watch(() => page.props.metavars, (value) => {
+    metavars.value = [...value]
+})
 </script>
 
 <template>
@@ -286,7 +289,7 @@ const download = (titles) => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(node, index) in metavars" :key="node.id">
+                <tr v-if="metavars.length > 0" v-for="(node, index) in metavars" :key="node.id">
                     <td>{{ node.number }}</td>
                     <td>{{ node.r101 }}</td>
                     <td>{{ node.r102 }}</td>
@@ -302,6 +305,9 @@ const download = (titles) => {
                             <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
                         </a>
                     </td>
+                </tr>
+                <tr v-else>
+                    <td colspan="8" class="text-center">Metadata Belum Ada</td>
                 </tr>
             </tbody>
         </table>

@@ -42,6 +42,7 @@ class MetadataVariabelController extends Controller
             # code...
             $tabel->number = $key + 1;
             $checkMetavar = MetadataVariabelStatus::where('id_tabel', $tabel->id)->first(['*', 'updated_at as status_updated']);
+            // dd($checkMetavar);
             if (!$checkMetavar) {
                 # code...
                 $tabel->status_metavar = '0';
@@ -70,13 +71,13 @@ class MetadataVariabelController extends Controller
         // dd($status_desc);
         $judul = Tabel::where('id', $id)->value('label');
         $satuan = Tabel::where('id', $id)->value('unit');
-
+        // dd($this_metavar);
         foreach ($this_metavar as $key => $value) {
             # code...
             $value->number = $key + 1;
             $value->satuan = $satuan;
-            $id_tabel = $value->id_tabel;
         }
+        $id_tabel = $id;
         return Inertia::render('Metavar/List', [
             'metavars' => $this_metavar,
             'status_metavars' => $this_status_metavar,
@@ -146,16 +147,16 @@ class MetadataVariabelController extends Controller
                 ]);
             }
             DB::commit();
-            return redirect()->route('metavar.lists', ['id' => $id_tabel])->with('message', 'Berhasil menambah data baru');
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
-
+            
             return response()->json([
                 'error' => 'An error occurred while processing the request.',
                 'message' => $th->getMessage(), // Include the exception message
             ], 500);
         }
+        return redirect()->route('metavar.lists', ['id' => $id_tabel])->with('message', 'Berhasil menambah data baru');
     }
 
     public function export(string $id, $title)
@@ -224,6 +225,11 @@ class MetadataVariabelController extends Controller
         //
         $get_idTabel = MetadataVariabel::where('id', $request->id)->value('id_tabel');
         MetadataVariabel::destroy($request->id);
+        $check = MetadataVariabel::where('id_tabel', $get_idTabel)->get();
+        if ($check->isEmpty()) {
+            $id_metavar_status = MetadataVariabelStatus::where('id_tabel', $get_idTabel)->value('id');
+            MetadataVariabelStatus::destroy($id_metavar_status);
+        }
         return redirect()->route('metavar.lists', ['id' => $get_idTabel])->with('message', 'Berhasil menghapus data tersebut');
     }
 }
