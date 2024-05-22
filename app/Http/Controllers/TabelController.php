@@ -124,9 +124,11 @@ class TabelController extends Controller
             $columns = Column::whereIn('id', $id_columns)->get('label');
             $who_updated = User::where('id', $table->edited_by)->value('username');
             $when_updated = $table->status_updated;
+            $NumberAndLabel = $table->nomor . ' - ' . $table->label;
             array_push($table_objects, [
                 'number' => $key + 1,
-                'label' => $table->label,
+                // 'label' => $table->label,
+                'label' => $NumberAndLabel,
                 'nama_dinas' => $table->nama_dinas,
                 'id' => $table->tabelUuid,
                 'rows' => $rows,
