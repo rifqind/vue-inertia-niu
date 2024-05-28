@@ -169,6 +169,14 @@ Route::get('/master_metavar/fetch', function () {
     $target = MetadataVariabel::selectRaw('MIN(id) as id, r101')->groupBy('r101')->get();
     return response()->json($target);
 })->name('updateMasterMetavar');
+Route::get('/fetchAllColumns', function () {
+    $target = Column::leftJoin('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')->get(['columns.id as value', 'columns.label as label', 'cg.label as cg_label']);
+    return response()->json($target);
+})->middleware(['auth', 'verified'])->name('fetchAllColumns');
+Route::get('/fetchAllRows', function () {
+    $target = Row::leftJoin('row_groups as cg', 'cg.id', '=', 'rows.id_row_groups')->get(['rows.id as value', 'rows.label as label', 'cg.label as cg_label']);
+    return response()->json($target);
+})->middleware(['auth', 'verified'])->name('fetchAllRows');
 Route::get('/order/fetch/{id}', [TabelController::class, 'fetchOrder'])->name('order.fetch')->middleware(['auth', 'verified']);
 Route::post('/order/change', [TabelController::class, 'changeOrder'])->middleware(['auth', 'verified'])->name('order.changeOrder');
 Route::get('/export/{id}/{title}', [MetadataVariabelController::class, 'export'])->name('export');

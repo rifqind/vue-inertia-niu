@@ -449,7 +449,7 @@ class HomeController extends Controller
         } else {
             $columns = Column::whereIn('id', $id_columns)->get();
         }
-        if (!$rows[0]->id == 0) $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+        if (!$rows[0]->id == 0 && $RowOrders) $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();

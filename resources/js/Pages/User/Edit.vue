@@ -100,7 +100,7 @@ const goBack = function () {
         form.errors.email }}</div>
                             </div>
                         </div>
-                        <div class="row mb-3">
+                        <div class="row mb-3" v-if="page.props.auth.user.role == 'admin'">
                             <div class="col-5 d-flex align-items-center">
                                 <label class="mb-0" for="iddinas">Instansi</label>
                             </div>

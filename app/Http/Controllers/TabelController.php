@@ -116,7 +116,22 @@ class TabelController extends Controller
                         $rowLabel = ucwords($rowLabel);
                     }
                 } else {
-                    $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+                    $listRowGroups = [];
+                    foreach ($rows as $key => $value) {
+                        # code...
+                        array_push($listRowGroups, $value->id_row_groups);
+                    }
+                    $isUnique = count(array_unique($listRowGroups));
+                    if ($isUnique > 1) {
+                        $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                        $text = 'Gabungan Kelompok Baris dari : ';
+                        foreach ($tempt as $key => $value) {
+                            # code...
+                            if ($key == sizeof($tempt) - 1) $text .= $value;
+                            else $text .= $value .' - ';
+                        }
+                        $rowLabel = $text;
+                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0]; 
                 }
             } catch (\Exception $e) {
                 return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->tabelUuid, 'rows' => $rows, 'wilayah_parent_code' => $wilayah_parent_code));
@@ -198,7 +213,22 @@ class TabelController extends Controller
                         $rowLabel = ucwords($rowLabel);
                     }
                 } else {
-                    $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+                    $listRowGroups = [];
+                    foreach ($rows as $key => $value) {
+                        # code...
+                        array_push($listRowGroups, $value->id_row_groups);
+                    }
+                    $isUnique = count(array_unique($listRowGroups));
+                    if ($isUnique > 1) {
+                        $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                        $text = 'Gabungan Kelompok Baris dari : ';
+                        foreach ($tempt as $key => $value) {
+                            # code...
+                            if ($key == sizeof($tempt) - 1) $text .= $value;
+                            else $text .= $value .' - ';
+                        }
+                        $rowLabel = $text;
+                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0]; 
                 }
             } catch (\Exception $e) {
                 return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->id, 'rows' => $rows));
@@ -500,8 +530,22 @@ class TabelController extends Controller
                     $rowLabel = ucwords($rowLabel);
                 }
             } else {
-
-                $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+                $listRowGroups = [];
+                foreach ($rows as $key => $value) {
+                    # code...
+                    array_push($listRowGroups, $value->id_row_groups);
+                }
+                $isUnique = count(array_unique($listRowGroups));
+                if ($isUnique > 1) {
+                    $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                    $text = 'Gabungan Kelompok Baris dari : ';
+                    foreach ($tempt as $key => $value) {
+                        # code...
+                        if ($key == sizeof($tempt) - 1) $text .= $value;
+                        else $text .= $value .' - ';
+                    }
+                    $rowLabel = $text;
+                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0]; 
             }
         } catch (\Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
@@ -515,7 +559,7 @@ class TabelController extends Controller
             $columns = Column::whereIn('id', $id_columns)->get();
         }
         // dd($id_columns, $columns, $orders);
-        if (!$rows[0]->id == 0) $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+        if (!$rows[0]->id == 0 && $RowOrders)  $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();

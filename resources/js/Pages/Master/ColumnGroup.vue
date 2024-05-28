@@ -104,7 +104,7 @@ const deleteForm = async function () {
     })
 }
 //new Pagination
-const showItems = ref(5)
+const showItems = ref(10)
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {

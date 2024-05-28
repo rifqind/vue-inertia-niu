@@ -8,6 +8,7 @@ import draggable from 'vuedraggable';
 
 import { ref, defineComponent, onMounted, watch, onUnmounted } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
+import axios from "axios";
 
 defineComponent({
     Multiselect, draggable
@@ -33,15 +34,31 @@ const provinsi = {
 };
 
 const rowGroups = page.props.row_groups;
+var notUsedRowGroups = [{ label: '-- Tidak Menggunakan Kelompok Baris --', value: -1 }]
 const rowGroupsDrop = ref({
     value: null,
-    options: rowGroups.slice(1),
+    options: [...notUsedRowGroups, ...rowGroups.slice(1)],
 });
+const allRowIncluded = ref([])
+const allRowTempt = ref([])
+const allRowSelected = ref([])
+const allRowFinal = ref([])
 const colGroups = page.props.column_groups;
+var notUsedColGroups = [{ label: '-- Tidak Menggunakan Kelompok Kolom --', value: -1 }]
 const colGroupsDrop = ref({
     value: null,
-    options: colGroups,
+    options: [...notUsedColGroups, ...colGroups],
 });
+watch(allRowSelected, (value) => {
+    allRowFinal.value = allRowTempt.value.filter(item => value.includes(item.value))
+})
+const allColumnIncluded = ref([])
+const allColumnSelected = ref([])
+const allColumnTempt = ref([])
+const allColumnFinal = ref([])
+watch(allColumnSelected, (value) => {
+    allColumnFinal.value = allColumnTempt.value.filter(item => value.includes(item.value))
+})
 const yearDrop = ref({
     value: null,
     options: [],
@@ -179,13 +196,22 @@ const assignRowListWilayah = function (options, parents) {
 const fetchRow = async function (value) {
     rowListFetched.value = []
     try {
-        const response = await axios.get("/row/fetchCreate/" + value);
-        rowListFetched.value = response.data.data.map((obj) => ({
-            label: obj.label,
-            tipe: obj.tipe,
-            value: obj.id,
-        }));
-        rowsCheckBox.value = Array(rowListFetched.value.length).fill(false);
+        if (value == -1) {
+            const response = await axios.get(route('fetchAllRows'))
+            allRowIncluded.value = response.data.map((row) => ({
+                label: row.label + " - " + row.cg_label,
+                value: row.value
+            }))
+            allRowTempt.value = response.data
+        } else {
+            const response = await axios.get("/row/fetchCreate/" + value);
+            rowListFetched.value = response.data.data.map((obj) => ({
+                label: obj.label,
+                tipe: obj.tipe,
+                value: obj.id,
+            }));
+            rowsCheckBox.value = Array(rowListFetched.value.length).fill(false);
+        }
     } catch (error) {
         console.error("Error Fetching data:", error);
     }
@@ -193,13 +219,22 @@ const fetchRow = async function (value) {
 const fetchColumn = async function (value) {
     // columnListFetched.value = []
     try {
-        const response = await axios.get("/column/fetchCreate/" + value);
-        columnListFetched.value = response.data.data.map((obj) => ({
-            label: obj.label,
-            tipe: obj.tipe,
-            value: obj.id,
-        }));
-        columnsCheckBox.value = Array(columnListFetched.value.length).fill(false)
+        if (value == -1) {
+            const response = await axios.get(route('fetchAllColumns'))
+            allColumnIncluded.value = response.data.map((column) => ({
+                label: column.label + " - " + column.cg_label,
+                value: column.value
+            }))
+            allColumnTempt.value = response.data
+        } else {
+            const response = await axios.get("/column/fetchCreate/" + value);
+            columnListFetched.value = response.data.data.map((obj) => ({
+                label: obj.label,
+                tipe: obj.tipe,
+                value: obj.id,
+            }));
+            columnsCheckBox.value = Array(columnListFetched.value.length).fill(false)
+        }
     } catch (error) {
         console.error("Error Fetching data:", error);
     }
@@ -294,8 +329,16 @@ const buildValue = function () {
     columnsSelected.value = columnListFetched.value.filter((_, index) => {
         return columnsCheckBox.value[index];
     });
-    form.rows.selected = rowsSelected.value
-    form.columns = columnsSelected.value
+    if (rowGroupsDrop.value.value == -1) {
+        form.rows.selected = allRowFinal.value
+    } else {
+        form.rows.selected = rowsSelected.value
+    }
+    if (colGroupsDrop.value.value == -1) {
+        form.columns = allColumnFinal.value
+    } else {
+        form.columns = columnsSelected.value
+    }
     if (!form.orderColumn) columnPreview.value = form.columns
     if (!form.orderRow) rowPreview.value = form.rows.selected
     previewModalStatus.value = true
@@ -330,10 +373,10 @@ const setupOrderColumn = (value) => {
 }
 
 watch(() => form.rows.tipe, (value) => {
-    if (!value) rowListFetched.value = []; tingkatanDrop.value.value = null; orderDropRow.value = 2;
+    if (!value) rowListFetched.value = []; tingkatanDrop.value.value = null; orderDropRow.value = 2; rowGroupsDrop.value.value = null;
 })
 watch(() => colGroupsDrop.value.value, (value) => {
-    if (!value) orderDropColumn.value = 2;
+    if (!value) orderDropColumn.value = 2; colGroupsDrop.value.value = null
 })
 
 </script>
@@ -419,7 +462,12 @@ watch(() => colGroupsDrop.value.value, (value) => {
                                 <Multiselect v-model="rowGroupsDrop.value" :options="rowGroupsDrop.options"
                                     @change="fetchRow" :searchable="true" placeholder="-- Pilih Kelompok Baris --" />
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3" v-if="rowGroupsDrop.value == -1">
+                                <label for="row-groups">Daftar Baris</label>
+                                <Multiselect v-model="allRowSelected" :options="allRowIncluded" :searchable="true"
+                                    mode="tags" placeholder="-- Pilih Baris --" />
+                            </div>
+                            <div class="mb-3" v-if="rowGroupsDrop.value != -1">
                                 <label for="judul">Daftar Baris</label>
                                 <table class="table table-hover table-bordered" ref="tabelRowList" id="tabelRowList">
                                     <thead>
@@ -456,7 +504,7 @@ watch(() => colGroupsDrop.value.value, (value) => {
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3" v-if="rowGroupsDrop.value != -1">
                                 <label class="mb-0" for="column-groups">Urutan Baris</label>
                                 <div>
                                     <small>(Abaikan Jika tidak ada perubahan urutan baris)</small>
@@ -491,7 +539,12 @@ watch(() => colGroupsDrop.value.value, (value) => {
                                 <Multiselect v-model="colGroupsDrop.value" :options="colGroupsDrop.options"
                                     @change="fetchColumn" :searchable="true" placeholder="-- Pilih Kelompok Kolom --" />
                             </div>
-                            <div class="mb-3" v-if="true">
+                            <div class="mb-3" v-if="colGroupsDrop.value == -1">
+                                <label for="column-groups">Daftar Kolom</label>
+                                <Multiselect v-model="allColumnSelected" :options="allColumnIncluded" :searchable="true"
+                                    mode="tags" placeholder="-- Pilih Kolom --" />
+                            </div>
+                            <div class="mb-3" v-if="colGroupsDrop.value != -1">
                                 <label for="judul">Daftar Kolom</label>
                                 <table class="table table-hover table-bordered" ref="tabelRowList" id="tabelRowList">
                                     <thead>
@@ -529,7 +582,7 @@ watch(() => colGroupsDrop.value.value, (value) => {
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3" v-if="colGroupsDrop.value != -1">
                                 <label class="mb-0" for="column-groups">Urutan Kolom</label>
                                 <div>
                                     <small>(Abaikan Jika tidak ada perubahan urutan kolom)</small>
@@ -605,8 +658,7 @@ watch(() => colGroupsDrop.value.value, (value) => {
                     <ModalBs :ModalStatus="previewModalStatus" :modalSize="'modal-xl modal-dialog-scrollable'"
                         @close="previewModalStatus = false" :title="'Preview Tabel'">
                         <template #modalBody>
-                            <TabelPreview :rows="rowPreview" :columns="columnPreview"
-                                :turtahun="turtahunListFetched" />
+                            <TabelPreview :rows="rowPreview" :columns="columnPreview" :turtahun="turtahunListFetched" />
                         </template>
                         <template #modalFunction>
                             <button id="" type="submit" class="btn btn-sm bg-success-fordone"
