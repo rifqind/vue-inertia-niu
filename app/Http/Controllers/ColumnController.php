@@ -88,9 +88,14 @@ class ColumnController extends Controller
 
         // Find the subject by ID
         $column = Column::findOrFail($request->id);
-
+        try {
+            //code...
+            $column->delete();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return redirect()->route('columns.index')->with('error', 'Gagal menghapus kolom tersebut, Kolom sudah digunakan untuk suatu data');
+        }
         // Delete the column
-        $column->delete();
 
         // Respond with a JSON success message
         return redirect()->route('columns.index')->with('message', 'Berhasil menghapus kolom tersebut');

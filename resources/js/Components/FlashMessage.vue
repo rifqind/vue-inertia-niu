@@ -19,7 +19,7 @@ const emit = defineEmits(['close'])
 const hideFlashMessage = function () {
     setInterval(() => {
         emit('close')
-    }, 3000);
+    }, 4000);
 }
 onUpdated(() => {
     if (props.toggleFlash == true) {

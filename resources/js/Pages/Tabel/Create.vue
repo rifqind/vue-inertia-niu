@@ -295,7 +295,8 @@ const form = useForm({
         label: null,
         unit: null,
         id_dinas: null,
-        id_subjek: null
+        id_subjek: null,
+        edited_by: page.props.auth.user.id
     },
     rows: {
         tipe: null,

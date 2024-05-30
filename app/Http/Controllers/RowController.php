@@ -77,9 +77,14 @@ class RowController extends Controller
         // $decryptedId = Crypt::decrypt($id);
         // Find the subject by ID
         $rows = Row::findOrFail($request->id);
-
+        try {
+            //code...
+            $rows->delete();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return redirect()->route('rows.index')->with('error', 'Gagal menghapus baris, Baris sudah digunakan untuk suatu data');
+        }
         // Delete the subject
-        $rows->delete();
 
         // Respond with a JSON success message
         return redirect()->route('rows.index')->with('message', 'Berhasil menghapus baris');

@@ -169,7 +169,12 @@ class TabelController extends Controller
         //
         $tables = Tabel::leftJoin('dinas', 'dinas.id', '=', 'tabels.id_dinas')
             ->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
-            ->get(['tabels.*', 'tabels.id as tabelUuid']);
+            ->get([
+                'tabels.*',
+                'tabels.id as tabelUuid',
+                'tabels.edited_by as edited_by',
+                'tabels.updated_at as status_updated'
+            ]);
         $table_objects = [];
         $number = 1;
         foreach ($tables as $key => $table) {
@@ -235,8 +240,10 @@ class TabelController extends Controller
                 return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->id, 'rows' => $rows));
             }
             $columns = Column::whereIn('id', $id_columns)->get();
+            $who_updated = User::where('id', $table->edited_by)->value('username');
+            $when_updated = $table->status_updated;
             array_push($table_objects, [
-                'number' => $number ++,
+                'number' => $number++,
                 'label' => $table->label,
                 'id' => $table->tabelUuid,
                 'nama_dinas' => $table->dinas->nama,
@@ -246,6 +253,8 @@ class TabelController extends Controller
                 'tahuns' => $tahuns,
                 'status' => $table->status,
                 'id_statustables' => $table->id_statustables,
+                'status_updated' => $when_updated,
+                'who_updated' => $who_updated,
             ]);
         }
         return Inertia::render('Master/Tabel', [
@@ -408,31 +417,37 @@ class TabelController extends Controller
         $oldDataContents = Datacontent::where('id_tabel', $firstStatus->id_tabel)
             ->where('tahun', $firstStatus->tahun)
             ->get();
-
+        $listYearInput = $request->tahun;
         $newDataContents = [];
         foreach ($oldDataContents as $record) {
-            array_push(
-                $newDataContents,
-                [
-                    'value' => '',
-                    'id_tabel' => $record->id_tabel,
-                    'id_row' => $record->id_row,
-                    'id_column' => $record->id_column,
-                    'id_turtahun' => $record->id_turtahun,
-                    'tahun' => $request->tahun,
-                    'wilayah_fullcode' => $record->wilayah_fullcode,
-                ]
-            );
+            foreach ($listYearInput as $key => $value) {
+                # code...
+                array_push(
+                    $newDataContents,
+                    [
+                        'value' => '',
+                        'id_tabel' => $record->id_tabel,
+                        'id_row' => $record->id_row,
+                        'id_column' => $record->id_column,
+                        'id_turtahun' => $record->id_turtahun,
+                        'tahun' => $value,
+                        'wilayah_fullcode' => $record->wilayah_fullcode,
+                    ]
+                );
+            }
         }
         // add new record in statustabel 
         try {
             DB::beginTransaction();
-            $newStatus = Statustables::create([
-                'id_tabel' => $request->id,
-                'tahun' => $request->tahun,
-                'status' => '1',
-                'edited_by' => auth()->user()->id,
-            ]);
+            foreach ($listYearInput as $key => $value) {
+                # code...
+                $newStatus = Statustables::create([
+                    'id_tabel' => $request->id,
+                    'tahun' => $value,
+                    'status' => '1',
+                    'edited_by' => auth()->user()->id,
+                ]);
+            }
             Datacontent::insert($newDataContents);
             DB::commit();
         } catch (\Exception $e) {

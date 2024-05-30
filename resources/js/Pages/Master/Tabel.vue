@@ -186,6 +186,9 @@ watch(() => page.props.tables, (value) => {
                     <th class="text-center align-middle">
                         Daftar Tahun
                     </th>
+                    <th class="text-center align-middle">
+                        Terakhir di-update
+                    </th>
                     <th class="text-center align-middle tabel-width-5">
                         Tambah Tahun
                     </th>
@@ -202,6 +205,8 @@ watch(() => page.props.tables, (value) => {
                             v-model.trim="searchRowLabel"></td>
                     <td class="search-header"><input type="text" class="search-input form-control"
                             v-model.trim="searchTahun"></td>
+                    <td class="search-header"><input type="text" class="search-input form-control"
+                            v-model.trim="searchUpdated"></td>
                     <td class="search-header deleted"></td>
                 </tr>
             </thead>
@@ -217,6 +222,8 @@ watch(() => page.props.tables, (value) => {
                     <td class="align-middle"><span v-for="(node, index) in table.tahuns" :key="index"
                             class="badge mr-1 badge-info">{{
         node }}</span></td>
+                    <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated
+                            }}</span><br><span>{{ table.status_updated }}</span></td>
                     <td class="text-center align-middle deleted">
                         <a @click.prevent="() => { addYearModalStatus = true; form.id = table.id }"
                             class="edit-pen mr-2">
@@ -234,7 +241,7 @@ watch(() => page.props.tables, (value) => {
                     </td>
                 </tr>
                 <tr v-else>
-                    <td colspan="7" class="text-center align-middle">
+                    <td colspan="8" class="text-center align-middle">
                         Tidak ada data
                     </td>
                 </tr>
@@ -258,7 +265,7 @@ watch(() => page.props.tables, (value) => {
                         <div class="mb-3">
                             <label for="tahun">Pilih Tahun</label>
                             <Multiselect v-model="form.tahun" :options="yearDrop.options" :searchable="true"
-                                placeholder="-- Pilih Tahun --" />
+                                placeholder="-- Pilih Tahun --" mode="tags" />
                         </div>
                     </div>
                 </template>

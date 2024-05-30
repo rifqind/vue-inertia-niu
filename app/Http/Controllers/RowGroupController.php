@@ -75,11 +75,17 @@ class RowGroupController extends Controller
     {
         // Find the subject by ID
         $column_gorup = RowGroup::findOrFail($request->id);
+        try {
+            //code...
+            $column_gorup->delete();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return redirect()->route('row_group.index')->with('error', 'Gagal menghapus kelompok baris tersebut, Periksa apakah masih ada baris di bawah kelompok baris ini');
 
+        }
         // Delete the subject
-        $column_gorup->delete();
 
         // Respond with a JSON success message
-        return redirect()->route('row_group.index')->with('message', 'Berhasil menghapus kelompok kolom tersebut');
+        return redirect()->route('row_group.index')->with('message', 'Berhasil menghapus kelompok baris tersebut');
     }
 }

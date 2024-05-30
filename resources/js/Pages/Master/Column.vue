@@ -21,6 +21,7 @@ const columnGroups = page.props.column_groups
 const createModalStatus = ref(false)
 const deleteModalStatus = ref(false)
 const toggleFlash = ref(false)
+const toggleFlashError = ref(false)
 const searchLabel = ref(null)
 const searchColumnGroup = ref(null)
 const triggerSpinner = ref(false)
@@ -114,6 +115,7 @@ const deleteForm = async function () {
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
+            if (page.props.flash.error) toggleFlashError.value = true
             form.reset()
         },
         onError: function () { deleteModalStatus.value = true }
@@ -156,6 +158,8 @@ watch(() => page.props.columns, (value) => {
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
+        <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
+            :types="'alert-danger'" />
         <table class="table table-sorted table-hover table-bordered table-search" ref="tabelColumns" id="tabel-kolom">
             <thead>
                 <tr class="bg-info-fordone">

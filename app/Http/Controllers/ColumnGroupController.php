@@ -75,9 +75,15 @@ class ColumnGroupController extends Controller
     {
         // Find the subject by ID
         $column_gorup = ColumnGroup::findOrFail($request->id);
+        try {
+            //code...
+            // Delete the subject
+            $column_gorup->delete();
 
-        // Delete the subject
-        $column_gorup->delete();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return redirect()->route('column_group.index')->with('error', 'Gagal menghapus kelompok kolom tersebut, Periksa apakah masih ada kolom di bawah kelompok kolom ini');
+        }
 
         // Respond with a JSON success message
         return redirect()->route('column_group.index')->with('message', 'Berhasil menghapus kelompok kolom tersebut');
