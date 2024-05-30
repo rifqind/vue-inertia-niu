@@ -61,13 +61,12 @@ const ArrayBigObjects = [
     { key: 'row_label', valueFilter: searchRowLabel },
     { key: 'updated', valueFilter: searchUpdated },
 ]
-watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+const filteredColumns = computed(() => {
     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
     if (filters.length === 0) {
-        tables.value = tGroup
-        return
+        return page.props.tables
     }
-    tables.value = tGroup.filter(item => {
+    return page.props.tables.filter(item => {
         return filters.every(obj => {
             const filterValue = obj.valueFilter.value.toLowerCase()
             if (obj.key == 'updated') {
@@ -90,6 +89,9 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
             }
         })
     })
+})
+watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+    tables.value = filteredColumns.value
 })
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
@@ -137,10 +139,10 @@ const updateCurrentPage = (value) => {
 const paginatedData = computed(() => {
     const start = (currentPage.value - 1) * showItems.value
     const end = start + showItems.value
-    return tables.value.slice(start, end)
+    return filteredColumns.value.slice(start, end)
 })
 watch(() => page.props.tables, (value) => {
-    tables.value = [...value]
+    tables.value = value
 })
 </script>
 <template>

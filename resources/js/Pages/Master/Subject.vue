@@ -29,18 +29,20 @@ const tabelSubjek = ref(null)
 const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel }
 ]
-watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+const filteredColumns = computed(() => {
     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
     if (filters.length === 0) {
-        subjects.value = sObject
-        return
+        return page.props.subjects
     }
-    subjects.value = sObject.filter(item => {
+    return page.props.subjects.filter(item => {
         return filters.every(obj => {
             const filterValue = obj.valueFilter.value.toLowerCase()
             return item[obj.key].toLowerCase().includes(filterValue)
         })
     })
+})
+watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+    subjects.value = filteredColumns.value
 })
 const form = useForm({
     id: null,
@@ -116,10 +118,10 @@ const updateCurrentPage = (value) => {
 const paginatedData = computed(() => {
     const start = (currentPage.value - 1) * showItems.value
     const end = start + showItems.value
-    return subjects.value.slice(start, end)
+    return filteredColumns.value.slice(start, end)
 })
 watch(() => page.props.subjects, (value) => {
-    subjects.value = [...value]
+    subjects.value = value
 })
 </script>
 <template>

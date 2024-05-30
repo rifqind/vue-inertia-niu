@@ -29,18 +29,20 @@ const tabelColumnGroup = ref(null)
 const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel }
 ]
-watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+const filteredColumns = computed(() => {
     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
     if (filters.length === 0) {
-        columnGroup.value = cGObject
-        return
+        return page.props.columnGroup
     }
-    columnGroup.value = cGObject.filter(item => {
+    return page.props.columnGroup.filter(item => {
         return filters.every(obj => {
             const filterValue = obj.valueFilter.value.toLowerCase()
             return item[obj.key].toLowerCase().includes(filterValue)
         })
     })
+})
+watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+    columnGroup.value = filteredColumns.value
 })
 const form = useForm({
     id: null,
@@ -116,10 +118,10 @@ const updateCurrentPage = (value) => {
 const paginatedData = computed(() => {
     const start = (currentPage.value - 1) * showItems.value
     const end = start + showItems.value
-    return columnGroup.value.slice(start, end)
+    return filteredColumns.value.slice(start, end)
 })
 watch(() => page.props.columnGroup, (value) => {
-    columnGroup.value = [...value]
+    columnGroup.value = value
 })
 </script>
 <template>

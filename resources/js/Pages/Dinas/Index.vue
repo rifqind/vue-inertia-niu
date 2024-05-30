@@ -129,24 +129,26 @@ const loadDesa = async (valueKecs) => {
         console.error('Error fetching desa:', error);
     }
 }
-
-watch([searchNama, searchWilayah], () => {
-    // filterData()
+const filteredColumns = computed(() => {
     if (searchNama.value && !searchWilayah.value) {
-        d.value = dObject.filter(x =>
+        return page.props.dinas.filter(x =>
             x.nama.toLowerCase().includes(searchNama.value.toLowerCase()))
     } else if (searchWilayah.value && !searchNama.value) {
-        d.value = dObject.filter(x =>
+        return page.props.dinas.filter(x =>
             x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
         )
     } else if (searchNama.value && searchWilayah.value) {
-        d.value = dObject.filter(x =>
+        return page.props.dinas.filter(x =>
             x.nama.toLowerCase().includes(searchNama.value.toLowerCase()) &&
             x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
         )
     } else {
-        d.value = dObject
+        return page.props.dinas
     }
+})
+watch([searchNama, searchWilayah], () => {
+    // filterData()
+    d.value = filteredColumns.value
 })
 
 defineComponent({
@@ -201,10 +203,10 @@ const updateCurrentPage = (value) => {
 const paginatedData = computed(() => {
     const start = (currentPage.value - 1) * showItems.value
     const end = start + showItems.value
-    return d.value.slice(start, end)
+    return filteredColumns.value.slice(start, end)
 })
 watch(() => page.props.dinas, (value) => {
-    d.value = [...value]
+    d.value = value
 })
 </script>
 

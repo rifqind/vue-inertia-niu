@@ -1,12 +1,11 @@
 <script setup>
 import GeneralLayout from '@/Layouts/GeneralLayout.vue'
-import { Link, Head, usePage, useForm } from '@inertiajs/vue3'
+import { Link, Head, usePage, } from '@inertiajs/vue3'
 import { clickSortProperties } from '@/sortAttribute'
-import { searchCell } from '@/searchCell'
-import { getPagination } from '@/pagination'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { GoDownload } from '@/download'
 import ModalBs from '@/Components/ModalBs.vue';
+import Pagination from '@/Components/Pagination.vue'
 
 const page = usePage()
 var mvGroup = page.props.tabels
@@ -15,9 +14,6 @@ var tabels = ref(mvGroup)
 const searchLabel = ref(null)
 const searchLabelDinas = ref(null)
 const tabelMetavars = ref(null)
-const statusText = ref(null)
-const maxRows = ref(null)
-const currentPagination = ref(null)
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
 
@@ -25,31 +21,38 @@ const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel },
     { key: 'nama_dinas', valueFilter: searchLabelDinas },
 ]
-
-watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+const filteredColumns = computed(() => {
     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
     if (filters.length === 0) {
-        tabels.value = mvGroup
-        return
+        return page.props.tabels
     }
-    tabels.value = mvGroup.filter(item => {
+    return page.props.tabels.filter(item => {
         return filters.every(obj => {
             const filterValue = obj.valueFilter.value.toLowerCase()
             return item[obj.key].toLowerCase().includes(filterValue)
         })
     })
 })
-onMounted(() => {
-    searchCell(tabelMetavars.value, 10)
-    let currentStatusText = statusText.value
-    var rowsTabel = tabelMetavars.value.querySelectorAll('tbody tr').length
-    getPagination(tabelMetavars, currentPagination, 10, statusText,
-        currentStatusText, rowsTabel)
-    maxRows.value.addEventListener("change", function (e) {
-        let valueChanged = this.value
-        getPagination(tabelMetavars, currentPagination, valueChanged, statusText,
-            currentStatusText, rowsTabel)
-    })
+watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+    tabels.value = filteredColumns.value
+})
+//new Pagination
+const showItems = ref(10)
+const currentPage = ref(1)
+
+const updateShowItems = (value) => {
+    showItems.value = value
+}
+const updateCurrentPage = (value) => {
+    currentPage.value = value
+}
+const paginatedData = computed(() => {
+    const start = (currentPage.value - 1) * showItems.value
+    const end = start + showItems.value
+    return filteredColumns.value.slice(start, end)
+})
+watch(() => page.props.tabels, (value) => {
+    tabels.value = value
 })
 </script>
 <template>
@@ -104,7 +107,7 @@ onMounted(() => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-if="tabels.length > 0" v-for="(node, index) in tabels" :key="index">
+                <tr v-if="tabels.length > 0" v-for="(node, index) in paginatedData" :key="index">
                     <td class="align-middle">{{ node.number }}</td>
                     <td class="align-middle">{{ node.label }}</td>
                     <td class="align-middle">{{ node.nama_dinas }}</td>
@@ -135,33 +138,7 @@ onMounted(() => {
                 </template>
             </ModalBs>
         </Teleport>
-        <div class="d-flex justify-content-end align-items-center">
-            <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
-                <span id="showTotal"></span>
-            </div>
-            <div class="form-group"> <!--		Show Numbers Of Rows 		-->
-                <select class="form-control" ref="maxRows" name="state" id="maxRows">
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            <div class="pagination-container">
-                <nav>
-                    <ul class="pagination" id="currentPagination" ref="currentPagination">
-                        <li data-page="prev" id="next">
-                            <span>
-                                < <span class="sr-only">(current)
-                            </span></span>
-                        </li>
-                        <!--	Here the JS Function Will Add the Rows -->
-                        <li data-page="next" id="prev">
-                            <span> > <span class="sr-only">(current)</span></span>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+        <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
+            :total-items="tabels.length" :current-page="currentPage" />
     </GeneralLayout>
 </template>

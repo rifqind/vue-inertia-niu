@@ -40,18 +40,20 @@ const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel },
     { key: 'columnGroupsLabel', valueFilter: searchColumnGroup },
 ]
-watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+const filteredColumns = computed(() => {
     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
     if (filters.length === 0) {
-        columns.value = cGroup
-        return
+        return page.props.columns
     }
-    columns.value = cGroup.filter(item => {
+    return page.props.columns.filter(item => {
         return filters.every(obj => {
             const filterValue = obj.valueFilter.value.toLowerCase()
             return item[obj.key].toLowerCase().includes(filterValue)
         })
     })
+})
+watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
+    columns.value = filteredColumns.value
 })
 
 const form = useForm({
@@ -130,10 +132,10 @@ const updateCurrentPage = (value) => {
 const paginatedData = computed(() => {
     const start = (currentPage.value - 1) * showItems.value
     const end = start + showItems.value
-    return columns.value.slice(start, end)
+    return filteredColumns.value.slice(start, end)
 })
 watch(() => page.props.columns, (value) => {
-    columns.value = [...value]
+    columns.value = value
 })
 </script>
 <template>
