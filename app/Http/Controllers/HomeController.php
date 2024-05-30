@@ -437,7 +437,22 @@ class HomeController extends Controller
                     $rowLabel = ucwords($rowLabel);
                 }
             } else {
-                $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+                $listRowGroups = [];
+                foreach ($rows as $key => $value) {
+                    # code...
+                    array_push($listRowGroups, $value->id_row_groups);
+                }
+                $isUnique = count(array_unique($listRowGroups));
+                if ($isUnique > 1) {
+                    $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                    $text = 'Gabungan Kelompok Baris dari : ';
+                    foreach ($tempt as $key => $value) {
+                        # code...
+                        if ($key == sizeof($tempt) - 1) $text .= $value;
+                        else $text .= $value . ' - ';
+                    }
+                    $rowLabel = $text;
+                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
             }
         } catch (\Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));

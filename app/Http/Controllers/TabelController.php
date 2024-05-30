@@ -128,10 +128,10 @@ class TabelController extends Controller
                         foreach ($tempt as $key => $value) {
                             # code...
                             if ($key == sizeof($tempt) - 1) $text .= $value;
-                            else $text .= $value .' - ';
+                            else $text .= $value . ' - ';
                         }
                         $rowLabel = $text;
-                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0]; 
+                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
                 }
             } catch (\Exception $e) {
                 return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->tabelUuid, 'rows' => $rows, 'wilayah_parent_code' => $wilayah_parent_code));
@@ -171,6 +171,7 @@ class TabelController extends Controller
             ->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
             ->get(['tabels.*', 'tabels.id as tabelUuid']);
         $table_objects = [];
+        $number = 1;
         foreach ($tables as $key => $table) {
             $datacontents = Datacontent::where('id_tabel', $table->id)->get();
             $id_rows = [];
@@ -225,17 +226,17 @@ class TabelController extends Controller
                         foreach ($tempt as $key => $value) {
                             # code...
                             if ($key == sizeof($tempt) - 1) $text .= $value;
-                            else $text .= $value .' - ';
+                            else $text .= $value . ' - ';
                         }
                         $rowLabel = $text;
-                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0]; 
+                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
                 }
             } catch (\Exception $e) {
                 return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->id, 'rows' => $rows));
             }
             $columns = Column::whereIn('id', $id_columns)->get();
             array_push($table_objects, [
-                'number' => $key + 1,
+                'number' => $number ++,
                 'label' => $table->label,
                 'id' => $table->tabelUuid,
                 'nama_dinas' => $table->dinas->nama,
@@ -247,7 +248,6 @@ class TabelController extends Controller
                 'id_statustables' => $table->id_statustables,
             ]);
         }
-
         return Inertia::render('Master/Tabel', [
             'tables' => $table_objects,
         ]);
@@ -542,10 +542,10 @@ class TabelController extends Controller
                     foreach ($tempt as $key => $value) {
                         # code...
                         if ($key == sizeof($tempt) - 1) $text .= $value;
-                        else $text .= $value .' - ';
+                        else $text .= $value . ' - ';
                     }
                     $rowLabel = $text;
-                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0]; 
+                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
             }
         } catch (\Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
