@@ -112,15 +112,17 @@ class HomeController extends Controller
         $kecs = array_values(array_unique($kecs, SORT_REGULAR));
         $desa = array_values(array_unique($desa, SORT_REGULAR));
         $wilayahs = (sizeof($tabels) > 0) ? array_merge($provs, $kabs) : [];
+        
         $subjects = array_values(array_unique($subjects, SORT_REGULAR));
         $tahuns = Statustables::where('status', 5)->distinct()->get(['tahun as value', 'tahun as label']);
         $countfinals = Statustables::where('status', 5)->count();
         $counttabels = $tabels->count();
         $dinas = array_values($tempt_dinas);
+        // dd($wilayahs);
         return Inertia::render('Home/Home', [
-            'kecs' => $kecs,
-            'desa' => $desa,
-            'wilayahs' => $wilayahs,
+            'kecs' => $this->sortHome($kecs),
+            'desa' => $this->sortHome($desa),
+            'wilayahs' => $this->sortHome($wilayahs),
             'dinas' => $dinas,
             'tabels' => $tabels,
             'subjects' => $subjects,
@@ -130,6 +132,26 @@ class HomeController extends Controller
         ]);
     }
 
+    private function sortHome($array)
+    {
+        usort($array, function ($a, $b) {
+            if ($a['wilayah_fullcode'] === $b['wilayah_fullcode']) {
+                return 0;
+            }
+
+            // Handle null values: move them to the end of the array
+            if ($a['wilayah_fullcode'] === null) {
+                return 1;
+            }
+            if ($b['wilayah_fullcode'] === null) {
+                return -1;
+            }
+
+            // Compare the wilayah_fullcode values
+            return $a['wilayah_fullcode'] <=> $b['wilayah_fullcode'];
+        });
+        return $array;
+    }
 
     public function monitoring()
     {

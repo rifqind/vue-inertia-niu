@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import InfiniteLoading from 'v3-infinite-loading'
 import "v3-infinite-loading/lib/style.css"
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
 const props = defineProps({
     countTabels: {
@@ -15,9 +15,12 @@ const props = defineProps({
     }
 })
 const displayedData = ref([])
-const loadInitialData = () => {
-    displayedData.value = props.data.slice(0, 20)
-}
+// const loadInitialData = () => {
+//     displayedData.value = props.data.slice(0, 20)
+// }
+watch(() => props.data, (value) => {
+    displayedData.value = value.slice(0, 20)
+})
 const loadMoreData = (state) => {
     let nextData = props.data.slice(displayedData.value.length, displayedData.value.length + 20)
     if (nextData.length) {
@@ -25,9 +28,9 @@ const loadMoreData = (state) => {
         state.loaded()
     } else state.complete()
 }
-onMounted(() => {
-    loadInitialData()
-})
+// onMounted(() => {
+//     loadInitialData()
+// })
 const infiniteData = +new Date()
 </script>
 <template>
