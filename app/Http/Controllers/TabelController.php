@@ -181,7 +181,7 @@ class TabelController extends Controller
             $datacontents = Datacontent::where('id_tabel', $table->id)->get();
             $id_rows = [];
             $tahunObjects = Statustables::where('id_tabel', $table->id)->select('tahun')->distinct()->get();
-
+            $id_statustables = Statustables::where('id_tabel', $table->id)->value('id');
             $tahuns = $tahunObjects->pluck('tahun')->toArray();
             $id_columns = [];
             $wilayah_fullcodes = [];
@@ -252,7 +252,7 @@ class TabelController extends Controller
                 'columns' => $columns,
                 'tahuns' => $tahuns,
                 'status' => $table->status,
-                'id_statustables' => $table->id_statustables,
+                'id_statustables' => $id_statustables,
                 'status_updated' => $when_updated,
                 'who_updated' => $who_updated,
             ]);

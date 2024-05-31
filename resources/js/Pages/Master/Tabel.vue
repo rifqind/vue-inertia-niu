@@ -22,6 +22,15 @@ const form = useForm({
     tahun: null,
     _token: null,
 })
+const duplicateForm = useForm({
+    judul: null,
+    produsen: null,
+    _token: null,
+    rows: {
+        tipe: 1,
+        selected: [],
+    }
+})
 const yearDrop = ref({
     value: null,
     options: [],
@@ -38,8 +47,8 @@ const toggleFlash = ref(false)
 const toggleFlashError = ref(false)
 const deleteModalStatus = ref(false)
 const addYearModalStatus = ref(false)
-const flashType = ref(null)
 const downloadModalStatus = ref(false)
+const duplicateModalStatus = ref(false)
 const downloadTitle = ref(null)
 
 const searchLabel = ref(null)
@@ -93,6 +102,15 @@ const filteredColumns = computed(() => {
 watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
     tables.value = filteredColumns.value
 })
+const ProdusenFetched = ref([])
+const patchTabel = async (id_tabel) => {
+    duplicateModalStatus.value = true
+    const response = await axios.get(route('fetchMaster', { id: id_tabel }))
+    // console.log(response.data.tabel)
+    duplicateForm.judul = response.data.tabel.label
+    ProdusenFetched.value = response.data.dinas
+    duplicateForm.produsen = response.data.tabel.id_dinas
+}
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
@@ -186,7 +204,7 @@ watch(() => page.props.tables, (value) => {
                     <th class="text-center align-middle">
                         Daftar Tahun
                     </th>
-                    <th class="text-center align-middle">
+                    <th class="text-center align-middle" @click="clickSortProperties(tables, 'status_updated')">
                         Terakhir di-update
                     </th>
                     <th class="text-center align-middle tabel-width-5">
@@ -232,6 +250,9 @@ watch(() => page.props.tables, (value) => {
                         <Link :href="route('tabel.edit', { id: table.id })" class="edit-pen mx-1">
                         <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Tabel" />
                         </Link>
+                        <a class="edit-pen mx-1" @click.prevent="patchTabel(table.id, table.id_statustables)">
+                            <font-awesome-icon icon="fa-solid fa-dice-d6" title="Duplikat Tabel" />
+                        </a>
                         <a v-if="false" @click.prevent="() => {
         deleteModalStatus = true;
         form.id = table.id_statustables
@@ -272,6 +293,22 @@ watch(() => page.props.tables, (value) => {
                 <template #modalFunction>
                     <button id="" type="button" class="btn btn-sm bg-success-fordone" :disabled="form.processing"
                         @click.prevent="submit">Simpan</button>
+                </template>
+            </ModalBs>
+            <ModalBs :-modal-status="duplicateModalStatus" @close="duplicateModalStatus = false"
+                :title="'Duplikat Tabel'">
+                <template #modalBody>
+                    <div class="form-group">
+                        <div class="mb-3">
+                            <label for="tahun">Judul Tabel</label>
+                            <input class="form-control" type="text" v-model="duplicateForm.judul" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="tahun">Produsen</label>
+                            <Multiselect v-model="duplicateForm.produsen" :value="duplicateForm.produsen" :options="ProdusenFetched"
+                                placeholder="-- Pilih Produsen Data --" :searchable="true" />
+                        </div>
+                    </div>
                 </template>
             </ModalBs>
         </Teleport>
