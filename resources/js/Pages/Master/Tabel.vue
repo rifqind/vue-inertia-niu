@@ -60,6 +60,21 @@ const searchUpdated = ref(null)
 const searchRowLabel = ref(null)
 
 const tabelTabels = ref(null)
+const tingkatanDrop = ref({})
+const kabsDrop = ref({
+    value: null,
+    options: [],
+})
+const kecsDrop = ref({
+    value: null,
+    options: [],
+})
+const desaDrop = ref({
+    value: null,
+    options: [],
+})
+const rowListFetched = ref([]);
+const rowsCheckBox = ref([]);
 
 const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel },
@@ -106,10 +121,95 @@ const ProdusenFetched = ref([])
 const patchTabel = async (id_tabel) => {
     duplicateModalStatus.value = true
     const response = await axios.get(route('fetchMaster', { id: id_tabel }))
-    // console.log(response.data.tabel)
+    console.log(response.data)
     duplicateForm.judul = response.data.tabel.label
     ProdusenFetched.value = response.data.dinas
     duplicateForm.produsen = response.data.tabel.id_dinas
+    kabsDrop.value.options = response.data.kab
+    tingkatanDrop.value = {
+        value: null,
+        options: [
+            { label: "Kecamatan", value: 2 },
+            { label: "Desa/Kelurahan", value: 3 },
+        ],
+    }
+}
+const loadKecamatans = async (valueKabs) => {
+    try {
+        let kabs = valueKabs.substring(2, 4);
+        const response = await axios.get("/master/wilayah/kecamatan/" + kabs);
+        kecsDrop.value.options = response.data.data;
+        let tempt = kabsDrop.value.options.filter((x) =>
+            x.value.includes(valueKabs)
+        );
+        let parents = {
+            label: tempt[0].label,
+            value: tempt[0].value,
+        };
+        assignRowListWilayah(2, parents);
+    } catch (error) {
+        console.error("Error fetching kecamatan:", error);
+    }
+};
+const loadDesa = async (valueKecs) => {
+    try {
+        let kabsFetch = valueKecs.substring(2, 4);
+        let kecsFetch = valueKecs.substring(4, 7);
+        const response = await axios.get(
+            "/master/wilayah/desa/" + kabsFetch + "/" + kecsFetch
+        );
+        desaDrop.value.options = response.data.data;
+        let tempt = kecsDrop.value.options.filter((x) => {
+            return x.value.includes(valueKecs)
+        })
+        let parents = {
+            label: tempt[0].label,
+            value: tempt[0].value,
+        }
+        assignRowListWilayah(3, parents);
+    } catch (error) {
+        console.error("Error fetching desa:", error);
+    }
+};
+const toggleAll = function (object) {
+    object.forEach((_, index) => {
+        object[index] = !object[index];
+    });
+};
+const assignRowListWilayah = function (options, parents) {
+    rowListFetched.value = []
+    switch (options) {
+        case 2:
+            let kecLists = kecsDrop.value.options;
+            kecLists.push(parents);
+            kecLists.map((item, key, array) => {
+                item.tipe =
+                    key === array.length - 1 ? "KABUPATEN/KOTA" : "KECAMATAN";
+            });
+            rowListFetched.value = kecLists;
+            break;
+        case 3:
+            let desaLists = desaDrop.value.options;
+            desaLists.push(parents);
+            desaLists.map((item, key, array) => {
+                item.tipe =
+                    key === array.length - 1 ? "KECAMATAN" : "DESA/KELURAHAN";
+            });
+            rowListFetched.value = desaLists;
+            break;
+
+        default:
+            break;
+    }
+    rowsCheckBox.value = Array(rowListFetched.value.length).fill(false);
+};
+const closeDuplicateModal = () => {
+    duplicateModalStatus.value = false
+    duplicateForm.reset()
+    kabsDrop.value.options = []
+    kecsDrop.value.options = []
+    rowListFetched.value = []
+    rowsCheckBox.value = []
 }
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
@@ -143,6 +243,9 @@ const submit = async function () {
         },
         onError: function () { addYearModalStatus.value = true }
     })
+}
+const duplicate = async () => {
+    
 }
 //new Pagination
 const showItems = ref(10)
@@ -295,8 +398,8 @@ watch(() => page.props.tables, (value) => {
                         @click.prevent="submit">Simpan</button>
                 </template>
             </ModalBs>
-            <ModalBs :-modal-status="duplicateModalStatus" @close="duplicateModalStatus = false"
-                :title="'Duplikat Tabel'">
+            <ModalBs :-modal-status="duplicateModalStatus" @close="closeDuplicateModal" :title="'Duplikat Tabel'"
+                :modalSize="'modal-xl modal-dialog-scrollable'">
                 <template #modalBody>
                     <div class="form-group">
                         <div class="mb-3">
@@ -305,10 +408,66 @@ watch(() => page.props.tables, (value) => {
                         </div>
                         <div class="mb-3">
                             <label for="tahun">Produsen</label>
-                            <Multiselect v-model="duplicateForm.produsen" :value="duplicateForm.produsen" :options="ProdusenFetched"
-                                placeholder="-- Pilih Produsen Data --" :searchable="true" />
+                            <Multiselect v-model="duplicateForm.produsen" :value="duplicateForm.produsen"
+                                :options="ProdusenFetched" placeholder="-- Pilih Produsen Data --" :searchable="true" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="tingkat-label">Tingkatan Wilayah</label>
+                            <Multiselect v-model="tingkatanDrop.value" :options="tingkatanDrop.options"
+                                :searchable="true" placeholder="-- Pilih Tingkatan --" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="tingkat-label">Kabupaten/Kota</label>
+                            <Multiselect v-model="kabsDrop.value" :options="kabsDrop.options" @change="loadKecamatans"
+                                :searchable="true" placeholder="-- Pilih Kabupaten/Kota --" />
+                        </div>
+                        <div class="mb-3" v-if="tingkatanDrop.value > 2">
+                            <label for="tingkat-label">Kecamatan</label>
+                            <Multiselect v-model="kecsDrop.value" :options="kecsDrop.options" :searchable="true"
+                                @change="loadDesa" placeholder="-- Pilih Kecamatan --" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="judul">Daftar Baris</label>
+                            <table class="table table-hover table-bordered" ref="tabelRowList" id="tabelRowList">
+                                <thead>
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>Kelompok Baris</th>
+                                        <th>Label</th>
+                                        <th>
+                                            <div class="btn btn-sm bg-success-fordone mr-1"
+                                                @click="toggleAll(rowsCheckBox)">
+                                                <font-awesome-icon icon="fa fa-check" />
+                                            </div>
+                                            Pilih Semua
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody v-if="tingkatanDrop.value">
+                                    <tr v-if="rowListFetched.length > 0" v-for="(node, index) in rowListFetched"
+                                        :key="index" @click="
+        toggleCheck(index, rowsCheckBox)
+        ">
+                                        <td>{{ index + 1 }}</td>
+                                        <td>{{ node.tipe }}</td>
+                                        <td>{{ node.label }}</td>
+                                        <td class="text-center">
+                                            <input class="row-select" type="checkbox" v-model="rowsCheckBox[index]"
+                                                :value="node.id" ref="checkbox" />
+                                        </td>
+                                    </tr>
+                                    <tr v-else>
+                                        <td colspan="4" class="text-center"> Belum ada daftar baris yang tersedia
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+                </template>
+                <template #modalFunction>
+                    <button id="" type="button" class="btn btn-sm bg-success-fordone" :disabled="duplicateForm.processing"
+                        @click.prevent="duplicate">Simpan</button>
                 </template>
             </ModalBs>
         </Teleport>
