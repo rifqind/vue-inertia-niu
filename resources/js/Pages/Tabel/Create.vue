@@ -353,7 +353,7 @@ const setupOrderRow = (value) => {
     if (value == 1) {
         orderDropRow.value = 1
         form.orderRow = rowListFetched.value.filter((_, index) => {
-            return rowListFetched.value[index];
+            return rowsCheckBox.value[index];
         });
     } else {
         orderDropRow.value = 2
