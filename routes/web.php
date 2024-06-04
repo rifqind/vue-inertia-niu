@@ -14,18 +14,10 @@ use App\Http\Controllers\RowGroupController;
 use App\Http\Controllers\TabelController;
 use App\Http\Controllers\MetadataVariabelController;
 use App\Models\Column;
-use App\Models\ColumnOrder;
-use App\Models\Datacontent;
-use App\Models\Dinas;
-use App\Models\MasterWilayah;
 use App\Models\MetadataVariabel;
 use App\Models\Row;
-use App\Models\RowOrder;
-use App\Models\Statustables;
-use App\Models\Tabel;
 use App\Models\Turtahun;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
 /*
@@ -178,29 +170,8 @@ Route::get('/fetchAllRows', function () {
     $target = Row::leftJoin('row_groups as cg', 'cg.id', '=', 'rows.id_row_groups')->get(['rows.id as value', 'rows.label as label', 'cg.label as cg_label']);
     return response()->json($target);
 })->middleware(['auth', 'verified'])->name('fetchAllRows');
-Route::get('/fetchMaster/{id}', function (String $id) {
-    $table = Tabel::where('id', $id)->first();
-    $datacontents = Datacontent::where('id_tabel', $id)->get();
-    $id_rows = [];
-    $wilayah_fullcodes = [];
-    foreach ($datacontents as $key => $value) {
-        # code...
-        array_push($id_rows, $value->id_row);
-        array_push($wilayah_fullcodes, $value->wilayah_fullcode);
-    }
-    $dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')
-        ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
-        ->get(['dinas.id as value', 'dinas.nama as label']);
-    if (!$id_rows[0] == 0) return response('Gakbisa');
-    $wilayah = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
-    $current_wilayah = MasterWilayah::getMyWilayah();
-    return response()->json([
-        'tabel' => $table,
-        'column' => $wilayah,
-        'dinas' => $dinas,
-        'kab' => $current_wilayah['kabs']
-    ]);
-})->middleware(['auth', 'verified'])->name('fetchMaster');
+Route::post('/duplicateMaster', [TabelController::class, 'duplicateMaster'])->middleware(['auth', 'verified'])->name('duplicateMaster');
+Route::get('/fetchMaster/{id}', [TabelController::class, 'fetchMaster'])->middleware(['auth', 'verified'])->name('fetchMaster');
 Route::get('/order/fetch/{id}', [TabelController::class, 'fetchOrder'])->name('order.fetch')->middleware(['auth', 'verified']);
 Route::post('/order/change', [TabelController::class, 'changeOrder'])->middleware(['auth', 'verified'])->name('order.changeOrder');
 Route::get('/export/{id}/{title}', [MetadataVariabelController::class, 'export'])->name('export');

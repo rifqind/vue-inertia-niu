@@ -19,6 +19,7 @@ use App\Models\Subject;
 use App\Models\Turtahun;
 use App\Models\TurTahunGroup;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,7 @@ class TabelController extends Controller
         $this_dinas = auth()->user()->id_dinas;
         $this_role = auth()->user()->role;
         $routeName = Route::currentRouteName();
+        $number = 1;
         if ($this_role == 'produsen') {
             # code...
             $tables = Statustables::where('dinas.id', $this_dinas)
@@ -141,7 +143,7 @@ class TabelController extends Controller
             $when_updated = $table->status_updated;
             $NumberAndLabel = $table->nomor . ' - ' . $table->label;
             array_push($table_objects, [
-                'number' => $key + 1,
+                'number' => $number++,
                 // 'label' => $table->label,
                 'label' => $NumberAndLabel,
                 'nama_dinas' => $table->nama_dinas,
@@ -457,6 +459,130 @@ class TabelController extends Controller
         return redirect()->route('tabel.master')->with('message', 'Berhasil Menyalin Tabel !');
     }
 
+    public function fetchMaster(String $id)
+    {
+        $table = Tabel::where('id', $id)->first();
+        $datacontents = Datacontent::where('id_tabel', $id)->get();
+        $id_rows = [];
+        $wilayah_fullcodes = [];
+        foreach ($datacontents as $key => $value) {
+            # code...
+            array_push($id_rows, $value->id_row);
+            array_push($wilayah_fullcodes, $value->wilayah_fullcode);
+        }
+        $dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')
+            ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
+            ->get(['dinas.id as value', 'dinas.nama as label']);
+        $isWilayahFullcodes = ($id_rows[0] == 0);
+        // $wilayah = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
+        $current_wilayah = MasterWilayah::getMyWilayah();
+        return response()->json([
+            // 'column' => $wilayah,
+            'tabel' => $table,
+            'dinas' => $dinas,
+            'kab' => $current_wilayah['kabs'],
+            'isWilayahFullcodes' => $isWilayahFullcodes
+        ]);
+    }
+
+    public function duplicateMaster(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $target = Tabel::where('id', $request->id)->first();
+            if ($target->label == $request->judul || $target->id_dinas == $request->produsen) return back()->with('error', 'Tidak bisa menduplikasi dengan value yang sama');
+            $newTabel = [
+                'nomor' => $target->nomor,
+                'label' => $request->judul,
+                'unit' => $target->unit,
+                'id_dinas' => $request->produsen,
+                'id_subjek' => $target->id_subjek,
+                'edited_by' => auth()->user()->id,
+            ];
+            $wilayah_fullcode_produsen = Dinas::where('id', $request->produsen)
+                ->value('wilayah_fullcode');
+            $new_tabel = Tabel::create($newTabel);
+            $datacontents = Datacontent::where('id_tabel', $request->id)
+                ->get([
+                    'id_row', 'id_column', 'id_turtahun'
+                ]);
+            $id_rows = [];
+            $id_columns = [];
+            $id_turtahuns = [];
+            $add_datacontent = [];
+            foreach ($datacontents as $key => $value) {
+                # code...
+                // Check and push unique id_row
+                if (!in_array($value->id_row, $id_rows)) {
+                    array_push($id_rows, $value->id_row);
+                }
+
+                // Check and push unique id_column
+                if (!in_array($value->id_column, $id_columns)) {
+                    array_push($id_columns, $value->id_column);
+                }
+
+                // Check and push unique id_turtahun
+                if (!in_array($value->id_turtahun, $id_turtahuns)) {
+                    array_push($id_turtahuns, $value->id_turtahun);
+                }
+            }
+            $targetStatusTables = Statustables::where('id_tabel', $request->id)
+                ->orderBy('tahun', 'DESC')
+                ->pluck('tahun')
+                ->first();
+
+            // dd($id_rows, $id_columns, $id_turtahuns);
+            // if ($request->rows['selected']) {
+            $used_rows = ($request->rows['selected']) ? $request->rows['selected'] : $id_rows;
+            // dd($used_rows);
+            foreach ($used_rows as $row) {
+                foreach ($id_columns as $column) {
+                    foreach ($id_turtahuns as $turtahun) {
+                        $tempt = [
+                            'id_tabel' => $new_tabel->id,
+                            'id_row' => $request->rows['selected'] ? 0 : $row,
+                            'id_column' => $column,
+                            'tahun' => $targetStatusTables,
+                            'id_turtahun' => $turtahun,
+                            'wilayah_fullcode' => $request->rows['selected'] ? (string) $row['value'] : (string) $wilayah_fullcode_produsen
+                        ];
+                        array_push($add_datacontent, $tempt);
+                    }
+                }
+            }
+            // }
+            $newStatusTables = Statustables::create([
+                'id_tabel' => $new_tabel->id,
+                'tahun' => $targetStatusTables,
+                'status' => 1,
+                'edited_by' => auth()->user()->id,
+            ]);
+            Notifikasi::create([
+                'id_statustabel' => $newStatusTables->id,
+                'id_user' => auth()->user()->id,
+                'komentar' => 'Admin telah menambahkan tabel baru dengan judul ',
+            ]);
+
+            // Datacontent::insert($add_datacontent);
+            // dd($add_datacontent);
+            // $add_datacontent = [];
+            if (empty($add_datacontent)) throw new Exception('Data Error, Fail to Duplicate');
+
+            foreach ($add_datacontent as $key => $value) {
+                # code...
+                Datacontent::create($value);
+            }
+            DB::commit();
+            //code...
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            // return redirect()->route('tabel.master')->response()->json(array($th->getMessage()));
+            return response()->json(array($th->getMessage()));
+        }
+        return redirect()->route('tabel.master')->with('message', 'Berhasil duplikat tabel');
+    }
     //     /**
     //      * Display the specified resource.
     //      */

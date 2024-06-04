@@ -41,16 +41,19 @@ class SubjectController extends Controller
                 'label' => 'required',
             ]);
             $insertedRow = Subject::where('id', $request->id)->update(['label' => $request->label]);
-            return redirect()->route('subject.index')->with('message','Berhasil mengedit subjek');
+            return redirect()->route('subject.index')->with('message', 'Berhasil mengedit subjek');
         }
-        $validatedData = $request->validate($request->rules());
+        $validatedData = $request->validate([
+            'label' => 'required',
+        ]);
         $insertedRow = Subject::create($validatedData);
         // return redirect(route('subject.index'))->with(['success' => 'Successfully inserted with id' . $insertedRow->id]);
-        return redirect()->route('subject.index')->with('message','Berhasil menambahkan subjek baru');
+        return redirect()->route('subject.index')->with('message', 'Berhasil menambahkan subjek baru');
     }
 
-    public function fetch(string $id) {
-        $subjects= Subject::where('id', $id)->first();
+    public function fetch(string $id)
+    {
+        $subjects = Subject::where('id', $id)->first();
         return response()->json([
             'data' => $subjects
         ]);
