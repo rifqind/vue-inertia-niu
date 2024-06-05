@@ -314,6 +314,7 @@ const submit = async function () {
     previewModalStatus.value = false
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('tabel.store'), {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () { triggerSpinner.value = false },

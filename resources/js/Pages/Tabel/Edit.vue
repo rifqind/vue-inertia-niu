@@ -41,6 +41,7 @@ const form = useForm({
 const submit = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('tabel.update'), {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () { triggerSpinner.value = false },

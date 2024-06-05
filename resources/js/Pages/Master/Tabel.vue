@@ -222,6 +222,7 @@ const closeDuplicateModal = () => {
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('tabel.statusDestroy'), {
         onBefore: function () {
             triggerSpinner.value = true
@@ -238,6 +239,7 @@ const deleteForm = async function () {
 const submit = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('tabel.storeCopy'), {
         onBefore: function () {
             triggerSpinner.value = true
@@ -258,6 +260,7 @@ const duplicate = async () => {
     })
     const response = await axios.get(route('token'))
     duplicateForm._token = response.data
+    if(duplicateForm.processing) return
     duplicateForm.post(route('duplicateMaster'), {
         onBefore: function () {
             triggerSpinner.value = true

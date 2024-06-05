@@ -114,6 +114,7 @@ const submit = async function (decision) {
     form.decisions = decision
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     if (decision == 'save' || decision == 'send') {
         form.post(route('tabel.update_content'), {
             onSuccess: function () { toggleFlash.value = true },

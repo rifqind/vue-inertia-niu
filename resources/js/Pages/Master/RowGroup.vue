@@ -76,6 +76,7 @@ const fetchColumnGroup = async function (id) {
 const submit = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('row_group.store'), {
         onBefore: function () {
             triggerSpinner.value = true
@@ -92,6 +93,7 @@ const submit = async function () {
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('row_group.destroy'), {
         onBefore: function () {
             triggerSpinner.value = true

@@ -44,6 +44,7 @@ const changeRolesLink = async function (id) {
     form.id = id
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('users.roleChange'), {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
@@ -106,6 +107,7 @@ onMounted(function () {
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('users.delete'), {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true

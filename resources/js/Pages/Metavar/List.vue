@@ -129,6 +129,7 @@ const submit = async () => {
     form.id_tabel = page.props.id_tabel
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('metavar.store'), {
         onBefore: () => {
             triggerSpinner.value = true
@@ -152,6 +153,7 @@ const manageData = async (decision) => {
     if (decision == 'send') {
         const response = await axios.get(route('token'))
         manageForm._token = response.data
+        if (manageForm.processing) return
         manageForm.post(route('metavar.metavarSend', { id: page.props.id_tabel }), {
             onSuccess: () => {
                 toggleFlash.value = true
@@ -160,6 +162,7 @@ const manageData = async (decision) => {
     } else {
         const response = await axios.get(route('token'))
         manageForm._token = response.data
+        if (manageForm.processing) return
         manageForm.post(route('metavar.adminHandleMetavar'), {
             onSuccess: () => {
                 toggleFlash.value = true
@@ -196,6 +199,7 @@ const toggleDeleteModal = (id) => {
 const deleteData = async () => {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('metavar.destroy'), {
         onBefore: () => {
             triggerSpinner.value = true

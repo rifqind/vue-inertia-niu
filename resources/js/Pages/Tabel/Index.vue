@@ -84,6 +84,7 @@ onMounted(() => {
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
+    if (form.processing) return
     form.post(route('tabel.statusDestroy'), {
         onBefore: function () {
             triggerSpinner.value = true
@@ -110,6 +111,7 @@ const changeOrder = async () => {
     order._token = response.data
     order.orders.columnOrder = currentColumnOrder.value
     order.orders.rowOrder = currentRowOrder.value
+    if (order.processing) return
     order.post(route('order.changeOrder'), {
         onBefore: function () {
             triggerSpinner.value = true
