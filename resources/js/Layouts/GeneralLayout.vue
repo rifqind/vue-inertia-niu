@@ -179,6 +179,9 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 .table thead tr th.tabel-width-5 {
     width: 5%;
 }
+/* .table thead tr th.tabel-width-10 {
+    width: 5%;
+} */
 
 .table thead tr th.tabel-width-35 {
     width: 35%;

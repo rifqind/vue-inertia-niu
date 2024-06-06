@@ -19,6 +19,8 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faSearchengin } from "@fortawesome/free-brands-svg-icons";
 import {
     faAngleLeft,
+    faAngleUp,
+    faAngleDown,
     faBan,
     faBars,
     faBarsStaggered,
@@ -66,6 +68,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 library.add(
     faAngleLeft,
+    faAngleUp,
+    faAngleDown,
     faBan,
     faBars,
     faBarsStaggered,

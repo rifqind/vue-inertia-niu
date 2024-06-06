@@ -51,29 +51,44 @@ const ArrayBigObjects = [
     { key: 'status', valueFilter: searchStatus },
     { key: 'updated', valueFilter: searchUpdated },
 ]
+const debounce = (func, wait = 400) => {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            func.apply(this, args);
+        }, wait);
+    };
+}
+// const filteredColumns = computed(() => {
+//     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
+//     if (filters.length === 0) {
+//         return page.props.tables
+//     }
+//     return page.props.tables.filter(item => {
+//         return filters.every(obj => {
+//             const filterValue = obj.valueFilter.value.toLowerCase()
+//             if (obj.key == 'updated') {
+//                 return `${item['who_updated']} ${item['status_updated']}`.toLowerCase().includes(filterValue);
+//             } else if (obj.key == 'columns') {
+//                 let check = item[obj.key].filter(X => {
+//                     let result = X.label.toLowerCase().includes(filterValue)
+//                     return result
+//                 })
+//                 if (check.length > 0) return true
+//             }
+//             else {
+//                 return item[obj.key].toLowerCase().includes(filterValue)
+//             }
+//         })
+//     })
+// })
+const delayedFetchData = debounce(() => {
+    fetchData()
+})
 watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
-    let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
-    if (filters.length === 0) {
-        tables.value = tGroup
-        return
-    }
-    tables.value = tGroup.filter(item => {
-        return filters.every(obj => {
-            const filterValue = obj.valueFilter.value.toLowerCase()
-            if (obj.key == 'updated') {
-                return `${item['who_updated']} ${item['status_updated']}`.toLowerCase().includes(filterValue);
-            } else if (obj.key == 'columns') {
-                let check = item[obj.key].filter(X => {
-                    let result = X.label.toLowerCase().includes(filterValue)
-                    return result
-                })
-                if (check.length > 0) return true
-            }
-            else {
-                return item[obj.key].toLowerCase().includes(filterValue)
-            }
-        })
-    })
+    currentPage.value = 1
+    delayedFetchData()
 })
 onMounted(() => {
     if (page.props.flash.message) {
@@ -161,20 +176,75 @@ const setupOrderRow = (value) => {
 const showItems = ref(10)
 const currentPage = ref(1)
 
+// const updateShowItems = (value) => {
+//     showItems.value = value
+// }
+// const updateCurrentPage = (value) => {
+//     currentPage.value = value
+// }
+// const paginatedData = computed(() => {
+//     const start = (currentPage.value - 1) * showItems.value
+//     const end = start + showItems.value
+//     return tables.value.slice(start, end)
+// })
+// watch(() => page.props.tables, (value) => {
+//     tables.value = [...value]
+// })
 const updateShowItems = (value) => {
     showItems.value = value
+    fetchData()
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
+    fetchData()
 }
+const totalItems = ref(page.props.countData)
+watch(() => page.props.countData, (value) => {
+    totalItems.value = value
+})
 const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * showItems.value
-    const end = start + showItems.value
-    return tables.value.slice(start, end)
+    // const start = (currentPage.value - 1) * showItems.value
+    // const end = start + showItems.value
+    // return filteredColumns.value.slice(start, end)
+    return tables.value
 })
 watch(() => page.props.tables, (value) => {
-    tables.value = [...value]
+    tables.value = value
 })
+const fetchData = async () => {
+    try {
+        const response = await axios.get(route('tabel.index'), {
+            params: {
+                currentPage: currentPage.value, paginated: showItems.value,
+                ArrayFilter: {
+                    label: searchLabel.value,
+                    nama_dinas: searchLabelDinas.value,
+                    columns: searchColumnList.value,
+                    row_label: searchRowLabel.value,
+                    tahun: searchTahun.value,
+                    status: searchStatus.value,
+                    updated: searchUpdated.value,
+                },
+                routeName: page.props.route
+            }
+        })
+        tables.value = response.data.tables
+        indexExpanded.value = Array(tables.value.length).fill(false)
+        totalItems.value = response.data.countData
+        // currentPage.value = response.data
+    } catch (error) {
+        console.error('Error fetching data: ', error)
+    }
+}
+const openRowList = (index) => {
+    if (index < 3) return true
+    else return false
+}
+    
+const indexExpanded = ref(Array(paginatedData.value.length).fill(false))
+const openOtherRow = (index) => {
+    indexExpanded.value[index] = !indexExpanded.value[index]
+}
 </script>
 <template>
 
@@ -204,7 +274,7 @@ watch(() => page.props.tables, (value) => {
                         @click="clickSortProperties(tables, 'nama_dinas')">
                         Produsen Data
                     </th>
-                    <th class="text-center align-middle">
+                    <th class="text-center align-middle tabel-width-20">
                         Daftar Kolom
                     </th>
                     <th class="text-center align-middle" @click="clickSortProperties(tables, 'row_label')">
@@ -247,10 +317,28 @@ watch(() => page.props.tables, (value) => {
                     <td class="align-middle">{{ table.number }}</td>
                     <td class="align-middle">{{ table.label }}</td>
                     <td class="align-middle">{{ table.nama_dinas }}</td>
-                    <td class="align-middle"><span v-for="(col, index) in table.columns" :key="index"
+                    <td class="align-middle"><span v-for="(col, colIndex) in table.columns" :key="colIndex"
                             class="badge mr-1 badge-info">{{
         col.label }}</span></td>
-                    <td class="align-middle">{{ table.row_label }}</td>
+                    <!-- <td class="align-middle">{{ table.row_label }}</td> -->
+                    <td class="align-middle">
+                        <template v-for="(row, rowIndex) in table.rowInputs" :key="rowIndex">
+                            <template v-if="row.wilayah_fullcode">
+                                <span v-if="indexExpanded[index] || openRowList(rowIndex)"
+                                    class="badge mr-1 badge-info">{{
+        row.label }}</span>
+                            </template>
+                            <template v-else>
+                                <span class="badge mr-1 badge-info">{{ row.label }}</span>
+                            </template>
+                        </template>
+                        <span v-if="table.rowInputs[0].wilayah_fullcode" class="badge mr-1 badge-info"
+                            @click="openOtherRow(index)">
+                            <font-awesome-icon v-if="!indexExpanded[index]" icon="fa-solid fa-angle-down" />
+                            <font-awesome-icon v-if="indexExpanded[index]" icon="fa-solid fa-angle-up" />
+                        </span>
+                    </td>
+
                     <td class="align-middle">{{ table.tahun }}</td>
                     <td class="align-middle">{{ table.status }}</td>
                     <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated
@@ -327,7 +415,7 @@ watch(() => page.props.tables, (value) => {
                             </div>
                             <div class="mb-3">
                                 <label>Urutan Baris</label>
-                                <template v-if="currentRowOrder" >
+                                <template v-if="currentRowOrder">
                                     <Multiselect class="mb-3" placeholder="Apakah ada perubahan urutan?" :value="2"
                                         @change="setupOrderRow"
                                         :options="[{ label: 'Ada perubahan', value: '1' }, { label: 'Sudah sesuai', value: '2' }]" />
@@ -360,6 +448,6 @@ watch(() => page.props.tables, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="tables.length" :current-page="currentPage" />
+            :total-items="totalItems" :current-page="currentPage" />
     </GeneralLayout>
 </template>

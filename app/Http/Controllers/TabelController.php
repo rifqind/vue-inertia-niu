@@ -30,226 +30,309 @@ class TabelController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    private function generateRowLabel($rows, $wilayah_fullcodes, $uuid)
+    {
+        try {
+            //code...
+            if ($rows[0]->id == 0) {
+                $wilayah_parent_code = '';
+                $jenis = "DAFTAR ";
+
+                $desa = substr($wilayah_fullcodes[0], 7, 3);
+                $kec = substr($wilayah_fullcodes[0], 4, 3);
+                $kab = substr($wilayah_fullcodes[0], 2, 2);
+                if ($desa != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
+                    $jenis = $jenis . "DESA DI ";
+                } else if ($kec != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
+                    $jenis = $jenis . "KECAMATAN DI ";
+                } else if ($kab != '00') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
+                    $jenis = $jenis . "KABUPATEN DI ";
+                }
+                if ($wilayah_parent_code == '') {
+                    $rowLabel = 'PROVINSI SULAWESI UTARA';
+                } else {
+                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                    $rowLabel = strtolower($rowLabel);
+                    $rowLabel = ucwords($rowLabel);
+                }
+                return $rowLabel;
+            } else {
+                $listRowGroups = [];
+                foreach ($rows as $key => $value) {
+                    # code...
+                    array_push($listRowGroups, $value->id_row_groups);
+                }
+                $isUnique = count(array_unique($listRowGroups));
+                if ($isUnique > 1) {
+                    $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                    $text = 'Gabungan Kelompok Baris dari : ';
+                    foreach ($tempt as $key => $value) {
+                        # code...
+                        if ($key == sizeof($tempt) - 1) $text .= $value;
+                        else $text .= $value . ' - ';
+                    }
+                    $rowLabel = $text;
+                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+                return $rowLabel;
+            }
+        } catch (\Exception $e) {
+            return response()->json(array('error' => $e->getMessage(), 'tersangka' => $uuid, 'rows' => $rows));
+        }
+    }
+    public function index(Request $request)
     {
         //
         $this_dinas = auth()->user()->id_dinas;
         $this_role = auth()->user()->role;
-        $routeName = Route::currentRouteName();
+        $routeName = ($request->routeName) ? $request->routeName : Route::currentRouteName();
         $number = 1;
-        if ($this_role == 'produsen') {
-            # code...
-            $tables = Statustables::where('dinas.id', $this_dinas)
-                ->where('statustables.status', ($routeName != 'tabel.deletedList') ? '<' : '=', '6')
-                ->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
-                ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
-                ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
-                ->get(
-                    [
-                        'tabels.*',
-                        'tabels.id as tabelUuid',
-                        'dinas.nama as nama_dinas',
-                        'statustables.tahun',
-                        'sdesc.label as status',
-                        'statustables.id as id_statustables',
-                        'statustables.updated_at as status_updated',
-                        'statustables.edited_by as edited_by',
-                    ]
-                );
-        } else {
-            $tables = Statustables::whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
-                ->where('statustables.status', ($routeName != 'tabel.deletedList') ? '<' : '=', '6')
-                ->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
-                ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
-                ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
-                ->get(
-                    [
-                        'tabels.*',
-                        'tabels.id as tabelUuid',
-                        'dinas.nama as nama_dinas',
-                        'statustables.tahun',
-                        'sdesc.label as status',
-                        'statustables.id as id_statustables',
-                        'statustables.updated_at as status_updated',
-                        'statustables.edited_by as edited_by',
-                    ]
-                );
+        $query = Statustables::query();
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        if ($this_role == 'produsen') $query->where('dinas.id', $this_dinas);
+        else $query->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah());
+        if ($routeName != 'tabel.deletedList') $query->where('statustables.status', '<', 6);
+        else $query->where('statustables.status', '=', 6);
+
+
+        $dataToCounted = $query->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
+            ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
+            ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
+            ->select(
+                [
+                    'tabels.*',
+                    'tabels.id as tabelUuid',
+                    'dinas.nama as nama_dinas',
+                    'statustables.tahun',
+                    'sdesc.label as status',
+                    'statustables.id as id_statustables',
+                    'statustables.updated_at as status_updated',
+                    'statustables.edited_by as edited_by',
+                ]
+            );
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label'])) {
+                $query->where(DB::raw("CONCAT(tabels.nomor, ' - ', tabels.label)"), 'like', '%' . $filter['label'] . '%');
+            }
+            if (!empty($filter['nama_dinas'])) $query->where('dinas.nama', 'like', '%' . $filter['nama_dinas'] . '%');
+            if (!empty($filter['columns'])) {
+                $targetTabels = Datacontent::join('columns as c', 'c.id', '=', 'datacontents.id_column')
+                    ->where('c.label', 'like', '%' . $filter['columns'] . '%')->pluck('datacontents.id_tabel')->unique();
+                $query->whereIn('tabels.id', $targetTabels);
+            }
+            if (!empty($filter['row_label'])) {
+                $targetTabels = Datacontent::join('rows as r', 'r.id', '=', 'datacontents.id_row')
+                    ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
+                if (empty($targetTabels) || !$targetTabels || !sizeof($targetTabels) > 0) {
+                    $targetTabels = Datacontent::join('master_wilayah as m', 'm.wilayah_fullcode', '=', 'datacontents.wilayah_fullcode')
+                        ->where('datacontents.id_row', '=', 0)
+                        ->where('m.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
+                }
+                $query->whereIn('tabels.id', $targetTabels);
+            }
+            if (!empty($filter['tahun'])) $query->where('statustables.tahun', 'like', '%' . $filter['tahun'] . '%');
+            if (!empty($filter['status'])) $query->where('sdesc.label', 'like', '%' . $filter['status'] . '%');
+            if (!empty($filter['updated'])) {
+                // $targetUsers = User::where('username', 'like', '%' . $filter['updated'] . '%')->value('username');
+                $query->join('users', 'statustables.edited_by', '=', 'users.id');
+                $query->where(DB::raw("CONCAT(users.username, ' - ', statustables.updated_at)"), 'like', '%' . $filter['updated'] . '%');
+                // dd($query->toSql());
+            }
         }
+        $countData = $dataToCounted->count();
+        $tables = $query->paginate($paginated, ['*'], 'page', $currentPage);
         $table_objects = [];
+
+        $listOfUuid = [];
         foreach ($tables as $key => $table) {
             $datacontents = Datacontent::where('id_tabel', $table->tabelUuid)->get();
-            $id_rows = [];
-            $id_columns = [];
-            $wilayah_fullcodes = [];
-            foreach ($datacontents as $datacontent) {
-                $split = explode("-", $datacontent->label);
-                array_push($id_rows, $datacontent->id_row);
-                array_push($id_columns, $datacontent->id_column);
-                array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+            if (sizeof($datacontents) > 0) {
+                $id_rows = $datacontents->pluck('id_row')->unique();
+                $id_columns = $datacontents->pluck('id_column')->unique();
+                $wilayah_fullcodes = $datacontents->pluck('wilayah_fullcode')->unique();
+                $rows = Row::whereIn('id', $id_rows)->get();
+                $rowLabel = $this->generateRowLabel($rows, $wilayah_fullcodes, $table->tabelUuid);
+                if ($id_rows[0] == 0) $rowInputs = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
+                else $rowInputs = Row::whereIn('id', $id_rows)->get();
+                $columns = Column::whereIn('id', $id_columns)->get('label');
+            } else {
+                $rowLabel = 'Tidak ada data';
+                $columns = ['Tidak ada data'];
             }
-            $yearList = Statustables::where('id_tabel', $table->tabelUuid)->distinct()->get(['statustables.tahun']);
-            $rows = Row::whereIn('id', $id_rows)->get();
-            try {
-                //code...
-                if ($rows[0]->id == 0) {
-                    // dd($table->tabelUuid, $rows[0]);
-                    $wilayah_parent_code = '';
-                    $jenis = "DAFTAR ";
-
-                    $desa = substr($wilayah_fullcodes[0], 7, 3);
-                    $kec = substr($wilayah_fullcodes[0], 4, 3);
-                    $kab = substr($wilayah_fullcodes[0], 2, 2);
-                    // dd($kec);
-                    if ($desa != '000') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
-                        $jenis = $jenis . "DESA DI ";
-                    } else if ($kec != '000') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
-                        $jenis = $jenis . "KECAMATAN DI ";
-                    } else if ($kab != '00') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
-                        $jenis = $jenis . "KABUPATEN DI ";
-                    }
-                    if ($wilayah_parent_code == '') {
-                        $rowLabel = 'PROVINSI SULAWESI UTARA';
-                    } else {
-                        $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
-                        $rowLabel = strtolower($rowLabel);
-                        $rowLabel = ucwords($rowLabel);
-                    }
-                } else {
-                    $listRowGroups = [];
-                    foreach ($rows as $key => $value) {
-                        # code...
-                        array_push($listRowGroups, $value->id_row_groups);
-                    }
-                    $isUnique = count(array_unique($listRowGroups));
-                    if ($isUnique > 1) {
-                        $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
-                        $text = 'Gabungan Kelompok Baris dari : ';
-                        foreach ($tempt as $key => $value) {
-                            # code...
-                            if ($key == sizeof($tempt) - 1) $text .= $value;
-                            else $text .= $value . ' - ';
-                        }
-                        $rowLabel = $text;
-                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
-                }
-            } catch (\Exception $e) {
-                return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->tabelUuid, 'rows' => $rows, 'wilayah_parent_code' => $wilayah_parent_code));
-            }
-            $columns = Column::whereIn('id', $id_columns)->get('label');
             $who_updated = User::where('id', $table->edited_by)->value('username');
+            // array_push($listOfUser, $rowLabel);
             $when_updated = $table->status_updated;
             $NumberAndLabel = $table->nomor . ' - ' . $table->label;
+
             array_push($table_objects, [
                 'number' => $number++,
-                // 'label' => $table->label,
                 'label' => $NumberAndLabel,
                 'nama_dinas' => $table->nama_dinas,
                 'id' => $table->tabelUuid,
-                'rows' => $rows,
                 'row_label' => $rowLabel,
                 'columns' => $columns,
                 'tahun' => $table->tahun,
-                'yearList' => $yearList,
                 'status' => $table->status,
                 'id_statustables' => $table->id_statustables,
                 'status_updated' => $when_updated,
                 'who_updated' => $who_updated,
+                'rowInputs' => $rowInputs,
+            ]);
+        }
+        if ($request->routeName) {
+
+            return response()->json([
+                'tables' => $table_objects,
+                'countData' => $countData,
+                'data' => $listOfUuid,
+                // 'test' => $countQuery->get(),
             ]);
         }
 
         return Inertia::render('Tabel/Index', [
             'tables' => $table_objects,
-            'role' => $this_role,
+            'countData' => $countData,
+            // 'data' => $tables,
         ]);
     }
+    private function backup($rows, $wilayah_fullcodes, $wilayah_parent_code, $table)
+    {
+        try {
+            //code...
+            if ($rows[0]->id == 0) {
+                // dd($table->tabelUuid, $rows[0]);
+                $wilayah_parent_code = '';
+                $jenis = "DAFTAR ";
 
-    public function master()
+                $desa = substr($wilayah_fullcodes[0], 7, 3);
+                $kec = substr($wilayah_fullcodes[0], 4, 3);
+                $kab = substr($wilayah_fullcodes[0], 2, 2);
+                // dd($kec);
+                if ($desa != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
+                    $jenis = $jenis . "DESA DI ";
+                } else if ($kec != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
+                    $jenis = $jenis . "KECAMATAN DI ";
+                } else if ($kab != '00') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
+                    $jenis = $jenis . "KABUPATEN DI ";
+                }
+                if ($wilayah_parent_code == '') {
+                    $rowLabel = 'PROVINSI SULAWESI UTARA';
+                } else {
+                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                    $rowLabel = strtolower($rowLabel);
+                    $rowLabel = ucwords($rowLabel);
+                }
+            } else {
+                $listRowGroups = [];
+                foreach ($rows as $key => $value) {
+                    # code...
+                    array_push($listRowGroups, $value->id_row_groups);
+                }
+                $isUnique = count(array_unique($listRowGroups));
+                if ($isUnique > 1) {
+                    $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                    $text = 'Gabungan Kelompok Baris dari : ';
+                    foreach ($tempt as $key => $value) {
+                        # code...
+                        if ($key == sizeof($tempt) - 1) $text .= $value;
+                        else $text .= $value . ' - ';
+                    }
+                    $rowLabel = $text;
+                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+            }
+        } catch (\Exception $e) {
+            return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->tabelUuid, 'rows' => $rows, 'wilayah_parent_code' => $wilayah_parent_code));
+        }
+    }
+    public function master(Request $request)
     {
         //
-        $tables = Tabel::leftJoin('dinas', 'dinas.id', '=', 'tabels.id_dinas')
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Tabel::query();
+        $dataToCounted = $query->join('dinas', 'dinas.id', '=', 'tabels.id_dinas')
             ->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
-            ->get([
+            ->select([
                 'tabels.*',
                 'tabels.id as tabelUuid',
                 'tabels.edited_by as edited_by',
                 'tabels.updated_at as status_updated'
             ]);
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label'])) {
+                $query->where(DB::raw("CONCAT(tabels.nomor, ' - ', tabels.label)"), 'like', '%' . $filter['label'] . '%');
+            }
+            if (!empty($filter['nama_dinas'])) $query->where('dinas.nama', 'like', '%' . $filter['nama_dinas'] . '%');
+            if (!empty($filter['columns'])) {
+                $targetTabels = Datacontent::join('columns as c', 'c.id', '=', 'datacontents.id_column')
+                    ->where('c.label', 'like', '%' . $filter['columns'] . '%')->pluck('datacontents.id_tabel')->unique();
+                $query->whereIn('tabels.id', $targetTabels);
+            }
+            if (!empty($filter['row_label'])) {
+                $targetTabels = Datacontent::join('rows as r', 'r.id', '=', 'datacontents.id_row')
+                    ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
+                if (empty($targetTabels) || !$targetTabels || !sizeof($targetTabels) > 0) {
+                    $targetTabels = Datacontent::join('master_wilayah as m', 'm.wilayah_fullcode', '=', 'datacontents.wilayah_fullcode')
+                        ->where('datacontents.id_row', '=', 0)
+                        ->where('m.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
+                }
+                $query->whereIn('tabels.id', $targetTabels);
+            }
+            if (!empty($filter['tahun'])) {
+                $targetTabels = Statustables::where('tahun', 'like', '%' . $filter['tahun'] . '%')->pluck('id_tabel')->unique();
+                $query->whereIn('tabels.id', $targetTabels);
+            }
+            if (!empty($filter['status'])) $query->where('sdesc.label', 'like', '%' . $filter['status'] . '%');
+            if (!empty($filter['updated'])) {
+                // $targetUsers = User::where('username', 'like', '%' . $filter['updated'] . '%')->value('username');
+                $query->join('users', 'edited_by', '=', 'users.id');
+                $query->where(DB::raw("CONCAT(users.username, ' - ', updated_at)"), 'like', '%' . $filter['updated'] . '%');
+                // dd($query->toSql());
+            }
+        }
+        $countData = $dataToCounted->count();
+        $tables = $query->paginate($paginated, ['*'], 'page', $currentPage);
         $table_objects = [];
         $number = 1;
         foreach ($tables as $key => $table) {
             $datacontents = Datacontent::where('id_tabel', $table->id)->get();
-            $id_rows = [];
             $tahunObjects = Statustables::where('id_tabel', $table->id)->select('tahun')->distinct()->get();
             $id_statustables = Statustables::where('id_tabel', $table->id)->value('id');
             $tahuns = $tahunObjects->pluck('tahun')->toArray();
-            $id_columns = [];
-            $wilayah_fullcodes = [];
-            foreach ($datacontents as $datacontent) {
-                array_push($id_rows, $datacontent->id_row);
-                array_push($id_columns, $datacontent->id_column);
-                array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+            if (sizeof($datacontents) > 0) {
+                $id_rows = $datacontents->pluck('id_row')->unique();
+                $id_columns = $datacontents->pluck('id_column')->unique();
+                $wilayah_fullcodes = $datacontents->pluck('wilayah_fullcode')->unique();
+                $rows = Row::whereIn('id', $id_rows)->get();
+                if ($id_rows[0] == 0) $rowInputs = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
+                else $rowInputs = Row::whereIn('id', $id_rows)->get();
+                $rowLabel = $this->generateRowLabel($rows, $wilayah_fullcodes, $table->id);
+                $columns = Column::whereIn('id', $id_columns)->get();
+            } else {
+                $rowLabel = 'Tidak ada data';
+                $columns = ['Tidak ada data'];
             }
-            $rows = Row::whereIn('id', $id_rows)->get();
-            try {
-                //code...
-                if ($rows[0]->id == 0) {
-                    $wilayah_parent_code = '';
-                    $jenis = "DAFTAR ";
-
-                    $desa = substr($wilayah_fullcodes[0], 7, 3);
-                    $kec = substr($wilayah_fullcodes[0], 4, 3);
-                    $kab = substr($wilayah_fullcodes[0], 2, 2);
-                    // dd($kec);
-                    if ($desa != '000') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
-                        $jenis = $jenis . "DESA DI ";
-                    } else if ($kec != '000') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
-                        $jenis = $jenis . "KECAMATAN DI ";
-                    } else if ($kab != '00') {
-                        $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
-                        $jenis = $jenis . "KABUPATEN DI ";
-                    }
-                    if ($wilayah_parent_code == '') {
-                        $rowLabel = 'PROVINSI SULAWESI UTARA';
-                    } else {
-                        $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
-                        $rowLabel = strtolower($rowLabel);
-                        $rowLabel = ucwords($rowLabel);
-                    }
-                } else {
-                    $listRowGroups = [];
-                    foreach ($rows as $key => $value) {
-                        # code...
-                        array_push($listRowGroups, $value->id_row_groups);
-                    }
-                    $isUnique = count(array_unique($listRowGroups));
-                    if ($isUnique > 1) {
-                        $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
-                        $text = 'Gabungan Kelompok Baris dari : ';
-                        foreach ($tempt as $key => $value) {
-                            # code...
-                            if ($key == sizeof($tempt) - 1) $text .= $value;
-                            else $text .= $value . ' - ';
-                        }
-                        $rowLabel = $text;
-                    } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
-                }
-            } catch (\Exception $e) {
-                return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->id, 'rows' => $rows));
-            }
-            $columns = Column::whereIn('id', $id_columns)->get();
             $who_updated = User::where('id', $table->edited_by)->value('username');
             $when_updated = $table->status_updated;
+            $NumberAndLabel = $table->nomor . ' - ' . $table->label;
             array_push($table_objects, [
                 'number' => $number++,
-                'label' => $table->label,
+                'label' => $NumberAndLabel,
                 'id' => $table->tabelUuid,
                 'nama_dinas' => $table->dinas->nama,
-                'rows' => $rows,
+                // 'rows' => $rows,
                 'row_label' => $rowLabel,
                 'columns' => $columns,
                 'tahuns' => $tahuns,
@@ -257,10 +340,21 @@ class TabelController extends Controller
                 'id_statustables' => $id_statustables,
                 'status_updated' => $when_updated,
                 'who_updated' => $who_updated,
+                'rowInputs' => $rowInputs,
+            ]);
+        }
+        if ($request->routeName) {
+            // dd($request);
+            return response()->json([
+                'tables' => $table_objects,
+                'countData' => $countData,
+                // 'data' => $listOfUuid,
+                // 'test' => $countQuery->get(),
             ]);
         }
         return Inertia::render('Master/Tabel', [
             'tables' => $table_objects,
+            'countData' => $countData,
         ]);
     }
 
@@ -378,8 +472,8 @@ class TabelController extends Controller
                 'id_user' => auth()->user()->id,
                 'komentar' => "Admin telah menambahkan tabel baru dengan judul ",
             ]);
+            if (empty($data_contents)) throw new Exception('Data Error, Fail to Duplicate');
             Datacontent::insert($data_contents);
-
             DB::commit();
         } catch (\Exception $e) {
             //throw $th;
@@ -415,7 +509,11 @@ class TabelController extends Controller
         // get first year entry
         $firstStatus = Statustables::where('id_tabel', $request->id)
             ->first();
-
+        $checkRowOrder = RowOrder::leftJoin('statustables as st', 'st.id', '=', 'row_orders.id_statustabel')
+            ->where('st.id_tabel', $request->id)->first(['row_orders.*']);
+        $checkColumnOrder = ColumnOrder::leftJoin('statustables as st', 'st.id', '=', 'column_orders.id_statustabel')
+            ->where('st.id_tabel', $request->id)->first(['column_orders.*']);
+        // dd($checkColumnOrder->orders);
         $oldDataContents = Datacontent::where('id_tabel', $firstStatus->id_tabel)
             ->where('tahun', $firstStatus->tahun)
             ->get();
@@ -449,6 +547,20 @@ class TabelController extends Controller
                     'status' => '1',
                     'edited_by' => auth()->user()->id,
                 ]);
+                if ($checkRowOrder) {
+                    $insertRowOrder = $checkRowOrder->orders;
+                    $newRowOrder = RowOrder::create([
+                        'id_statustabel' => $newStatus->id,
+                        'orders' => $insertRowOrder,
+                    ]);
+                }
+                if ($checkColumnOrder) {
+                    $insertColumnOrder = $checkColumnOrder->orders;
+                    $newColumnOrder = ColumnOrder::create([
+                        'id_statustabel' => $newStatus->id,
+                        'orders' => $insertColumnOrder,
+                    ]);
+                }
             }
             Datacontent::insert($newDataContents);
             DB::commit();
@@ -552,6 +664,11 @@ class TabelController extends Controller
                 }
             }
             // }
+            $checkRowOrder = RowOrder::leftJoin('statustables as st', 'st.id', '=', 'row_orders.id_statustabel')
+                ->where('st.id_tabel', $request->id)->first(['row_orders.*']);
+            $checkColumnOrder = ColumnOrder::leftJoin('statustables as st', 'st.id', '=', 'column_orders.id_statustabel')
+                ->where('st.id_tabel', $request->id)->first(['column_orders.*']);
+
             $newStatusTables = Statustables::create([
                 'id_tabel' => $new_tabel->id,
                 'tahun' => $targetStatusTables,
@@ -563,6 +680,20 @@ class TabelController extends Controller
                 'id_user' => auth()->user()->id,
                 'komentar' => 'Admin telah menambahkan tabel baru dengan judul ',
             ]);
+            if ($checkRowOrder) {
+                $insertRowOrder = $checkRowOrder->orders;
+                $newRowOrder = RowOrder::create([
+                    'id_statustabel' => $newStatusTables->id,
+                    'orders' => $insertRowOrder,
+                ]);
+            }
+            if ($checkColumnOrder) {
+                $insertColumnOrder = $checkColumnOrder->orders;
+                $newColumnOrder = ColumnOrder::create([
+                    'id_statustabel' => $newStatusTables->id,
+                    'orders' => $insertColumnOrder,
+                ]);
+            }
 
             // Datacontent::insert($add_datacontent);
             // dd($add_datacontent);

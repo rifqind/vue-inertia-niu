@@ -341,8 +341,10 @@ const buildValue = function () {
     } else {
         form.columns = columnsSelected.value
     }
-    if (!form.orderColumn) columnPreview.value = form.columns
-    if (!form.orderRow) rowPreview.value = form.rows.selected
+    // if (!form.orderColumn) columnPreview.value = form.columns
+    columnPreview.value = (form.orderColumn) ? form.orderColumn : form.columns
+    // if (!form.orderRow) rowPreview.value = form.rows.selected
+    rowPreview.value = (form.orderRow) ? form.orderRow : form.rows.selected
     previewModalStatus.value = true
 }
 
