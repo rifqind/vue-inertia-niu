@@ -6,6 +6,7 @@ import { usePage, useForm, Head, Link } from '@inertiajs/vue3'
 import { onMounted, ref, onUpdated } from 'vue';
 import ModalBs from '@/Components/ModalBs.vue';
 import { downloadTabel } from '@/download'
+import { nextTick } from 'vue';
 
 const page = usePage()
 const form = useForm({
@@ -94,14 +95,18 @@ const handleInput = function (event, row, column) {
 onMounted(() => {
     defineBadges(status[0])
     defineInputDisable(status[0], page.props.auth.user.role)
-    let RowTheadHeight = Rowee.value.offsetHeight
-    let DatasTheadHeight = Columnee.value.offsetHeight
-    if (RowTheadHeight > DatasTheadHeight) {
-        Columnee.value.style.height = `${RowTheadHeight}px`
-    }
-    else {
-        Rowee.value.style.height = `${DatasTheadHeight}px`
-    }
+    nextTick(() => {
+        let RowTheadHeight = Rowee.value.offsetHeight
+        let DatasTheadHeight = Columnee.value.offsetHeight
+        if (RowTheadHeight > DatasTheadHeight) {
+            Columnee.value.style.height = `${RowTheadHeight}px`
+        }
+        else {
+            console.log({ RowTheadHeight, DatasTheadHeight })
+            Rowee.value.style.height = `${DatasTheadHeight}px`
+            console.log({ RowTheadHeight, DatasTheadHeight })
+        }
+    })
 })
 
 onUpdated(() => {
@@ -181,13 +186,28 @@ const setId = (row, column) => {
     } else rowComponents = row.wilayah_fullcode
     return 'cell-' + rowComponents + '-' + columnComponents
 }
+const hiddenLabel = (value, index) => {
+    console.log(value.length)
+    if (value.length > 30) {
+        indexExpanded.value[index] = false
+        return value.substring(0, 30) + ' '
+    }
+    return value
+}
+const toggleLabel = (index) => {
+    indexExpanded.value[index] = !indexExpanded.value[index]
+}
+const indexExpanded = ref(Array(page.props.columns.length).fill(true))
+page.props.columns.forEach((column, index) => {
+    if (column.label.length > 30) indexExpanded.value[index] = false
+})
 </script>
 <template>
 
     <Head title="Entri Data" />
     <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
-        <div class="container pb-3">
+        <div id="container-of-entry" class="pb-3">
             <div class="card">
                 <div class="card-body">
                     <h3 class="text-bold">{{ page.props.judul_tabel }}, Tahun {{ page.props.years }}
@@ -229,8 +249,12 @@ const setId = (row, column) => {
                                 <tr>
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
                                         <th class="text-center align-middle" v-for="(node, index) in page.props.columns"
-                                            :key="index">{{
-        node.label }}</th>
+                                            :key="index">
+                                            <template v-if="indexExpanded[index]">{{ node.label }}</template>
+                                            <template v-else>{{ hiddenLabel(node.label, index) }}</template>
+                                            <span v-if="!indexExpanded[index] || node.label.length > 30"
+                                                class="badge badge-info" @click="toggleLabel(index)">...</span>
+                                        </th>
                                     </template>
                                 </tr>
                             </thead>
@@ -238,7 +262,7 @@ const setId = (row, column) => {
                                 <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                                            <input type="text" class="form-control" :id="setId(nodeRow, nodeColumn)"
+                                            <input type="text" class="" :id="setId(nodeRow, nodeColumn)"
                                                 :value="getData(nodeRow, nodeColumn)" :disabled="inputDisabled"
                                                 @paste="(event) => { handlePaste(event, nodeRow, nodeColumn) }"
                                                 @input="(event) => { handleInput(event, nodeRow, nodeColumn) }">
@@ -330,6 +354,16 @@ const setId = (row, column) => {
     </GeneralLayout>
 </template>
 <style scoped>
+#container-of-entry {
+    margin-right: 5%;
+    margin-left: 5%;
+    font-size: 12px;
+}
+
+.badge {
+    cursor: pointer;
+}
+
 #RowTabel {
     table-layout: fixed;
     width: 400px;
@@ -356,9 +390,10 @@ const setId = (row, column) => {
     vertical-align: middle;
     padding: .1rem;
     /* white-space: nowrap; */
-    /* text-overflow: ellipsis; */
+    text-overflow: ellipsis;
     overflow: auto;
 }
+
 
 #ColumnTabel tbody tr td {
     /* padding-right: 1rem; */
@@ -368,7 +403,7 @@ const setId = (row, column) => {
 #RowTabel tbody tr td,
 #ColumnTabel tbody tr td {
     /* height: 20px; */
-    height: 65px;
+    height: 50px;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;

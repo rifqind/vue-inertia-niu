@@ -266,6 +266,7 @@ const submit = async function () {
             if (page.props.flash.message) toggleFlash.value = true
             if (page.props.flash.error) toggleFlashError.value = true
             form.reset()
+            fetchData()
         },
         onError: function () { addYearModalStatus.value = true }
     })
@@ -287,6 +288,7 @@ const duplicate = async () => {
             if (page.props.flash.message) toggleFlash.value = true
             if (page.props.flash.error) toggleFlashError.value = true
             duplicateForm.reset()
+            fetchData()
         },
         onError: function () { duplicateModalStatus.value = true }
     })
@@ -342,7 +344,7 @@ const openRowList = (index) => {
     if (index < 3) return true
     else return false
 }
-
+    
 const indexExpanded = ref(Array(paginatedData.value.length).fill(false))
 const openOtherRow = (index) => {
     indexExpanded.value[index] = !indexExpanded.value[index]

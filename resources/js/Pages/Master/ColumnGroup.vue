@@ -110,11 +110,20 @@ const deleteForm = async function () {
     })
 }
 //new Pagination
-const showItems = ref(10)
+const showItemsValue = ref(10)
+const showItems = computed(() => {
+    const filteredLength = filteredColumns.value.length
+    let thisLength = null
+    if (filteredLength < 10) thisLength = filteredLength
+    else thisLength = showItemsValue.value
+    return thisLength
+})
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {
-    showItems.value = value
+    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    else showItemsValue.value = value
+    currentPage.value = 1
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
@@ -234,6 +243,6 @@ watch(() => page.props.columnGroup, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="columnGroup.length" :current-page="currentPage" />
+            :total-items="filteredColumns.length" :current-page="currentPage" />
     </GeneralLayout>
 </template>

@@ -298,7 +298,7 @@ class TabelController extends Controller
             if (!empty($filter['updated'])) {
                 // $targetUsers = User::where('username', 'like', '%' . $filter['updated'] . '%')->value('username');
                 $query->join('users', 'edited_by', '=', 'users.id');
-                $query->where(DB::raw("CONCAT(users.username, ' - ', updated_at)"), 'like', '%' . $filter['updated'] . '%');
+                $query->where(DB::raw("CONCAT(users.username, ' - ', tabels.updated_at)"), 'like', '%' . $filter['updated'] . '%');
                 // dd($query->toSql());
             }
         }
@@ -568,7 +568,7 @@ class TabelController extends Controller
             DB::rollBack();
             return response()->json($e->getMessage());
         }
-        return redirect()->route('tabel.master')->with('message', 'Berhasil Menyalin Tabel !');
+        // return redirect()->route('tabel.master')->with('message', 'Berhasil Menyalin Tabel !');
     }
 
     public function fetchMaster(String $id)
@@ -936,7 +936,7 @@ class TabelController extends Controller
             DB::rollBack();
             return response()->json($th->getMessage());
         }
-        return redirect()->route('tabel.index')->with('message', 'berhasil mengubah urutan');
+        // return redirect()->route('tabel.index')->with('message', 'berhasil mengubah urutan');
     }
 
     //     /**
@@ -1097,8 +1097,14 @@ class TabelController extends Controller
 
     public function statusDestroy(Request $request)
     {
-        $thisStatus = Statustables::where('id', $request->id);
-        $thisStatus->update(['status' => '6']);
-        return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
+        try {
+            //code...
+            $thisStatus = Statustables::where('id', $request->id);
+            $thisStatus->update(['status' => '6']);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json($th->getMessage());
+        }
+        // return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
     }
 }

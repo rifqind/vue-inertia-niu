@@ -3,26 +3,22 @@ import GeneralLayout from '@/Layouts/GeneralLayout.vue'
 import Multiselect from '@vueform/multiselect'
 import SpinnerBorder from '@/Components/SpinnerBorder.vue'
 import { Head, usePage } from '@inertiajs/vue3'
-import { defineComponent, watch, ref, onMounted, onUpdated } from 'vue'
-import { getPagination } from '@/pagination'
+import { defineComponent, watch, ref, computed } from 'vue'
 import axios from 'axios'
 import { GoDownload } from '@/download'
 import ModalBs from '@/Components/ModalBs.vue';
+import Pagination from '@/Components/Pagination.vue'
 
 defineComponent({
     Multiselect
 })
 const page = usePage()
-var mObject = page.props.this_monitoring
-const monitoring = ref(mObject)
+// var mObject = page.props.this_monitoring
+const monitoring = ref(page.props.this_monitoring)
 const searchLabel = ref(null)
 const triggerSpinner = ref(false)
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
-
-var valueChanged = 10
-var currentStatusText = null
-var rowsTabel = null
 
 var all = [{ label: 'Pilih Semua', value: 'all' }]
 const yearDrop = ref({
@@ -31,23 +27,25 @@ const yearDrop = ref({
 })
 
 const tabelMonitoring = ref(null)
-const statusText = ref(false)
-const maxRows = ref(null)
-const currentPagination = ref(null)
 
-watch(searchLabel, () => {
-    monitoring.value = mObject.filter(x => x.nama_dinas.toLowerCase().includes(searchLabel.value.toLowerCase()))
-})
-onMounted(() => {
-    currentStatusText = statusText.value
-    rowsTabel = tabelMonitoring.value.querySelectorAll('tbody tr').length
-    getPagination(tabelMonitoring, currentPagination, 10, statusText,
-        currentStatusText, rowsTabel)
-    maxRows.value.addEventListener("change", function (e) {
-        valueChanged = this.value
-        valueChanged = getPagination(tabelMonitoring, currentPagination, valueChanged, statusText,
-            currentStatusText, rowsTabel)
+const ArrayBigObjects = [
+    { key: 'nama_dinas', valueFilter: searchLabel },
+]
+
+const filteredColumns = computed(() => {
+    let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
+    if (filters.length === 0) {
+        return monitoring.value
+    }
+    return monitoring.value.filter(item => {
+        return filters.every(obj => {
+            const filterValue = obj.valueFilter.value.toLowerCase()
+            return item[obj.key].toLowerCase().includes(filterValue)
+        })
     })
+})
+watch(ArrayBigObjects.filter(obj => obj.valueFilter.value), () => {
+    monitoring.value = filteredColumns.value
 })
 const changeYearList = async function (value) {
     if (!value) {
@@ -56,18 +54,32 @@ const changeYearList = async function (value) {
     try {
         triggerSpinner.value = true
         const response = await axios.get(route('home.getMonitoring', { years: value }))
-        mObject = response.data
-        monitoring.value = mObject
+        monitoring.value = response.data
         triggerSpinner.value = false
     } catch (error) {
         console.error('Error fetching data:', error);
     }
 }
-onUpdated(() => {
-    currentStatusText = statusText.value
-    rowsTabel = tabelMonitoring.value.querySelectorAll('tbody tr').length
-    getPagination(tabelMonitoring, currentPagination, valueChanged, statusText,
-        currentStatusText, rowsTabel)
+//new Pagination
+const showItemsValue = ref(10)
+const showItems = computed(() => {
+    if (filteredColumns.value.length < 10) return filteredColumns.value.length
+    return showItemsValue.value
+})
+const currentPage = ref(1)
+
+const updateShowItems = (value) => {
+    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    else showItemsValue.value = value
+    currentPage.value = 1
+}
+const updateCurrentPage = (value) => {
+    currentPage.value = value
+}
+const paginatedData = computed(() => {
+    const start = (currentPage.value - 1) * showItems.value
+    const end = start + showItems.value
+    return filteredColumns.value.slice(start, end)
 })
 </script>
 <template>
@@ -84,8 +96,9 @@ onUpdated(() => {
                     <Multiselect @change="changeYearList" :options="yearDrop.options" v-model="yearDrop.value"
                         placeholder="-- Pilih Tahun --" />
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadModalStatus = true"><font-awesome-icon
-                        icon="fa-solid fa-circle-down" /> Download</button>
+                <button class="btn bg-success-fordone mr-2" title="Download"
+                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" />
+                    Download</button>
             </div>
         </div>
         <table class="table table-hover table-bordered" id="tabel-monitoring" ref="tabelMonitoring">
@@ -112,7 +125,7 @@ onUpdated(() => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(node, index) in monitoring" :key="index">
+                <tr v-for="(node, index) in paginatedData" :key="index">
                     <td>{{ index + 1 }}</td>
                     <td>{{ node.nama_dinas }}</td>
                     <td>{{ node.jumlah_satu }}</td>
@@ -124,34 +137,8 @@ onUpdated(() => {
                 </tr>
             </tbody>
         </table>
-        <div class="d-flex justify-content-end align-items-center">
-            <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showPage"></span> dari
-                <span id="showTotal"></span>
-            </div>
-            <div class="form-group"> <!--		Show Numbers Of Rows 		-->
-                <select class="form-control" ref="maxRows" name="state" id="maxRows">
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            <div class="pagination-container">
-                <nav>
-                    <ul class="pagination" id="currentPagination" ref="currentPagination">
-                        <li data-page="prev" id="next">
-                            <span>
-                                < <span class="sr-only">(current)
-                            </span></span>
-                        </li>
-                        <!--	Here the JS Function Will Add the Rows -->
-                        <li data-page="next" id="prev">
-                            <span> > <span class="sr-only">(current)</span></span>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+        <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
+            :total-items="filteredColumns.length" :current-page="currentPage" />
         <Teleport to="body">
             <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
                 <template #modalBody>

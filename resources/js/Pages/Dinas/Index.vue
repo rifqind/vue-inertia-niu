@@ -192,12 +192,18 @@ const deleteForm = async function () {
         onError: function () { deleteModalStatus.value = true }
     })
 }
-// pagination vue
-const showItems = ref(10)
+//new Pagination
+const showItemsValue = ref(10)
+const showItems = computed(() => {
+    if (filteredColumns.value.length < 10) return filteredColumns.value.length
+    return showItemsValue.value
+})
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {
-    showItems.value = value
+    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    else showItemsValue.value = value
+    currentPage.value = 1
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value

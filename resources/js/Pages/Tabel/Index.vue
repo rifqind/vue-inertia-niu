@@ -109,6 +109,7 @@ const deleteForm = async function () {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
             form.reset()
+            fetchData()
         },
         onError: function () { deleteModalStatus.value = true }
     })
@@ -138,6 +139,7 @@ const changeOrder = async () => {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
             order.reset()
+            fetchData()
         },
         onError: function () { orderModalStatus.value = true }
     })
