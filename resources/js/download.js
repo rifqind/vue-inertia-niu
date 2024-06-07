@@ -76,7 +76,8 @@ function getReady() {
             let value = input ? input.value : cell.textContent;
             let numericValue = parseFloat(value);
             if (!isNaN(numericValue)) {
-                let val = value.replace(/[^0-9]/g, '');
+                // let val = value.replace(/[^0-9]/g, '');
+                let val = value.replace(/\./g, '').replace(/,/g, '.');
                 data[mergedHeaders[index]] = Number(val);
             } else {
                 data[mergedHeaders[index]] = value;
