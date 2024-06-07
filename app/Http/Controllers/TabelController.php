@@ -568,8 +568,7 @@ class TabelController extends Controller
             DB::rollBack();
             return response()->json($e->getMessage());
         }
-        // return response()->json('Berhasil');
-        // return redirect()->route('tabel.master')->with('message', 'Berhasil Menyalin Tabel !');
+        return redirect()->route('tabel.master')->with('message', 'Berhasil Menyalin Tabel !');
     }
 
     public function fetchMaster(String $id)

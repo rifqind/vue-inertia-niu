@@ -127,17 +127,11 @@ const changeNumber = (number) => {
     return number.replace(/^0/, '+62')
 }
 //new Pagination
-const showItemsValue = ref(10)
-const showItems = computed(() => {
-    if (filteredColumns.value.length < 10) return filteredColumns.value.length
-    return showItemsValue.value
-})
+const showItems = ref(10)
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {
-    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
-    else showItemsValue.value = value
-    currentPage.value = 1
+    showItems.value = value
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
@@ -255,7 +249,7 @@ watch(() => page.props.users, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage" />
+            :total-items="users.length" :current-page="currentPage" />
     </GeneralLayout>
 </template>
 <style scoped>

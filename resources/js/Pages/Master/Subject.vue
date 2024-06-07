@@ -108,16 +108,11 @@ const deleteForm = async function () {
     })
 }
 //new Pagination
-const showItemsValue = ref(10)
-const showItems = computed(() => {
-    if (filteredColumns.value.length < 10) return filteredColumns.value.length
-    return showItemsValue.value
-})
+const showItems = ref(10)
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {
-    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
-    else showItemsValue.value = value
+    showItems.value = value
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
@@ -206,7 +201,6 @@ watch(() => page.props.subjects, (value) => {
                             <label for="label">Nama Subjek</label>
                             <input v-model="form.label" type="text" class="form-control" id="label"
                                 placeholder="Isi Nama Subjek">
-                            <div v-if="form.errors.label" class="text-danger">{{ form.errors.label }}</div>
                         </div>
                     </form>
                 </template>
@@ -228,6 +222,6 @@ watch(() => page.props.subjects, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage" />
+            :total-items="subjects.length" :current-page="currentPage" />
     </GeneralLayout>
 </template>
