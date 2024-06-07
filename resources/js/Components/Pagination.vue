@@ -19,6 +19,7 @@ const props = defineProps({
     }
 })
 const totalPages = computed(() => {
+    if (props.totalItems == 0) return 1
     return Math.ceil(props.totalItems / props.showItems)
 })
 const emits = defineEmits([
@@ -29,7 +30,7 @@ const changePage = (node, index) => {
     let current = props.currentPage
     let lasted = visiblePages.value.length
     // console.log(index, lasted)
-    if (node < 1 || node > totalPages) return
+    if (node < 1 || node > totalPages.value) return
     if (node == '...') {
         if (index == 0) {
             node = Math.ceil(current / 2)

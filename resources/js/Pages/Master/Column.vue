@@ -90,6 +90,7 @@ const fetchColumns = async function (id) {
 }
 const submit = async function () {
     const response = await axios.get(route('token'))
+    form.label = listInput.value.value
     form._token = response.data
     if (form.processing) return
     form.post(route('columns.store'), {
@@ -104,6 +105,7 @@ const submit = async function () {
         },
         onError: function () { createModalStatus.value = true }
     })
+    // columns.value = filteredColumns.value
 }
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
@@ -124,11 +126,17 @@ const deleteForm = async function () {
     })
 }
 //new Pagination
-const showItems = ref(10)
+const showItemsValue = ref(10)
+const showItems = computed(() => {
+    if (filteredColumns.value.length < 10) return filteredColumns.value.length
+    return showItemsValue.value
+})
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {
-    showItems.value = value
+    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    else showItemsValue.value = value
+    currentPage.value = 1
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
@@ -141,6 +149,26 @@ const paginatedData = computed(() => {
 watch(() => page.props.columns, (value) => {
     columns.value = value
 })
+const listInput = ref({
+    value: [],
+    options: []
+})
+const currentInput = ref(null)
+const addListInput = () => {
+    if (currentInput.value) {
+        listInput.value.options.push(currentInput.value)
+        listInput.value.value.push(currentInput.value)
+        currentInput.value = null
+    }
+}
+const closeCreateModalStatus = () => {
+    createModalStatus.value = false
+    form.reset()
+    modalTitle.value = 'Tambah Kolom Baru'
+    listInput.value.value = []
+    listInput.value.options = []
+}
+
 </script>
 <template>
 
@@ -216,23 +244,32 @@ watch(() => page.props.columns, (value) => {
                         @click.prevent="GoDownload('tabel-kolom', downloadTitle)">Simpan</button>
                 </template>
             </ModalBs>
-            <ModalBs :ModalStatus="createModalStatus" @close="function () {
-        createModalStatus = false
-        form.reset()
-        modalTitle = 'Tambah Kolom Baru'
-    }" :title="modalTitle">
+            <ModalBs :ModalStatus="createModalStatus" @close="closeCreateModalStatus" :title="modalTitle">
                 <template #modalBody>
                     <form>
                         <div class="form-group">
                             <div class="mb-3">
+                                <label for="label">Daftar Kolom</label>
+                                <Multiselect v-model="listInput.value" mode="tags" :options="listInput.options"
+                                    :placeholder="'-- Daftar Kolom --'" />
+                                <div v-if="form.errors.label" class="text-danger">{{ form.errors.label }}</div>
+                            </div>
+                            <div class="mb-3">
                                 <label for="label">Nama Kolom</label>
-                                <input v-model="form.label" type="text" class="form-control" id="label"
-                                    placeholder="Isi Nama Kolom">
+                                <div class="row">
+                                    <input v-model="currentInput" type="text" class="ml-2 form-control col mr-1"
+                                        id="label" placeholder="Isi Nama Kolom">
+                                    <button type="button" class="btn btn-sm bg-success-fordone col-2 mr-2"
+                                        @click.prevent="addListInput">Tambah</button>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="id_column_groups">Nama Kelompok Kolom</label>
                                 <Multiselect v-model="form.id_column_groups" :options="colGroupsDrop.options"
                                     placeholder="-- Pilih Kelompok Kolom --" :searchable="true" />
+                                <div v-if="form.errors.id_column_groups" class="text-danger">
+                                    {{ form.errors.id_column_groups }}
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -258,6 +295,6 @@ watch(() => page.props.columns, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="columns.length" :current-page="currentPage" />
+            :total-items="filteredColumns.length" :current-page="currentPage" />
     </GeneralLayout>
 </template>

@@ -266,6 +266,7 @@ const submit = async function () {
             if (page.props.flash.message) toggleFlash.value = true
             if (page.props.flash.error) toggleFlashError.value = true
             form.reset()
+            fetchData()
         },
         onError: function () { addYearModalStatus.value = true }
     })
@@ -287,6 +288,7 @@ const duplicate = async () => {
             if (page.props.flash.message) toggleFlash.value = true
             if (page.props.flash.error) toggleFlashError.value = true
             duplicateForm.reset()
+            fetchData()
         },
         onError: function () { duplicateModalStatus.value = true }
     })
