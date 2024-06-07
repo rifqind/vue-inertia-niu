@@ -256,4 +256,7 @@ watch(() => page.props.users, (value) => {
 .role-update {
     cursor: pointer;
 }
+table {
+    font-size: smaller;
+}
 </style>

@@ -21,6 +21,7 @@ const desaSelected = ref([])
 const triggerSpinner = ref(false)
 const visibleKecs = ref([])
 const visibleDesa = ref([])
+const updateResult = ref(false)
 var dataFiltered = ref(page.props.tabels)
 const countDataFiltered = ref(page.props.counttabels)
 const form = useForm({
@@ -125,6 +126,7 @@ const submit = () => {
     });
     dataFiltered.value = result
     countDataFiltered.value = result.length
+    updateResult.value = false
     setTimeout(() => {
         if (isYearAll) form.year.push('all')
         if (isDinasAll) form.dinas.push('all')
@@ -145,6 +147,7 @@ const reset = () => {
     if (subjectCheckBox.value.length > 0) subjectCheckBox.value = Array(subjectCheckBox.value.length).fill(false)
     dataFiltered.value = page.props.tabels
     countDataFiltered.value = dataFiltered.value.length
+    updateResult.value = false
     setTimeout(() => {
         triggerSpinner.value = false
     }, 500);
@@ -225,6 +228,9 @@ function findDesa(array, parent) {
 }
 const showCard = (targetVisible) => {
     return targetVisible.some(x => x.value === true)
+}
+const updateResultResults = (value) => {
+    updateResult.value = value
 }
 </script>
 <template>
@@ -388,7 +394,8 @@ const showCard = (targetVisible) => {
                 <!-- Pie Chart -->
                 <div class="col-xl-8 col-lg-5">
                     <div class="card shadow" id="tabel-list">
-                        <TabelListTimeline :count-tabels="countDataFiltered" :data="dataFiltered" />
+                        <TabelListTimeline :count-tabels="countDataFiltered" :data="dataFiltered"
+                            :update-result="updateResult" @update:update-result="updateResultResults" />
                     </div>
                 </div>
             </div>
@@ -465,6 +472,7 @@ const showCard = (targetVisible) => {
     background-size: cover;
     background-position: 50% 50%;
 }
+
 .adjust-text-1 {
     font-size: 2em;
 }

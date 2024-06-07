@@ -4,15 +4,17 @@ import GeneralLayout from '@/Layouts/GeneralLayout.vue';
 import PieChart from '@/Components/PieChart.vue';
 import Multiselect from '@vueform/multiselect';
 import SpinnerBorder from '@/Components/SpinnerBorder.vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
+import InfiniteLoading from 'v3-infinite-loading'
 // import {  } from '@inertiajs/vue3';
-import { ref, onMounted, defineComponent } from 'vue'
+import { ref, onMounted, defineComponent, watch } from 'vue'
+import axios from 'axios';
 
 defineComponent({
     Multiselect
 })
 const page = usePage()
-
+const displayedData = ref(page.props.notifikasiList.data)
 var pieChartData = page.props.pieValues
 var newTabels = page.props.newTabels
 var finalTabels = page.props.finalTabels
@@ -34,7 +36,35 @@ const kabsDrop = ref({
     value: 'all',
     options: [...all, ...page.props.wilayah]
 })
-
+// console.log(page.props.notifikasiList)
+// watch(() => page.props.notifikasiList.data, (value) => {
+//     displayedData.value = value.slice(0, 20)
+// })
+const updateResult = ref(false)
+const pageNumber = ref(2)
+const loadMoreData = async (state) => {
+    try {
+        const response = await axios.get(route('home.dashboard'), {
+            params: {
+                currentPage: pageNumber.value, paginated: 20,
+            }
+        })
+        // console.log(response.data.notifikasiList)
+        let nextData = response.data.notifikasiList.data
+        if (nextData.length) {
+            displayedData.value = displayedData.value.concat(nextData)
+            state.loaded()
+        } else {
+            updateResult.value = (nextData.length == 0) ? true : false
+            state.complete()
+        }
+        pageNumber.value = pageNumber.value + 1
+    } catch (error) {
+        console.error('Error Fetching Data :', error)
+    }
+    // let nextData = page.props.notifikasiList.data.slice(displayedData.value.length, displayedData.value.length + 20)
+}
+const infiniteData = +new Date()
 const defineBadges = function (status) {
     const statusMapping = {
         1: "badge-status-satu",
@@ -46,6 +76,7 @@ const defineBadges = function (status) {
     return statusMapping[status]
 }
 onMounted(() => {
+    // displayedData.value = page.props.notifikasiList.data
     percentProgress.value.style.height = `${pieCharts.value.offsetHeight}px`
 })
 const getDashboard = async function () {
@@ -160,7 +191,7 @@ const getDashboard = async function () {
             <div class="p-0" id="p-progress">
                 <div class="card" id="pie-charts" ref="pieCharts">
                     <div class="card-header text-bold text-center">
-                        DIAGRAM PROGRES PENGERJAAN DATA
+                        PROGRES PENGERJAAN DATA
                     </div>
                     <div class="card-body">
                         <div class="pie-chart-container mb-3 text-center">
@@ -169,21 +200,21 @@ const getDashboard = async function () {
                         </div>
                         <div class="row p-2">
                             <div class="col p-0">
-                                <div class="small mr-3">
+                                <div class="small mr-2">
                                     <font-awesome-icon icon="fa-solid fa-circle" class="text-satu" />
-                                    Tabel Baru
+                                    Baru
                                 </div>
-                                <div class="small mr-3">
+                                <div class="small mr-2">
                                     <font-awesome-icon icon="fa-solid fa-circle" class="text-lima" />
                                     Rilis
                                 </div>
                             </div>
                             <div class="col p-0">
-                                <div class="small mr-3">
+                                <div class="small mr-2">
                                     <font-awesome-icon icon="fa-solid fa-circle" class="text-dua" />
-                                    Proses Entri
+                                    Entri
                                 </div>
-                                <div class="small mr-3">
+                                <div class="small mr-2">
                                     <font-awesome-icon icon="fa-solid fa-circle" class="text-tiga" />
                                     Diperiksa
                                 </div>
@@ -204,7 +235,7 @@ const getDashboard = async function () {
                         PROGRES PENGERJAAN
                     </div>
                     <div class="card-body" id="card-notifikasi">
-                        <div v-for="(node, index) in page.props.notifikasiList" :key="index" class="row">
+                        <div v-for="(node, index) in displayedData" :key="index" class="row">
                             <div class="col-2 mb-3">
                                 <div class="">
                                     <span class="badge" :class="defineBadges(node.status)">
@@ -216,6 +247,9 @@ const getDashboard = async function () {
                                 {{ node.komentar }}
                                 <span class="text-bold">{{ node.judul_tabel }}</span>, Tahun {{ node.tahundata }}
                             </div>
+                        </div>
+                        <div class="text-center" v-if="!updateResult">
+                            <InfiniteLoading @infinite="loadMoreData" :identifier="infiniteData" />
                         </div>
                     </div>
                 </div>

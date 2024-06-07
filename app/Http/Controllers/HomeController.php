@@ -112,7 +112,7 @@ class HomeController extends Controller
         $kecs = array_values(array_unique($kecs, SORT_REGULAR));
         $desa = array_values(array_unique($desa, SORT_REGULAR));
         $wilayahs = (sizeof($tabels) > 0) ? array_merge($provs, $kabs) : [];
-        
+
         $subjects = array_values(array_unique($subjects, SORT_REGULAR));
         $tahuns = Statustables::where('status', 5)->distinct()->get(['tahun as value', 'tahun as label']);
         $countfinals = Statustables::where('status', 5)->count();
@@ -208,49 +208,43 @@ class HomeController extends Controller
         return response()->json($this_monitoring);
     }
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         //check role
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Notifikasi::query();
         if (auth()->user()->role != 'produsen') {
-            # code...
             $ourDinas = Dinas::whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->pluck('id');
-            // dd($ourDinas);
             $myTabels = Tabel::whereIn('id_dinas', $ourDinas)->pluck('id');
-
-            $notifikasiList = Notifikasi::where('notifikasi.id_user', '!=', auth()->user()->id)
-                ->whereIn('d.wilayah_fullcode', MasterWilayah::getDinasWilayah())
-                ->leftJoin('statustables as s', 's.id', '=', 'notifikasi.id_statustabel')
-                ->leftJoin('tabels as t', 't.id', '=', 's.id_tabel')
-                ->leftJoin('dinas as d', 'd.id', '=', 't.id_dinas')
-                ->leftJoin('users as u', 'u.id_dinas', '=', 'd.id')
-                ->orderBy('notifikasi.created_at', 'desc')
-                ->get([
-                    'notifikasi.*',
-                    'notifikasi.created_at as timestamp',
-                    't.label as judul_tabel',
-                    's.tahun as tahundata',
-                    's.status as status',
-                ]);
             $wilayah = MasterWilayah::getMyWilayah();
-            // dd($notifikasiList[0]->tahundata);
+            $query->whereIn('d.wilayah_fullcode', MasterWilayah::getDinasWilayah());
         } else {
             $myDinas = auth()->user()->id_dinas;
             $myTabels = Tabel::where('id_dinas', $myDinas)->pluck('id');
-            $notifikasiList = Notifikasi::where('u.id', auth()->user()->id)
-                ->leftJoin('statustables as s', 's.id', '=', 'notifikasi.id_statustabel')
-                ->leftJoin('tabels as t', 't.id', '=', 's.id_tabel')
-                ->leftJoin('dinas as d', 'd.id', '=', 't.id_dinas')
-                ->leftJoin('users as u', 'u.id_dinas', '=', 'd.id')
-                ->orderBy('notifikasi.created_at', 'desc')
-                ->get([
-                    'notifikasi.*',
-                    'notifikasi.created_at as timestamp',
-                    't.label as judul_tabel',
-                    's.tahun as tahundata',
-                    's.status as status',
-                ]);
         }
 
+        $query->where('u.id', auth()->user()->id)
+            ->join('statustables as s', 's.id', '=', 'notifikasi.id_statustabel')
+            ->join('tabels as t', 't.id', '=', 's.id_tabel')
+            ->join('dinas as d', 'd.id', '=', 't.id_dinas')
+            ->join('users as u', 'u.id_dinas', '=', 'd.id')
+            ->orderBy('notifikasi.created_at', 'desc')
+            ->select([
+                'notifikasi.*',
+                'notifikasi.created_at as timestamp',
+                't.label as judul_tabel',
+                's.tahun as tahundata',
+                's.status as status',
+            ]);
+        $notifikasiList = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        if ($request->paginated) {
+            return response()->json([
+                'notifikasiList' => $notifikasiList,
+            ]);
+        }
 
         #status 1
         $newTabels = Statustables::whereIn('id_tabel', $myTabels)->where('status', 1)->count();

@@ -342,7 +342,7 @@ const openRowList = (index) => {
     if (index < 3) return true
     else return false
 }
-    
+
 const indexExpanded = ref(Array(paginatedData.value.length).fill(false))
 const openOtherRow = (index) => {
     indexExpanded.value[index] = !indexExpanded.value[index]
@@ -595,3 +595,8 @@ const openOtherRow = (index) => {
             :total-items="totalItems" :current-page="currentPage" />
     </GeneralLayout>
 </template>
+<style scoped>
+table {
+    font-size: smaller;
+}
+</style>

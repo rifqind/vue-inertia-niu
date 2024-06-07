@@ -7,6 +7,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 // import 'admin-lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css';
 </script>
 <template>
+
     <body class="hold-transition layout-fixed">
         <!-- Site wrapper -->
         <div class="wrapper">
@@ -62,7 +63,6 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 </template>
 <style src="@vueform/multiselect/themes/default.css"></style>
 <style>
-
 .table-sorted th {
     cursor: pointer;
 }
@@ -116,7 +116,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     color: whitesmoke;
 }
 
-.bg-info-fordone:hover{
+.bg-info-fordone:hover {
     background-color: #434272;
     color: whitesmoke;
 }
@@ -125,7 +125,9 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     background-color: #2E7AE6;
     color: whitesmoke;
 }
-.bg-primary-fordone:hover, .bg-primary-fordone:active {
+
+.bg-primary-fordone:hover,
+.bg-primary-fordone:active {
     background-color: #3368b3;
     color: whitesmoke;
 }
@@ -150,6 +152,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     background-color: #8B1E3F;
     color: whitesmoke;
 }
+
 .badge-status-empat:hover {
     background-color: #724452;
     color: whitesmoke;
@@ -159,18 +162,23 @@ import Sidebar from '@/Layouts/Sidebar.vue';
     background-color: green;
     color: whitesmoke;
 }
+
 .icon-trash-color {
     color: #9a091f;
 }
+
 .update-pen {
     cursor: pointer;
 }
+
 .delete-trash {
     cursor: pointer;
 }
+
 .edit-pen {
     cursor: pointer;
 }
+
 .table thead tr th {
     background-color: #3d3b8e;
     color: whitesmoke;
@@ -179,6 +187,7 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 .table thead tr th.tabel-width-5 {
     width: 5%;
 }
+
 /* .table thead tr th.tabel-width-10 {
     width: 5%;
 } */
@@ -206,15 +215,19 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 .table thead tr th.tabel-width-20 {
     width: 20%;
 }
+
 .table thead tr th.tabel-width-15 {
     width: 15%;
 }
+
 .table thead tr th.tabel-width-10 {
     width: 10%;
 }
+
 .table thead tr th.tabel-width-8 {
     width: 8%;
 }
+
 .table thead tr th.tabel-width-45px {
     width: 45px;
 }

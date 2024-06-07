@@ -7,6 +7,13 @@ body {
     font-family: "Poppins", sans-serif !important;
 }
 
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
 #nprogress .bar {
     background: #fe2e6c !important;
     z-index: 2000 !important;

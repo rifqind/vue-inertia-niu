@@ -12,6 +12,11 @@ const props = defineProps({
     data: {
         type: Array,
         required: true,
+    },
+    updateResult: {
+        type: Boolean,
+        required: true,
+        default: false,
     }
 })
 const displayedData = ref([])
@@ -21,12 +26,16 @@ const displayedData = ref([])
 watch(() => props.data, (value) => {
     displayedData.value = value.slice(0, 20)
 })
+const emits = defineEmits(['update:updateResult'])
 const loadMoreData = (state) => {
     let nextData = props.data.slice(displayedData.value.length, displayedData.value.length + 20)
     if (nextData.length) {
         displayedData.value = displayedData.value.concat(nextData)
         state.loaded()
-    } else state.complete()
+    } else {
+        (nextData.length == 0) ? emits('update:updateResult', true) : emits('update:updateResult', false)
+        state.complete()
+    }
 }
 // onMounted(() => {
 //     loadInitialData()
@@ -51,7 +60,10 @@ const infiniteData = +new Date()
             <small class="lead smalltext-homepage">Terakhir diupdate :
                 {{ node.status_updated }}</small>
         </div>
-        <div class="text-center">
+        <div class="text-center" v-if="updateResult">
+            Tidak ada data lagi
+        </div>
+        <div class="text-center" v-else>
             <InfiniteLoading @infinite="loadMoreData" :identifier="infiniteData" />
         </div>
     </div>

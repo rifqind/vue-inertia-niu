@@ -451,3 +451,8 @@ const openOtherRow = (index) => {
             :total-items="totalItems" :current-page="currentPage" />
     </GeneralLayout>
 </template>
+<style scoped>
+table {
+    font-size: smaller;
+}
+</style>
