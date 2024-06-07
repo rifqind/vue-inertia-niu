@@ -40,22 +40,14 @@ class RowController extends Controller
     {
         //
         $validatedData = $request->validate([
-            'label' => ['required', 'array'],
-            'label.*' => ['required', 'string'],
+            'label' => ['required', 'string'],
             'id_row_groups' => 'required',
         ]);
         if ($request->id) {
             $updated = Row::where('id', $request->id)->update($validatedData);
             return redirect()->route('rows.index')->with('message', 'Berhasil mengedit baris');
         }
-        // $inserted = Row::create($validatedData);
-        foreach ($validatedData['label'] as $key => $value) {
-            # code...
-            $insertedRow = Row::create([
-                'label' => $value,
-                'id_row_groups' => $validatedData['id_row_groups']
-            ]);
-        }
+        $inserted = Row::create($validatedData);
         return redirect()->route('rows.index')->with('message', 'Berhasil menambah baris baru');
     }
 

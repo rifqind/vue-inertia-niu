@@ -43,22 +43,15 @@ class ColumnController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'label' => ['required', 'array'],
-            'label.*' => ['required', 'string'],
+            'label' => ['required', 'string'],
             'id_column_groups' => 'required',
         ]);
-        // dd($validatedData['label']);
         if($request->id) {
             $updated = Column::where('id', $request->id)->update($validatedData);
             return redirect()->route('columns.index')->with('message', 'Berhasil mengedit kolom tersebut');
         }
-        foreach ($validatedData['label'] as $key => $value) {
-            # code...
-            $insertedRow = Column::create([
-                'label' => $value,
-                'id_column_groups' => $validatedData['id_column_groups']
-            ]);
-        }
+
+        $insertedRow = Column::create($validatedData);
         return redirect()->route('columns.index')->with('message', 'Berhasil menambahkan kolom baru');
         //
     }
