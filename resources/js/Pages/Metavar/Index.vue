@@ -139,6 +139,6 @@ watch(() => page.props.tabels, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="tabels.length" :current-page="currentPage" />
+            :total-items="tabels.length" :current-page="currentPage" :current-show-items="paginatedData.length"/>
     </GeneralLayout>
 </template>

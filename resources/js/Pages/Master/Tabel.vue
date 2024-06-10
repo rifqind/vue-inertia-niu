@@ -295,9 +295,17 @@ const duplicate = async () => {
 }
 //new Pagination
 const showItems = ref(10)
+// const showItemsValue = ref(10)
+// const showItems = computed(() => {
+// if (tables.value.length < 10) return tables.value.length
+// return showItemsValue.value
+// })
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {
+    // if (value > tables.value.length) showItemsValue.value = tables.value.length
+    // else showItemsValue.value = value
+    // currentPage.value = 1
     showItems.value = value
     fetchData()
 }
@@ -315,6 +323,21 @@ const paginatedData = computed(() => {
 watch(() => page.props.tables, (value) => {
     tables.value = value
 })
+const orderAttribute = ref({
+    before: null,
+    label: null,
+    value: 'asc',
+})
+const clickToOrder = (value) => {
+    orderAttribute.value.label = value
+    if (orderAttribute.value.before == null || orderAttribute.value.before == value) {
+        if (orderAttribute.value.value == 'asc') orderAttribute.value.value = 'desc'
+        else if (orderAttribute.value.value == 'desc') orderAttribute.value.value = null
+        else orderAttribute.value.value = 'asc'
+    } else orderAttribute.value.value = 'asc'
+    orderAttribute.value.before = value
+    fetchData()
+}
 const fetchData = async () => {
     try {
         const response = await axios.get(route('tabel.master'), {
@@ -329,11 +352,13 @@ const fetchData = async () => {
                     status: searchStatus.value,
                     updated: searchUpdated.value,
                 },
+                orderAttribute: orderAttribute.value,
                 routeName: page.props.route
             }
         })
         tables.value = response.data.tables
-        indexExpanded.value = Array(tables.value.length).fill(false)
+        indexExpandedRow.value = Array(tables.value.length).fill(false)
+        indexExpandedCol.value = Array(tables.value.length).fill(false)
         totalItems.value = response.data.countData
         // currentPage.value = response.data
     } catch (error) {
@@ -344,10 +369,18 @@ const openRowList = (index) => {
     if (index < 3) return true
     else return false
 }
-    
-const indexExpanded = ref(Array(paginatedData.value.length).fill(false))
+const openColList = (index) => {
+    if (index < 3) return true
+    else return false
+}
+
+const indexExpandedRow = ref(Array(paginatedData.value.length).fill(false))
 const openOtherRow = (index) => {
-    indexExpanded.value[index] = !indexExpanded.value[index]
+    indexExpandedRow.value[index] = !indexExpandedRow.value[index]
+}
+const indexExpandedCol = ref(Array(paginatedData.value.length).fill(false))
+const openOtherCol = (index) => {
+    indexExpandedCol.value[index] = !indexExpandedCol.value[index]
 }
 </script>
 <template>
@@ -370,28 +403,28 @@ const openOtherRow = (index) => {
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
         <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
             :types="'alert-danger'" />
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelTabels" id="tabel-master">
+        <table class="table table-hover table-bordered table-search" ref="tabelTabels" id="tabel-master">
             <thead>
                 <tr class="bg-info-fordone">
-                    <th class="first-column text-center align-middle" @click="clickSortProperties(tables, 'number')">No.
+                    <th class="first-column text-center th-order align-middle"
+                        @click="clickSortProperties(tables, 'number')">No.
                     </th>
-                    <th class="text-center align-middle tabel-width-20" @click="clickSortProperties(tables, 'label')">
+                    <th class="text-center align-middle th-order tabel-width-20" @click="clickToOrder('tabels.label')">
                         Nama Tabel
                     </th>
-                    <th class="text-center align-middle tabel-width-20"
-                        @click="clickSortProperties(tables, 'nama_dinas')">
+                    <th class="text-center align-middle th-order tabel-width-20" @click="clickToOrder('dinas.nama')">
                         Produsen Data
                     </th>
                     <th class="text-center align-middle tabel-width-15">
                         Daftar Kolom
                     </th>
-                    <th class="text-center align-middle" @click="clickSortProperties(tables, 'row_label')">
+                    <th class="text-center align-middle">
                         Daftar Baris
                     </th>
                     <th class="text-center align-middle tabel-width-10">
                         Daftar Tahun
                     </th>
-                    <th class="text-center align-middle" @click="clickSortProperties(tables, 'status_updated')">
+                    <th class="text-center align-middle th-order" @click="clickToOrder('tabels.updated_at')">
                         Terakhir di-update
                     </th>
                     <th class="text-center align-middle tabel-width-5">
@@ -420,36 +453,62 @@ const openOtherRow = (index) => {
                     <td class="align-middle">{{ table.number }}</td>
                     <td class="align-middle">{{ table.label }}</td>
                     <td class="align-middle">{{ table.nama_dinas }}</td>
-                    <td class="align-middle"><span v-for="(col, colIndex) in table.columns" :key="colIndex"
-                            class="badge mr-1 badge-info">{{
-        col.label }}</span></td>
+                    <td class="align-middle">
+                        <template v-for="(col, colIndex) in table.columns" :key="colIndex">
+                            <template v-if="!table.columns.length > 5">
+                                <span class="badge mr-1 badge-info">{{ col.label }}</span>
+                            </template>
+                            <template v-else>
+                                <span v-if="indexExpandedCol[index] || openColList(colIndex)"
+                                    class="badge mr-1 badge-info">
+                                    {{ col.label }}
+                                </span>
+                            </template>
+                        </template>
+                        <span v-if="table.columns.length > 5" class="badge mr-1 badge-info"
+                            @click="openOtherCol(index)">
+                            <font-awesome-icon v-if="!indexExpandedCol[index]" icon="fa-solid fa-angle-down" />
+                            <font-awesome-icon v-if="indexExpandedCol[index]" icon="fa-solid fa-angle-up" />
+                        </span>
+                        <!-- <span v-for="(col, colIndex) in table.columns" :key="colIndex" class="badge mr-1 badge-info">
+                            {{ col.label }}
+                        </span> -->
+                    </td>
                     <!-- <td class="align-middle">{{ table.row_label }}</td> -->
                     <td class="align-middle">
                         <template v-for="(row, rowIndex) in table.rowInputs" :key="rowIndex">
                             <template v-if="row.wilayah_fullcode">
-                                <span v-if="indexExpanded[index] || openRowList(rowIndex)"
-                                    class="badge mr-1 badge-info">{{
-        row.label }}</span>
+                                <span v-if="indexExpandedRow[index] || openRowList(rowIndex)"
+                                    class="badge mr-1 badge-info">
+                                    {{ row.label }}
+                                </span>
                             </template>
                             <template v-else-if="!table.rowInputs.length > 5">
                                 <span class="badge mr-1 badge-info">{{ row.label }}</span>
                             </template>
                             <template v-else>
-                                <span v-if="indexExpanded[index] || openRowList(rowIndex)"
+                                <span v-if="indexExpandedRow[index] || openRowList(rowIndex)"
                                     class="badge mr-1 badge-info">{{ row.label }}</span>
                             </template>
                         </template>
                         <span v-if="table.rowInputs[0].wilayah_fullcode || table.rowInputs.length > 5"
                             class="badge mr-1 badge-info" @click="openOtherRow(index)">
-                            <font-awesome-icon v-if="!indexExpanded[index]" icon="fa-solid fa-angle-down" />
-                            <font-awesome-icon v-if="indexExpanded[index]" icon="fa-solid fa-angle-up" />
+                            <font-awesome-icon v-if="!indexExpandedRow[index]" icon="fa-solid fa-angle-down" />
+                            <font-awesome-icon v-if="indexExpandedRow[index]" icon="fa-solid fa-angle-up" />
                         </span>
                     </td>
-                    <td class="align-middle"><span v-for="(node, index) in table.tahuns" :key="index"
-                            class="badge mr-1 badge-info">{{
-        node }}</span></td>
-                    <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated
-                            }}</span><br><span>{{ table.status_updated }}</span></td>
+                    <td class="align-middle">
+                        <span v-for="(node, index) in table.tahuns" :key="index" class="badge mr-1 badge-info">
+                            {{ node }}
+                        </span>
+                    </td>
+                    <td class="text-center align-middle">
+                        <span class="badge badge-info">
+                            {{ table.who_updated }}
+                        </span>
+                        <br>
+                        <span>{{ table.status_updated }}</span>
+                    </td>
                     <td class="text-center align-middle deleted">
                         <a @click.prevent="() => { addYearModalStatus = true; form.id = table.id }"
                             class="edit-pen mr-2">
@@ -552,9 +611,7 @@ const openOtherRow = (index) => {
                                     </thead>
                                     <tbody v-if="tingkatanDrop.value">
                                         <tr v-if="rowListFetched.length > 0" v-for="(node, index) in rowListFetched"
-                                            :key="index" @click="
-        toggleCheck(index, rowsCheckBox)
-        ">
+                                            :key="index" @click="toggleCheck(index, rowsCheckBox)">
                                             <td>{{ index + 1 }}</td>
                                             <td>{{ node.tipe }}</td>
                                             <td>{{ node.label }}</td>
@@ -594,11 +651,15 @@ const openOtherRow = (index) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="totalItems" :current-page="currentPage" />
+            :total-items="totalItems" :current-page="currentPage" :current-show-items="paginatedData.length" />
     </GeneralLayout>
 </template>
 <style scoped>
 table {
     font-size: smaller;
+}
+
+.th-order {
+    cursor: pointer;
 }
 </style>

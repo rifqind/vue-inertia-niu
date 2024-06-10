@@ -2,13 +2,19 @@
 import Footer from '@/Components/Footer.vue';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Layouts/Sidebar.vue';
-
+const props = defineProps({
+    entri: {
+        type: Boolean,
+        default: false,
+        required: false,
+    }
+})
 
 // import 'admin-lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css';
 </script>
 <template>
 
-    <body class="hold-transition layout-fixed">
+    <body class="hold-transition layout-fixed" :class="{ 'sidebar-collapse': entri }">
         <!-- Site wrapper -->
         <div class="wrapper">
             <!-- Navbar -->
@@ -160,6 +166,11 @@ import Sidebar from '@/Layouts/Sidebar.vue';
 
 .badge-status-lima {
     background-color: green;
+    color: whitesmoke;
+}
+
+.badge-status-enam {
+    background-color: black;
     color: whitesmoke;
 }
 

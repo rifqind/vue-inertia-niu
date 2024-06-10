@@ -295,6 +295,6 @@ const closeCreateModalStatus = () => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage" />
+            :total-items="filteredColumns.length" :current-page="currentPage" :current-show-items="paginatedData.length" />
     </GeneralLayout>
 </template>

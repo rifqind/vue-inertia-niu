@@ -279,7 +279,7 @@ watch(() => page.props.dinas, (value) => {
             </table>
         </div>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="d.length" :current-page="currentPage" />
+            :total-items="d.length" :current-page="currentPage" :current-show-items="paginatedData.length" />
         <Teleport to="body">
             <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
                 <template #modalBody>

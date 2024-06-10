@@ -85,12 +85,26 @@ const download = (titles) => {
     window.location.href = `/export-view/${page.props.tabel.id_tabel}/${titles}`
     downloadModalStatus.value = false
 }
+const hiddenLabel = (value, index) => {
+    if (value.length > 30) {
+        indexExpanded.value[index] = false
+        return value.substring(0, 30) + ' '
+    }
+    return value
+}
+const toggleLabel = (index) => {
+    indexExpanded.value[index] = !indexExpanded.value[index]
+}
+const indexExpanded = ref(Array(page.props.columns.length).fill(true))
+page.props.columns.forEach((column, index) => {
+    if (column.label.length > 30) indexExpanded.value[index] = false
+})
 </script>
 <template>
 
     <Head title="Lihat Tabel" />
     <HomeLayout>
-        <div class="container pb-3">
+        <div id="container-of-entry" class="pb-3">
             <div class="card">
                 <div class="card-body">
                     <h3 class="text-bold">{{ page.props.tabel.judul_tabel }}, Tahun {{ page.props.tahun }}
@@ -130,13 +144,18 @@ const download = (titles) => {
                                 <tr>
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
                                         <th class="text-center align-middle" v-for="(node, index) in page.props.columns"
-                                            :key="index">{{
-                        node.label }}</th>
+                                            :key="index">
+                                            <template v-if="indexExpanded[index]">{{ node.label }} </template>
+                                            <template v-else>{{ hiddenLabel(node.label, index) }} </template>
+                                            <span v-if="!indexExpanded[index] || node.label.length > 30"
+                                                class="badge badge-info ml-1" @click="toggleLabel(index)">...</span>
+                                        </th>
                                     </template>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="text-center align-middle" v-for="(nodeRow, index) in page.props.rows" :key="index">
+                                <tr class="text-center align-middle" v-for="(nodeRow, index) in page.props.rows"
+                                    :key="index">
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
                                             {{ getData(nodeRow, nodeColumn) }}
@@ -311,6 +330,16 @@ const download = (titles) => {
     </HomeLayout>
 </template>
 <style scoped>
+#container-of-entry {
+    margin-right: 5%;
+    margin-left: 5%;
+    font-size: 13px;
+}
+
+.badge {
+    cursor: pointer;
+}
+
 .bg-success-fordone {
     background-color: #1D845B;
     color: whitesmoke;
@@ -356,7 +385,7 @@ const download = (titles) => {
 #RowTabel thead,
 #ColumnTabel thead {
     /* min-height: 200px; */
-    height: 100px;
+    height: 120px;
     vertical-align: middle;
     padding: .1rem;
     /* white-space: nowrap; */
@@ -372,7 +401,7 @@ const download = (titles) => {
 #RowTabel tbody tr td,
 #ColumnTabel tbody tr td {
     /* height: 20px; */
-    height: 65px;
+    height: 50px;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;

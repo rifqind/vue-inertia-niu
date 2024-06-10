@@ -71,7 +71,8 @@ const defineBadges = function (status) {
         2: "badge-status-dua",
         3: "badge-status-tiga",
         4: "badge-status-empat",
-        5: "badge-status-lima"
+        5: "badge-status-lima",
+        6: 'badge-status-enam',
     }
     return statusMapping[status]
 }

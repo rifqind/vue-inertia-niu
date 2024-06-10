@@ -92,21 +92,21 @@ const handleInput = function (event, row, column) {
         form.dataContents[theIndex].value = event.target.value
     }
 }
+const mountThis = ref(false)
 onMounted(() => {
     defineBadges(status[0])
     defineInputDisable(status[0], page.props.auth.user.role)
-    nextTick(() => {
-        let RowTheadHeight = Rowee.value.offsetHeight
-        let DatasTheadHeight = Columnee.value.offsetHeight
-        if (RowTheadHeight > DatasTheadHeight) {
-            Columnee.value.style.height = `${RowTheadHeight}px`
-        }
-        else {
-            console.log({ RowTheadHeight, DatasTheadHeight })
-            Rowee.value.style.height = `${DatasTheadHeight}px`
-            console.log({ RowTheadHeight, DatasTheadHeight })
-        }
-    })
+    mountThis.value = true
+    // nextTick(() => {
+    //     let RowTheadHeight = Rowee.value.offsetHeight
+    //     let DatasTheadHeight = Columnee.value.offsetHeight
+    //     if (RowTheadHeight > DatasTheadHeight) {
+    //         Columnee.value.style.height = `${RowTheadHeight}px`
+    //     }
+    //     else {
+    //         Rowee.value.style.height = `${DatasTheadHeight}px`
+    //     }
+    // })
 })
 
 onUpdated(() => {
@@ -187,7 +187,6 @@ const setId = (row, column) => {
     return 'cell-' + rowComponents + '-' + columnComponents
 }
 const hiddenLabel = (value, index) => {
-    console.log(value.length)
     if (value.length > 30) {
         indexExpanded.value[index] = false
         return value.substring(0, 30) + ' '
@@ -206,7 +205,7 @@ page.props.columns.forEach((column, index) => {
 
     <Head title="Entri Data" />
     <SpinnerBorder v-if="triggerSpinner" />
-    <GeneralLayout>
+    <GeneralLayout :entri="mountThis">
         <div id="container-of-entry" class="pb-3">
             <div class="card">
                 <div class="card-body">
@@ -250,10 +249,10 @@ page.props.columns.forEach((column, index) => {
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
                                         <th class="text-center align-middle" v-for="(node, index) in page.props.columns"
                                             :key="index">
-                                            <template v-if="indexExpanded[index]">{{ node.label }}</template>
-                                            <template v-else>{{ hiddenLabel(node.label, index) }}</template>
+                                            <template v-if="indexExpanded[index]">{{ node.label }} </template>
+                                            <template v-else>{{ hiddenLabel(node.label, index) }} </template>
                                             <span v-if="!indexExpanded[index] || node.label.length > 30"
-                                                class="badge badge-info" @click="toggleLabel(index)">...</span>
+                                                class="badge badge-info ml-1" @click="toggleLabel(index)">...</span>
                                         </th>
                                     </template>
                                 </tr>
@@ -262,7 +261,7 @@ page.props.columns.forEach((column, index) => {
                                 <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                                            <input type="text" class="" :id="setId(nodeRow, nodeColumn)"
+                                            <input type="text" class="w-100 text-center" :id="setId(nodeRow, nodeColumn)"
                                                 :value="getData(nodeRow, nodeColumn)" :disabled="inputDisabled"
                                                 @paste="(event) => { handlePaste(event, nodeRow, nodeColumn) }"
                                                 @input="(event) => { handleInput(event, nodeRow, nodeColumn) }">
@@ -386,7 +385,7 @@ page.props.columns.forEach((column, index) => {
 #RowTabel thead,
 #ColumnTabel thead {
     /* min-height: 200px; */
-    /* height: 100px; */
+    height: 120px;
     vertical-align: middle;
     padding: .1rem;
     /* white-space: nowrap; */

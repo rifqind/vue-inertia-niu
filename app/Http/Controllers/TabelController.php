@@ -115,6 +115,17 @@ class TabelController extends Controller
                     'statustables.edited_by as edited_by',
                 ]
             );
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) {
+                if ($order['label'] === 'tabels.label') {
+                    $query->orderBy('tabels.nomor', $order['value']);
+                    $query->orderBy('tabels.label', $order['value']);
+                } else {
+                    $query->orderBy($order['label'], $order['value']);
+                }
+            }
+        }
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
             if (!empty($filter['label'])) {
@@ -158,8 +169,16 @@ class TabelController extends Controller
                 $wilayah_fullcodes = $datacontents->pluck('wilayah_fullcode')->unique();
                 $rows = Row::whereIn('id', $id_rows)->get();
                 $rowLabel = $this->generateRowLabel($rows, $wilayah_fullcodes, $table->tabelUuid);
-                if ($id_rows[0] == 0) $rowInputs = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
-                else $rowInputs = Row::whereIn('id', $id_rows)->get();
+                if ($id_rows[0] == 0) {
+                    $rowInputs = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
+                    foreach ($rowInputs as $key => $value) {
+                        # code...
+                        $exploded = explode(' ', $value['label']);
+                        // join every $exploded data except $exploded[0]
+                        array_shift($exploded);
+                        $value['label'] = implode(' ', $exploded);
+                    }
+                } else $rowInputs = Row::whereIn('id', $id_rows)->get();
                 $columns = Column::whereIn('id', $id_columns)->get('label');
             } else {
                 $rowLabel = 'Tidak ada data';
@@ -269,6 +288,17 @@ class TabelController extends Controller
                 'tabels.edited_by as edited_by',
                 'tabels.updated_at as status_updated'
             ]);
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) {
+                if ($order['label'] === 'tabels.label') {
+                    $query->orderBy('tabels.nomor', $order['value']);
+                    $query->orderBy('tabels.label', $order['value']);
+                } else {
+                    $query->orderBy($order['label'], $order['value']);
+                }
+            }
+        }
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
             if (!empty($filter['label'])) {
@@ -316,8 +346,16 @@ class TabelController extends Controller
                 $id_columns = $datacontents->pluck('id_column')->unique();
                 $wilayah_fullcodes = $datacontents->pluck('wilayah_fullcode')->unique();
                 $rows = Row::whereIn('id', $id_rows)->get();
-                if ($id_rows[0] == 0) $rowInputs = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
-                else $rowInputs = Row::whereIn('id', $id_rows)->get();
+                if ($id_rows[0] == 0) {
+                    $rowInputs = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)->get();
+                    foreach ($rowInputs as $key => $value) {
+                        # code...
+                        $exploded = explode(' ', $value['label']);
+                        // join every $exploded data except $exploded[0]
+                        array_shift($exploded);
+                        $value['label'] = implode(' ', $exploded);
+                    }
+                } else $rowInputs = Row::whereIn('id', $id_rows)->get();
                 $rowLabel = $this->generateRowLabel($rows, $wilayah_fullcodes, $table->id);
                 $columns = Column::whereIn('id', $id_columns)->get();
             } else {
@@ -391,16 +429,20 @@ class TabelController extends Controller
         // $new_tabel = Tabel::create($request->tabel);
         // dd($new_tabel);
 
+        $request->validate([
+            'tabel.nomor' => ['required', 'string'],
+            'tabel.label' => ['required'],
+            'tabel.unit' => ['required'],
+            'tabel.id_dinas' => ['required', 'integer'],
+            'tabel.id_subjek' => ['required', 'integer'],
+            'rows' => ['required'],
+            'columns' => ['required'],
+            'tahun' => ['required'],
+            'id_turtahun' => ['required'],
+        ]);
         try {
             //code...
             DB::beginTransaction();
-            $request->validate([
-                'tabel.nomor' => ['required', 'string'],
-                'tabel.label' => ['required'],
-                'tabel.unit' => ['required'],
-                'tabel.id_dinas' => ['required', 'integer'],
-                'tabel.id_subjek' => ['required', 'integer'],
-            ]);
             // dd($request);
 
             //tabel create
@@ -472,21 +514,20 @@ class TabelController extends Controller
                 'id_user' => auth()->user()->id,
                 'komentar' => "Admin telah menambahkan tabel baru dengan judul ",
             ]);
-            if (empty($data_contents)) throw new Exception('Data Error, Fail to Duplicate');
+            if (empty($data_contents)) throw new Exception('Data Error, Fail to Create');
             Datacontent::insert($data_contents);
             DB::commit();
+            return redirect()->route('tabel.index')->with('message', 'Berhasil menambahkan tabel baru');
         } catch (\Exception $e) {
             //throw $th;
             DB::rollBack();
 
             // Handle the exception (log it, show a user-friendly message, etc.)
             // For example, you can log the error:
-            return response()->json(array($e->getMessage(), $row));
+            return response()->json(array($e->getMessage()));
             // Optionally, you may throw the exception again to be caught by Laravel's exception handler
             // throw $e;
         }
-
-        return redirect()->route('tabel.index')->with('message', 'Berhasil menambahkan tabel baru');
     }
 
     //     /**

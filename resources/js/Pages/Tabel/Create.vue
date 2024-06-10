@@ -309,7 +309,7 @@ const form = useForm({
     orderColumn: null,
     _token: null,
 })
-
+const errorModalStatus = ref(false)
 const submit = async function () {
     previewModalStatus.value = false
     const response = await axios.get(route('token'))
@@ -318,7 +318,10 @@ const submit = async function () {
     form.post(route('tabel.store'), {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () { triggerSpinner.value = false },
-        onError: function () { triggerSpinner.value = false },
+        onError: function () {
+            triggerSpinner.value = false
+            errorModalStatus.value = true
+        },
     })
 }
 
@@ -663,10 +666,23 @@ watch(() => colGroupsDrop.value.value, (value) => {
                         @close="previewModalStatus = false" :title="'Preview Tabel'">
                         <template #modalBody>
                             <TabelPreview :rows="rowPreview" :columns="columnPreview" :turtahun="turtahunListFetched" />
+                            <div class="text-center">
+                                <label>Apakah Anda yakin tidak ada tabel dengan judul yang sama?</label>
+                            </div>
                         </template>
                         <template #modalFunction>
                             <button id="" type="submit" class="btn btn-sm bg-success-fordone"
                                 :disabled="form.processing" @click.prevent="submit">Simpan</button>
+                        </template>
+                    </ModalBs>
+                    <ModalBs :-modal-status="errorModalStatus" @close="errorModalStatus = false"
+                        :title="'Daftar Error'">
+                        <template #modalBody>
+                            <ul>
+                                <li class="text-danger" v-for="(node, index) in page.props.errors" :key="index">
+                                    {{ node }}
+                                </li>
+                            </ul>
                         </template>
                     </ModalBs>
                 </Teleport>

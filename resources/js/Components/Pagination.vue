@@ -16,6 +16,10 @@ const props = defineProps({
     adjustPage: {
         type: Array,
         default: [10, 15, 20, 50]
+    },
+    currentShowItems: {
+        type: Number,
+        require: true,
     }
 })
 const totalPages = computed(() => {
@@ -29,7 +33,7 @@ const changePage = (node, index) => {
     let current = props.currentPage
     let lasted = visiblePages.value.length
     // console.log(index, lasted)
-    if (node < 1 || node > totalPages) return
+    if (node < 1 || node > totalPages.value) return
     if (node == '...') {
         if (index == 0) {
             node = Math.ceil(current / 2)
@@ -97,8 +101,9 @@ const visiblePages = computed(() => {
 </script>
 <template>
     <div class="d-flex justify-content-end align-items-center">
-        <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showItems">{{ showItems
-                }}</span> dari
+        <div id="statusText" ref="statusText" class="mb-3 mx-3 ml-auto">Menampilkan <span id="showItems">
+                {{ currentShowItems }}
+            </span> dari
             <span id="showTotal">{{ totalItems }}</span>
         </div>
         <div class="form-group"> <!--		Show Numbers Of Rows 		-->
