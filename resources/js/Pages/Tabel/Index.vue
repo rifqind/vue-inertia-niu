@@ -442,7 +442,7 @@ const openOtherCol = (index) => {
                         @click.prevent="deleteForm">Hapus</button>
                 </template>
             </ModalBs>
-            <ModalBs :-modal-status="orderModalStatus"
+            <ModalBs :-modal-status="orderModalStatus" :modalSize="'modal-dialog-scrollable'"
                 @close="orderModalStatus = false; currentColumnOrder = null; currentRowOrder = null; order.reset(); orderDropColumn = 2; orderDropRow = 2"
                 :title="'Ganti Urutan Kolom atau Baris'">
                 <template #modalBody>

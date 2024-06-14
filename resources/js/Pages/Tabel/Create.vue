@@ -665,7 +665,10 @@ watch(() => colGroupsDrop.value.value, (value) => {
                     <ModalBs :ModalStatus="previewModalStatus" :modalSize="'modal-xl modal-dialog-scrollable'"
                         @close="previewModalStatus = false" :title="'Preview Tabel'">
                         <template #modalBody>
-                            <TabelPreview :rows="rowPreview" :columns="columnPreview" :turtahun="turtahunListFetched" />
+                            <div class="tabel-container mb-3">
+                                <TabelPreview :rows="rowPreview" :columns="columnPreview"
+                                    :turtahun="turtahunListFetched" />
+                            </div>
                             <div class="text-center">
                                 <label>Apakah Anda yakin tidak ada tabel dengan judul yang sama?</label>
                             </div>
@@ -695,5 +698,11 @@ watch(() => colGroupsDrop.value.value, (value) => {
 .card-header {
     border-bottom-color: #3d3b8e;
     border-bottom-width: 3px;
+}
+
+.tabel-container {
+    max-height: 500px;
+    overflow-y: scroll;
+    overflow-x: scroll;
 }
 </style>

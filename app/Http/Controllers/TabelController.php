@@ -182,7 +182,15 @@ class TabelController extends Controller
                 $columns = Column::whereIn('id', $id_columns)->get('label');
             } else {
                 $rowLabel = 'Tidak ada data';
-                $columns = ['Tidak ada data'];
+                $columns = [[
+                    'id' => 'Tidak ada data',
+                    'label' => 'Tidak ada data',
+                ]];
+                $rowInputs = [[
+                    'id' => 'Tidak ada data',
+                    'label' => 'Tidak ada data',
+                    'wilayah_fullcode' => 'Tidak ada data',
+                ]];
             }
             $who_updated = User::where('id', $table->edited_by)->value('username');
             // array_push($listOfUser, $rowLabel);
@@ -360,7 +368,15 @@ class TabelController extends Controller
                 $columns = Column::whereIn('id', $id_columns)->get();
             } else {
                 $rowLabel = 'Tidak ada data';
-                $columns = ['Tidak ada data'];
+                $columns = [[
+                    'id' => 'Tidak ada data',
+                    'label' => 'Tidak ada data',
+                ]];
+                $rowInputs = [[
+                    'id' => 'Tidak ada data',
+                    'label' => 'Tidak ada data',
+                    'wilayah_fullcode' => 'Tidak ada data',
+                ]];
             }
             $who_updated = User::where('id', $table->edited_by)->value('username');
             $when_updated = $table->status_updated;

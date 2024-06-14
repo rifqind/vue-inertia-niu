@@ -49,7 +49,10 @@ class ColumnController extends Controller
         ]);
         // dd($validatedData['label']);
         if($request->id) {
-            $updated = Column::where('id', $request->id)->update($validatedData);
+            $updated = Column::where('id', $request->id)->update([
+                'label' => $validatedData['label'][0],
+                'id_column_groups' => $validatedData['id_column_groups'],
+            ]);
             return redirect()->route('columns.index')->with('message', 'Berhasil mengedit kolom tersebut');
         }
         foreach ($validatedData['label'] as $key => $value) {

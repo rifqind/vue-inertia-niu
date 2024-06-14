@@ -45,7 +45,10 @@ class RowController extends Controller
             'id_row_groups' => 'required',
         ]);
         if ($request->id) {
-            $updated = Row::where('id', $request->id)->update($validatedData);
+            $updated = Row::where('id', $request->id)->update([
+                'label' => $validatedData['label'][0],
+                'id_row_groups' => $validatedData['id_row_groups'],
+            ]);
             return redirect()->route('rows.index')->with('message', 'Berhasil mengedit baris');
         }
         // $inserted = Row::create($validatedData);

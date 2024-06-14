@@ -63,9 +63,11 @@ const form = useForm({
     id_column_groups: null,
     _token: null,
 })
+const isUpdate = ref(false)
 const toggleUpdateModal = function (id) {
     if (id) {
         fetchColumns(id).then(function () {
+            isUpdate.value = true
             modalTitle.value = 'Update Kolom'
             triggerSpinner.value = false
             createModalStatus.value = true
@@ -90,11 +92,14 @@ const fetchColumns = async function (id) {
 }
 const submit = async function () {
     const response = await axios.get(route('token'))
-    form.label = listInput.value.value
+    // console.log(isUpdate.value)
+    if (!isUpdate.value) form.label = listInput.value.value
+    else form.label = [form.label]
     form._token = response.data
     if (form.processing) return
     form.post(route('columns.store'), {
         onBefore: function () {
+            isUpdate.value = false
             triggerSpinner.value = true
             createModalStatus.value = false
         },
@@ -167,6 +172,7 @@ const closeCreateModalStatus = () => {
     modalTitle.value = 'Tambah Kolom Baru'
     listInput.value.value = []
     listInput.value.options = []
+    isUpdate.value = false
 }
 
 </script>
@@ -248,20 +254,27 @@ const closeCreateModalStatus = () => {
                 <template #modalBody>
                     <form>
                         <div class="form-group">
-                            <div class="mb-3">
-                                <label for="label">Daftar Kolom</label>
-                                <Multiselect v-model="listInput.value" mode="tags" :options="listInput.options"
-                                    :placeholder="'-- Daftar Kolom --'" />
-                                <div v-if="form.errors.label" class="text-danger">{{ form.errors.label }}</div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="label">Nama Kolom</label>
-                                <div class="row">
-                                    <input v-model="currentInput" type="text" class="ml-2 form-control col mr-1"
-                                        id="label" placeholder="Isi Nama Kolom">
-                                    <button type="button" class="btn btn-sm bg-success-fordone col-2 mr-2"
-                                        @click.prevent="addListInput">Tambah</button>
+                            <template v-if="!isUpdate">
+                                <div class="mb-3">
+                                    <label for="label">Daftar Kolom</label>
+                                    <Multiselect v-model="listInput.value" mode="tags" :options="listInput.options"
+                                        :placeholder="'-- Daftar Kolom --'" />
+                                    <div v-if="form.errors.label" class="text-danger">{{ form.errors.label }}</div>
                                 </div>
+                                <div class="mb-3">
+                                    <label for="label">Nama Kolom</label>
+                                    <div class="row">
+                                        <input v-model="currentInput" type="text" class="ml-2 form-control col mr-1"
+                                            id="label" placeholder="Isi Nama Kolom">
+                                        <button type="button" class="btn btn-sm bg-success-fordone col-2 mr-2"
+                                            @click.prevent="addListInput">Tambah</button>
+                                    </div>
+                                </div>
+                            </template>
+                            <div v-else class="form-group">
+                                <label for="label">Nama Kolom</label>
+                                <input v-model="form.label" type="text" class="form-control" id="label"
+                                    placeholder="Isi Nama Kolom">
                             </div>
                             <div class="mb-3">
                                 <label for="id_column_groups">Nama Kelompok Kolom</label>
@@ -295,6 +308,7 @@ const closeCreateModalStatus = () => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage" :current-show-items="paginatedData.length" />
+            :total-items="filteredColumns.length" :current-page="currentPage"
+            :current-show-items="paginatedData.length" />
     </GeneralLayout>
 </template>
