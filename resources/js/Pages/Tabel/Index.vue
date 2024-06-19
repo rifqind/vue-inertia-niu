@@ -280,6 +280,35 @@ const indexExpandedCol = ref(Array(paginatedData.value.length).fill(false))
 const openOtherCol = (index) => {
     indexExpandedCol.value[index] = !indexExpandedCol.value[index]
 }
+const forceModalStatus = ref(false)
+const toggleModalForceDelete = (id) => {
+    form.id = id
+    forceModalStatus.value = true
+}
+const forceDelete = async () => {
+    const response = await axios.get(route('token'))
+    form._token = response.data
+    if (form.processing) return
+    try {
+        const response = form.post(route('tabel.forceDelete'), {
+            onBefore: function () {
+                triggerSpinner.value = true
+                forceModalStatus.value = false
+            },
+            onFinish: function () {
+                triggerSpinner.value = false;
+            },
+            onSuccess: function () {
+                if (page.props.flash.message) toggleFlash.value = true
+                form.reset()
+                fetchData()
+            },
+            onError: function () { forceModalStatus.value = true }
+        })
+    } catch (error) {
+        console.error(error)
+    }
+}
 </script>
 <template>
 
@@ -396,8 +425,15 @@ const openOtherCol = (index) => {
 
                     <td class="align-middle">{{ table.tahun }}</td>
                     <td class="align-middle">{{ table.status }}</td>
-                    <td class="text-center align-middle"><span class="badge badge-info">{{ table.who_updated
-                            }}</span><br><span>{{ table.status_updated }}</span></td>
+                    <td class="text-center align-middle">
+                        <span class="badge badge-info">
+                            {{ table.who_updated }}
+                        </span>
+                        <br>
+                        <span>
+                            {{ table.status_updated }}
+                        </span>
+                    </td>
                     <td class="text-center align-middle deleted">
                         <Link :href="route('tabel.entri', { id: table.id_statustables })" class="edit-pen mx-1">
                         <font-awesome-icon icon="fa-solid fa-pencil" title="Cek/Edit" />
@@ -411,6 +447,11 @@ const openOtherCol = (index) => {
     }" class="delete-trash">
                             <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color mx-1"
                                 title="Hapus" />
+                        </a>
+                        <a @click.prevent="toggleModalForceDelete(table.id_statustables)"
+                            v-if="page.props.route == 'tabel.deletedList'" class="edit-pen mx-1">
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color mx-1"
+                                title="Force Delete" />
                         </a>
                     </td>
                 </tr>
@@ -438,8 +479,21 @@ const openOtherCol = (index) => {
                     <label>Apakah Anda yakin akan menghapus Tabel tahun ini?</label>
                 </template>
                 <template v-slot:modalFunction>
-                    <button type="button" class="btn btn-sm badge-status-empat" :disabled="deleteForm.processing"
+                    <button type="button" class="btn btn-sm badge-status-empat"
                         @click.prevent="deleteForm">Hapus</button>
+                </template>
+            </ModalBs>
+            <ModalBs :ModalStatus="forceModalStatus" @close="function () {
+        forceModalStatus = false
+        form.reset()
+    }" :title="'Hapus Tabel'">
+                <template v-slot:modalBody>
+                    <label>Apakah Anda yakin akan menghapus Tabel tahun ini? Tabel ini tidak akan kembali lagi setelah
+                        Anda menghapusnya</label>
+                </template>
+                <template v-slot:modalFunction>
+                    <button type="button" class="btn btn-sm badge-status-empat"
+                        @click.prevent="forceDelete">Hapus</button>
                 </template>
             </ModalBs>
             <ModalBs :-modal-status="orderModalStatus" :modalSize="'modal-dialog-scrollable'"

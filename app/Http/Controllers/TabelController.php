@@ -1164,4 +1164,35 @@ class TabelController extends Controller
         }
         // return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
     }
+
+    public function forceDeleteStatusTables(Request $request)
+    {
+        try {
+            //code...
+            DB::beginTransaction();
+            $thisStatus = Statustables::where('id', $request->id);
+            $thisColumnOrder = ColumnOrder::where('id_statustabel', $request->id);
+            $thisRowOrder = RowOrder::where('id_statustabel', $request->id);
+            $thisNotifikasi = Notifikasi::where('id_statustabel', $request->id);
+            $tahun = $thisStatus->value('tahun');
+            $idTabel = $thisStatus->value('id_tabel');
+            // dd($tahun);
+
+            $thisNotifikasi->delete();
+            if ($thisColumnOrder) $thisColumnOrder->delete();
+            if ($thisRowOrder) $thisRowOrder->delete();
+            $thisDataContent = Datacontent::where('id_tabel', $idTabel)
+                ->where('tahun', $tahun)
+                ->delete();
+            $thisStatus->delete();
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            // Handle the exception (log it, show a user-friendly message, etc.)
+            // For example, you can log the error:
+            return response()->json($th->getMessage());
+        }
+    }
 }
