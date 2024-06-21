@@ -835,10 +835,27 @@ class TabelController extends Controller
                 } else if ($kec != '000') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
                     $jenis = $jenis . "KECAMATAN DI ";
+                    //server dont know why act like this
+                    $elementToMove = null;
                     $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                        ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
-                        ->orderBy('desa')
                         ->get();
+                    foreach ($temp as $key => $value) {
+                        # code...
+                        if ($value->kec == '000') {
+                            $elementToMove = $value;
+                            $temp->forget($key);
+                            break;
+                        }
+                    }
+                    if ($elementToMove) {
+                        $temp->push($elementToMove);
+                    }
+                    $temp = $temp->values();
+
+                    // $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                    //     ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
+                    //     ->orderBy('desa')
+                    //     ->get();
                     $rows = $temp;
                 } else if ($kab != '00') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
@@ -1006,11 +1023,21 @@ class TabelController extends Controller
             ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
             ->get(['dinas.id as value', 'dinas.nama as label']);
         $subjects = Subject::get(['subjects.id as value', 'subjects.label as label']);
-
+        $columnList =  Datacontent::where('id_tabel', $id)->pluck('id_column');
+        $rowList =  Datacontent::where('id_tabel', $id)->pluck('id_row');
+        
+        $columns = Column::whereIn('id', $columnList)->get(['id as value', 'label as label']);
+        $columnBase = Column::get(['id as value', 'label as label']);
+        $rows = Row::whereIn('id', $rowList)->get(['id as value', 'label as label']);
+        $rowBase = Row::get(['id as value', 'label as label']);
         return Inertia::render('Tabel/Edit', [
             'tabel' => $tabel,
             'dinas' => $daftar_dinas,
             'subjects' => $subjects,
+            'columns' => $columns,
+            'columnBase' => $columnBase,
+            'rowBase' => $rowBase,
+            'rows' => $rows,
         ]);
     }
 

@@ -5,7 +5,7 @@ import ModalBs from "@/Components/ModalBs.vue";
 import TabelPreview from "@/Components/TabelPreview.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 
-import { ref, defineComponent, onMounted, watch, onUnmounted } from "vue";
+import { ref, defineComponent, computed } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
 
 defineComponent({
@@ -24,7 +24,19 @@ const dinasDrop = ref({
     value: null,
     options: dinas,
 });
-
+const columnLeft = ref(null)
+const columnRight = ref(null)
+const columnChange = ref({
+    value: [],
+    options: [],
+})
+const columnTemp = ref([])
+const rowLeft = ref(null)
+const rowRight = ref(null)
+const rowChange = ref({
+    value: [],
+    options: [],
+})
 
 const form = useForm({
     id: page.props.tabel.id,
@@ -34,6 +46,10 @@ const form = useForm({
         unit: page.props.tabel.unit,
         id_dinas: page.props.tabel.id_dinas,
         id_subjek: page.props.tabel.id_subjek
+    },
+    destroyer: {
+        rows: [],
+        columns: []
     },
     _token: null,
 })
@@ -47,6 +63,31 @@ const submit = async function () {
         onFinish: function () { triggerSpinner.value = false },
         onError: function () { triggerSpinner.value = false },
     })
+}
+const columns = computed(() => {
+    let result
+    if (columnChange.value.value.length > 0) {
+        result = page.props.columns.filter(column => {
+            return !(columnTemp.value.includes(column.value))
+        })
+    } else result = page.props.columns
+    return result
+})
+const addColumnChange = () => {
+    if (columnLeft.value && columnRight.value) {
+        let columnLabel = page.props.columns.filter(x => x.value == columnLeft.value)
+        let columnLabel2 = page.props.columnBase.filter(x => x.value == columnRight.value)
+        let theArray = columnLeft.value + '->' + columnRight.value
+        let arrayLabel = columnLabel[0].label + ' -> ' + columnLabel2[0].label
+        let arrayValue = theArray
+        columnChange.value.options.push(
+            { value: arrayValue, label: arrayLabel }
+        )
+        columnChange.value.value.push(arrayValue)
+        columnTemp.value.push(columnLeft.value)
+        columnLeft.value = null
+        columnRight.value = null
+    }
 }
 </script>
 <template>
@@ -96,6 +137,43 @@ const submit = async function () {
                                 <input v-model="form.tabel.unit" type="text" id="unit" class="form-control"
                                     placeholder="Isikan satuan/unit data" />
                                 <div class="text-danger text-left" v-if="true" id="error-unit"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <label class="h5 mb-0">The One Who Destroy The Database</label>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label>Daftar Perubahan di Kolom</label>
+                                <Multiselect v-model="columnChange.value" mode="tags" :options="columnChange.options"
+                                    :placeholder="'-- Daftar Perubahan di Kolom --'" />
+                            </div>
+                            <div class="mb-3 row">
+                                <div class="col">
+                                    <label for="column-groups">Daftar Kolom</label>
+                                    <Multiselect v-model="columnLeft" :options="columns" :searchable="true"
+                                        placeholder="-- Pilih Kolom --" />
+                                </div>
+                                <div class="col">
+                                    <label for="column-groups">Kolom Pengganti</label>
+                                    <Multiselect v-model="columnRight" :options="page.props.columnBase"
+                                        :searchable="true" placeholder="-- Pilih Kolom Pengganti --" />
+                                </div>
+                                <div class="col-1">
+                                    <label><br></label>
+                                    <button @click.prevent="addColumnChange" type="button"
+                                        class="btn btn-sm bg-success-fordone">
+                                        Tambah
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="column-groups">Pilih Periode/Turunan Tahun</label>
+                                <!-- <Multiselect v-model="form.id_turtahun" :options="yearDownDrop.options"
+                                    :searchable="true" @change="fetchTurtahun"
+                                    placeholder="-- Pilih Periode/Turunan Tahun --" /> -->
                             </div>
                         </div>
                     </div>
