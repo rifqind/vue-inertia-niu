@@ -1025,11 +1025,37 @@ class TabelController extends Controller
         $subjects = Subject::get(['subjects.id as value', 'subjects.label as label']);
         $columnList =  Datacontent::where('id_tabel', $id)->pluck('id_column');
         $rowList =  Datacontent::where('id_tabel', $id)->pluck('id_row');
-        
-        $columns = Column::whereIn('id', $columnList)->get(['id as value', 'label as label']);
-        $columnBase = Column::get(['id as value', 'label as label']);
-        $rows = Row::whereIn('id', $rowList)->get(['id as value', 'label as label']);
-        $rowBase = Row::get(['id as value', 'label as label']);
+
+        $columns = Column::join('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')
+            ->whereIn('columns.id', $columnList)
+            ->get([
+                'columns.id as value', 'cg.label as columnGroup', 'columns.label as label'
+            ]);
+        foreach ($columns as $key => $value) {
+            # code...
+            $value->label = $value->columnGroup . ' - ' . $value->label;
+        }
+        $columnBase = Column::join('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')
+            ->get([
+                'columns.id as value', 'cg.label as columnGroup', 'columns.label as label'
+            ]);
+        foreach ($columnBase as $key => $value) {
+            # code...
+            $value->label = $value->columnGroup . ' - ' . $value->label;
+        }
+        $rows = Row::join('row_groups as rg', 'rg.id', '=', 'rows.id_row_groups')
+            ->whereIn('rows.id', $rowList)
+            ->get(['rows.id as value', 'rg.label as rowGroup', 'rows.label as label']);
+        foreach ($rows as $key => $value) {
+            # code...
+            $value->label = $value->rowGroup . ' - ' . $value->label;
+        }
+        $rowBase = Row::join('row_groups as rg', 'rg.id', '=', 'rows.id_row_groups')
+            ->get(['rows.id as value', 'rg.label as rowGroup', 'rows.label as label']);
+        foreach ($rowBase as $key => $value) {
+            # code...
+            $value->label = $value->rowGroup . ' - ' . $value->label;
+        }
         return Inertia::render('Tabel/Edit', [
             'tabel' => $tabel,
             'dinas' => $daftar_dinas,
@@ -1039,6 +1065,36 @@ class TabelController extends Controller
             'rowBase' => $rowBase,
             'rows' => $rows,
         ]);
+    }
+
+    public function changeStructure(Request $request)
+    {
+        $rowChangeList = $request->destroyer['rows'];
+        $columnChangeList = $request->destroyer['columns'];
+        try {
+            //code...
+            DB::beginTransaction();
+            foreach ($rowChangeList as $key => $value) {
+                # code...
+                $data = explode('->', $value);
+                $thisDataContent = Datacontent::where('id_tabel', $request->id)
+                    ->where('id_row', $data[0]);
+                $thisDataContent->update(['id_row' => $data[1]]);
+            }
+            foreach ($columnChangeList as $key => $value) {
+                # code...
+                $data = explode('->', $value);
+                $thisDataContent = Datacontent::where('id_tabel', $request->id)
+                    ->where('id_column', $data[0]);
+                $thisDataContent->update(['id_column' => $data[1]]);
+            }
+            DB::commit();
+            return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil mengubah struktur!');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return response()->json($th->getMessage());
+        }
     }
 
 

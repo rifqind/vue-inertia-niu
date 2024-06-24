@@ -5,7 +5,7 @@ import ModalBs from "@/Components/ModalBs.vue";
 import TabelPreview from "@/Components/TabelPreview.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 
-import { ref, defineComponent, computed } from "vue";
+import { ref, defineComponent, computed, watch } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
 
 defineComponent({
@@ -31,13 +31,16 @@ const columnChange = ref({
     options: [],
 })
 const columnTemp = ref([])
+const thisColumn = ref(page.props.columns)
+
 const rowLeft = ref(null)
 const rowRight = ref(null)
 const rowChange = ref({
     value: [],
     options: [],
 })
-
+const rowTemp = ref([])
+const thisRow = ref(page.props.rows)
 const form = useForm({
     id: page.props.tabel.id,
     tabel: {
@@ -67,15 +70,24 @@ const submit = async function () {
 const columns = computed(() => {
     let result
     if (columnChange.value.value.length > 0) {
-        result = page.props.columns.filter(column => {
+        result = thisColumn.value.filter(column => {
             return !(columnTemp.value.includes(column.value))
         })
-    } else result = page.props.columns
+    } else result = thisColumn.value
+    return result
+})
+const rows = computed(() => {
+    let result
+    if (rowChange.value.value.length > 0) {
+        result = thisRow.value.filter(row => {
+            return !(rowTemp.value.includes(row.value))
+        })
+    } else result = thisRow.value
     return result
 })
 const addColumnChange = () => {
     if (columnLeft.value && columnRight.value) {
-        let columnLabel = page.props.columns.filter(x => x.value == columnLeft.value)
+        let columnLabel = thisColumn.value.filter(x => x.value == columnLeft.value)
         let columnLabel2 = page.props.columnBase.filter(x => x.value == columnRight.value)
         let theArray = columnLeft.value + '->' + columnRight.value
         let arrayLabel = columnLabel[0].label + ' -> ' + columnLabel2[0].label
@@ -89,6 +101,46 @@ const addColumnChange = () => {
         columnRight.value = null
     }
 }
+const addRowChange = () => {
+    if (rowLeft.value && rowRight.value) {
+        let rowLabel = thisRow.value.filter(x => x.value == rowLeft.value)
+        let rowLabel2 = page.props.rowBase.filter(x => x.value == rowRight.value)
+        let theArray = rowLeft.value + '->' + rowRight.value
+        let arrayLabel = rowLabel[0].label + ' -> ' + rowLabel2[0].label
+        let arrayValue = theArray
+        rowChange.value.options.push(
+            { value: arrayValue, label: arrayLabel }
+        )
+        rowChange.value.value.push(arrayValue)
+        rowTemp.value.push(rowLeft.value)
+        rowLeft.value = null
+        rowRight.value = null
+    }
+}
+const changeStructure = async () => {
+    const response = await axios.get(route('token'))
+    form._token = response.data
+    form.destroyer.columns = columnChange.value.value
+    form.destroyer.rows = rowChange.value.value
+    if (form.processing) return
+    form.post(route('tabel.changeStructure'), {
+        onBefore: function () { triggerSpinner.value = true },
+        onFinish: function () { 
+            triggerSpinner.value = false
+            columnChange.value.value = []
+            columnChange.value.options = []
+            rowChange.value.value = []
+            rowChange.value.options = []
+        },
+        onError: function () { triggerSpinner.value = false },
+    })
+}
+watch(() => page.props.columns, (value) => {
+    thisColumn.value = value
+})
+watch(()=>page.props.rows, (value) => {
+    thisRow.value = value
+})
 </script>
 <template>
 
@@ -170,10 +222,33 @@ const addColumnChange = () => {
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="column-groups">Pilih Periode/Turunan Tahun</label>
-                                <!-- <Multiselect v-model="form.id_turtahun" :options="yearDownDrop.options"
-                                    :searchable="true" @change="fetchTurtahun"
-                                    placeholder="-- Pilih Periode/Turunan Tahun --" /> -->
+                                <label>Daftar Perubahan di Baris</label>
+                                <Multiselect v-model="rowChange.value" mode="tags" :options="rowChange.options"
+                                    :placeholder="'-- Daftar Perubahan di Baris --'" />
+                            </div>
+                            <div class="mb-3 row">
+                                <div class="col">
+                                    <label for="column-groups">Daftar Baris</label>
+                                    <Multiselect v-model="rowLeft" :options="rows" :searchable="true"
+                                        placeholder="-- Pilih Baris --" />
+                                </div>
+                                <div class="col">
+                                    <label for="column-groups">Baris Pengganti</label>
+                                    <Multiselect v-model="rowRight" :options="page.props.rowBase"
+                                        :searchable="true" placeholder="-- Pilih Baris Pengganti --" />
+                                </div>
+                                <div class="col-1">
+                                    <label><br></label>
+                                    <button @click.prevent="addRowChange" type="button"
+                                        class="btn btn-sm bg-success-fordone">
+                                        Tambah
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <button @click.prevent="changeStructure" type="button" class="btn btn-sm bg-success-fordone">
+                                    Simpan
+                                </button>
                             </div>
                         </div>
                     </div>

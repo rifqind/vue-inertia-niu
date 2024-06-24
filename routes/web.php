@@ -135,6 +135,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/tabel/statusDestroy', [TabelController::class, 'statusDestroy'])->name('tabel.statusDestroy');
     Route::post('/tabel/destroy', [TabelController::class, 'destroy'])->name('tabel.destroy');
     Route::post('/tabel/forceDelete', [TabelController::class, 'forceDeleteStatusTables'])->name('tabel.forceDelete');
+    Route::post('/tabel/changeStructure', [TabelController::class, 'changeStructure'])->name('tabel.changeStructure');
 });
 
 //metadata-variabel
