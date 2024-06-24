@@ -192,7 +192,7 @@ watch(()=>page.props.rows, (value) => {
                             </div>
                         </div>
                     </div>
-                    <div class="card">
+                    <div class="card" v-if="page.props.auth.user.username == 'niu'">
                         <div class="card-header">
                             <label class="h5 mb-0">The One Who Destroy The Database</label>
                         </div>
