@@ -14,8 +14,8 @@ defineComponent({
 const page = usePage();
 const subjects = page.props.subjects;
 const dinas = page.props.dinas;
-const triggerSpinner = ref(false)
-const previewModalStatus = ref(false)
+const triggerSpinner = ref(false);
+const previewModalStatus = ref(false);
 const subjectDrop = ref({
     value: null,
     options: subjects,
@@ -24,23 +24,25 @@ const dinasDrop = ref({
     value: null,
     options: dinas,
 });
-const columnLeft = ref(null)
-const columnRight = ref(null)
+const columnLeft = ref(null);
+const columnRight = ref(null);
 const columnChange = ref({
     value: [],
     options: [],
-})
-const columnTemp = ref([])
-const thisColumn = ref(page.props.columns)
+});
+const columnTemp = ref([]);
+const thisColumn = ref(page.props.columns);
 
-const rowLeft = ref(null)
-const rowRight = ref(null)
+const rowLeft = ref(null);
+const rowRight = ref(null);
 const rowChange = ref({
     value: [],
     options: [],
-})
-const rowTemp = ref([])
-const thisRow = ref(page.props.rows)
+});
+const rowTemp = ref([]);
+const thisRow = ref(page.props.rows);
+
+const columnDelete = ref([]);
 const form = useForm({
     id: page.props.tabel.id,
     tabel: {
@@ -48,102 +50,138 @@ const form = useForm({
         label: page.props.tabel.label,
         unit: page.props.tabel.unit,
         id_dinas: page.props.tabel.id_dinas,
-        id_subjek: page.props.tabel.id_subjek
+        id_subjek: page.props.tabel.id_subjek,
     },
     destroyer: {
         rows: [],
-        columns: []
+        columns: [],
     },
+    columnToDelete: [],
     _token: null,
-})
+});
 
 const submit = async function () {
-    const response = await axios.get(route('token'))
-    form._token = response.data
-    if (form.processing) return
-    form.post(route('tabel.update'), {
-        onBefore: function () { triggerSpinner.value = true },
-        onFinish: function () { triggerSpinner.value = false },
-        onError: function () { triggerSpinner.value = false },
-    })
-}
+    const response = await axios.get(route("token"));
+    form._token = response.data;
+    if (form.processing) return;
+    form.post(route("tabel.update"), {
+        onBefore: function () {
+            triggerSpinner.value = true;
+        },
+        onFinish: function () {
+            triggerSpinner.value = false;
+        },
+        onError: function () {
+            triggerSpinner.value = false;
+        },
+    });
+};
 const columns = computed(() => {
-    let result
+    let result;
     if (columnChange.value.value.length > 0) {
-        result = thisColumn.value.filter(column => {
-            return !(columnTemp.value.includes(column.value))
-        })
-    } else result = thisColumn.value
-    return result
-})
+        result = thisColumn.value.filter((column) => {
+            return !columnTemp.value.includes(column.value);
+        });
+    } else result = thisColumn.value;
+    return result;
+});
 const rows = computed(() => {
-    let result
+    let result;
     if (rowChange.value.value.length > 0) {
-        result = thisRow.value.filter(row => {
-            return !(rowTemp.value.includes(row.value))
-        })
-    } else result = thisRow.value
-    return result
-})
+        result = thisRow.value.filter((row) => {
+            return !rowTemp.value.includes(row.value);
+        });
+    } else result = thisRow.value;
+    return result;
+});
 const addColumnChange = () => {
     if (columnLeft.value && columnRight.value) {
-        let columnLabel = thisColumn.value.filter(x => x.value == columnLeft.value)
-        let columnLabel2 = page.props.columnBase.filter(x => x.value == columnRight.value)
-        let theArray = columnLeft.value + '->' + columnRight.value
-        let arrayLabel = columnLabel[0].label + ' -> ' + columnLabel2[0].label
-        let arrayValue = theArray
-        columnChange.value.options.push(
-            { value: arrayValue, label: arrayLabel }
-        )
-        columnChange.value.value.push(arrayValue)
-        columnTemp.value.push(columnLeft.value)
-        columnLeft.value = null
-        columnRight.value = null
+        let columnLabel = thisColumn.value.filter(
+            (x) => x.value == columnLeft.value
+        );
+        let columnLabel2 = page.props.columnBase.filter(
+            (x) => x.value == columnRight.value
+        );
+        let theArray = columnLeft.value + "->" + columnRight.value;
+        let arrayLabel = columnLabel[0].label + " -> " + columnLabel2[0].label;
+        let arrayValue = theArray;
+        columnChange.value.options.push({
+            value: arrayValue,
+            label: arrayLabel,
+        });
+        columnChange.value.value.push(arrayValue);
+        columnTemp.value.push(columnLeft.value);
+        columnLeft.value = null;
+        columnRight.value = null;
     }
-}
+};
 const addRowChange = () => {
     if (rowLeft.value && rowRight.value) {
-        let rowLabel = thisRow.value.filter(x => x.value == rowLeft.value)
-        let rowLabel2 = page.props.rowBase.filter(x => x.value == rowRight.value)
-        let theArray = rowLeft.value + '->' + rowRight.value
-        let arrayLabel = rowLabel[0].label + ' -> ' + rowLabel2[0].label
-        let arrayValue = theArray
-        rowChange.value.options.push(
-            { value: arrayValue, label: arrayLabel }
-        )
-        rowChange.value.value.push(arrayValue)
-        rowTemp.value.push(rowLeft.value)
-        rowLeft.value = null
-        rowRight.value = null
+        let rowLabel = thisRow.value.filter((x) => x.value == rowLeft.value);
+        let rowLabel2 = page.props.rowBase.filter(
+            (x) => x.value == rowRight.value
+        );
+        let theArray = rowLeft.value + "->" + rowRight.value;
+        let arrayLabel = rowLabel[0].label + " -> " + rowLabel2[0].label;
+        let arrayValue = theArray;
+        rowChange.value.options.push({ value: arrayValue, label: arrayLabel });
+        rowChange.value.value.push(arrayValue);
+        rowTemp.value.push(rowLeft.value);
+        rowLeft.value = null;
+        rowRight.value = null;
     }
-}
+};
+const addColumnDelete = () => {
+    if (columnLeft.value) {
+        let columnLabel = thisColumn.value.filter(
+            (x) => x.value == columnLeft.value
+        );
+        columnDelete.value.push({
+            value: columnLeft.value,
+            label: columnLabel[0].label,
+        });
+        form.columnToDelete.push(columnLeft.value);
+        columnLeft.value = null;
+    }
+};
 const changeStructure = async () => {
-    const response = await axios.get(route('token'))
-    form._token = response.data
-    form.destroyer.columns = columnChange.value.value
-    form.destroyer.rows = rowChange.value.value
-    if (form.processing) return
-    form.post(route('tabel.changeStructure'), {
-        onBefore: function () { triggerSpinner.value = true },
-        onFinish: function () { 
-            triggerSpinner.value = false
-            columnChange.value.value = []
-            columnChange.value.options = []
-            rowChange.value.value = []
-            rowChange.value.options = []
+    const response = await axios.get(route("token"));
+    form._token = response.data;
+    form.destroyer.columns = columnChange.value.value;
+    form.destroyer.rows = rowChange.value.value;
+    if (form.processing) return;
+    form.post(route("tabel.changeStructure"), {
+        onBefore: function () {
+            triggerSpinner.value = true;
         },
-        onError: function () { triggerSpinner.value = false },
-    })
-}
-watch(() => page.props.columns, (value) => {
-    thisColumn.value = value
-})
-watch(()=>page.props.rows, (value) => {
-    thisRow.value = value
-})
+        onFinish: function () {
+            triggerSpinner.value = false;
+            form.reset();
+            columnChange.value.value = [];
+            columnChange.value.options = [];
+            rowChange.value.value = [];
+            rowChange.value.options = [];
+            columnDelete.value = [];
+        },
+        onError: function () {
+            triggerSpinner.value = false;
+        },
+    });
+};
+watch(
+    () => page.props.columns,
+    (value) => {
+        thisColumn.value = value;
+    }
+);
+watch(
+    () => page.props.rows,
+    (value) => {
+        thisRow.value = value;
+    }
+);
 </script>
 <template>
-
     <Head title="Edit Tabel" />
     <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
@@ -162,91 +200,232 @@ watch(()=>page.props.rows, (value) => {
                         <div class="card-body">
                             <div class="mb-3">
                                 <label for="dinas">Produsen Data</label>
-                                <Multiselect v-model="form.tabel.id_dinas" :options="dinasDrop.options"
-                                    placeholder="-- Pilih Produsen Data --" :searchable="true" />
-                                <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+                                <Multiselect
+                                    v-model="form.tabel.id_dinas"
+                                    :options="dinasDrop.options"
+                                    placeholder="-- Pilih Produsen Data --"
+                                    :searchable="true"
+                                />
+                                <div
+                                    class="text-danger text-left"
+                                    v-if="true"
+                                    id="error-dinas"
+                                ></div>
                             </div>
                             <div class="mb-3">
                                 <label for="nomor">Nomor Tabel</label>
-                                <input v-model="form.tabel.nomor" type="text" id="nomor" class="form-control"
-                                    placeholder="1.1.1" />
-                                <div class="text-danger text-left" v-if="true" id="error-nomor"></div>
+                                <input
+                                    v-model="form.tabel.nomor"
+                                    type="text"
+                                    id="nomor"
+                                    class="form-control"
+                                    placeholder="1.1.1"
+                                />
+                                <div
+                                    class="text-danger text-left"
+                                    v-if="true"
+                                    id="error-nomor"
+                                ></div>
                             </div>
                             <div class="mb-3">
                                 <label for="judul">Judul Tabel</label>
-                                <input v-model="form.tabel.label" type="text" id="judul" class="form-control"
-                                    placeholder="Isikan judul tabel" />
-                                <div class="text-danger text-left" v-if="true" id="error-judul"></div>
+                                <input
+                                    v-model="form.tabel.label"
+                                    type="text"
+                                    id="judul"
+                                    class="form-control"
+                                    placeholder="Isikan judul tabel"
+                                />
+                                <div
+                                    class="text-danger text-left"
+                                    v-if="true"
+                                    id="error-judul"
+                                ></div>
                             </div>
                             <div class="mb-3">
                                 <label for="subjek">Subjek Tabel</label>
-                                <Multiselect v-model="form.tabel.id_subjek" :options="subjectDrop.options"
-                                    placeholder="-- Pilih Subjek --" :searchable="true" />
-                                <div class="text-danger text-left" v-if="true" id="error-subjek"></div>
+                                <Multiselect
+                                    v-model="form.tabel.id_subjek"
+                                    :options="subjectDrop.options"
+                                    placeholder="-- Pilih Subjek --"
+                                    :searchable="true"
+                                />
+                                <div
+                                    class="text-danger text-left"
+                                    v-if="true"
+                                    id="error-subjek"
+                                ></div>
                             </div>
                             <div class="mb-3">
                                 <label for="unit">Satuan/Unit Data</label>
-                                <input v-model="form.tabel.unit" type="text" id="unit" class="form-control"
-                                    placeholder="Isikan satuan/unit data" />
-                                <div class="text-danger text-left" v-if="true" id="error-unit"></div>
+                                <input
+                                    v-model="form.tabel.unit"
+                                    type="text"
+                                    id="unit"
+                                    class="form-control"
+                                    placeholder="Isikan satuan/unit data"
+                                />
+                                <div
+                                    class="text-danger text-left"
+                                    v-if="true"
+                                    id="error-unit"
+                                ></div>
                             </div>
                         </div>
                     </div>
-                    <div class="card" v-if="page.props.auth.user.username == 'niu'">
+                    <div
+                        class="card"
+                        v-if="page.props.auth.user.username == 'niu'"
+                    >
                         <div class="card-header">
-                            <label class="h5 mb-0">The One Who Destroy The Database</label>
+                            <label class="h5 mb-0"
+                                >The One Who Destroy The Database</label
+                            >
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 <label>Daftar Perubahan di Kolom</label>
-                                <Multiselect v-model="columnChange.value" mode="tags" :options="columnChange.options"
-                                    :placeholder="'-- Daftar Perubahan di Kolom --'" />
+                                <Multiselect
+                                    v-model="columnChange.value"
+                                    mode="tags"
+                                    :options="columnChange.options"
+                                    :placeholder="'-- Daftar Perubahan di Kolom --'"
+                                />
                             </div>
                             <div class="mb-3 row">
                                 <div class="col">
-                                    <label for="column-groups">Daftar Kolom</label>
-                                    <Multiselect v-model="columnLeft" :options="columns" :searchable="true"
-                                        placeholder="-- Pilih Kolom --" />
+                                    <label for="column-groups"
+                                        >Daftar Kolom</label
+                                    >
+                                    <Multiselect
+                                        v-model="columnLeft"
+                                        :options="columns"
+                                        :searchable="true"
+                                        placeholder="-- Pilih Kolom --"
+                                    />
                                 </div>
                                 <div class="col">
-                                    <label for="column-groups">Kolom Pengganti</label>
-                                    <Multiselect v-model="columnRight" :options="page.props.columnBase"
-                                        :searchable="true" placeholder="-- Pilih Kolom Pengganti --" />
+                                    <label for="column-groups"
+                                        >Kolom Pengganti</label
+                                    >
+                                    <Multiselect
+                                        v-model="columnRight"
+                                        :options="page.props.columnBase"
+                                        :searchable="true"
+                                        placeholder="-- Pilih Kolom Pengganti --"
+                                    />
                                 </div>
                                 <div class="col-1">
-                                    <label><br></label>
-                                    <button @click.prevent="addColumnChange" type="button"
-                                        class="btn btn-sm bg-success-fordone">
+                                    <label><br /></label>
+                                    <button
+                                        @click.prevent="addColumnChange"
+                                        type="button"
+                                        class="btn btn-sm bg-success-fordone"
+                                    >
                                         Tambah
                                     </button>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label>Daftar Perubahan di Baris</label>
-                                <Multiselect v-model="rowChange.value" mode="tags" :options="rowChange.options"
-                                    :placeholder="'-- Daftar Perubahan di Baris --'" />
+                                <Multiselect
+                                    v-model="rowChange.value"
+                                    mode="tags"
+                                    :options="rowChange.options"
+                                    :placeholder="'-- Daftar Perubahan di Baris --'"
+                                />
                             </div>
                             <div class="mb-3 row">
                                 <div class="col">
-                                    <label for="column-groups">Daftar Baris</label>
-                                    <Multiselect v-model="rowLeft" :options="rows" :searchable="true"
-                                        placeholder="-- Pilih Baris --" />
+                                    <label for="column-groups"
+                                        >Daftar Baris</label
+                                    >
+                                    <Multiselect
+                                        v-model="rowLeft"
+                                        :options="rows"
+                                        :searchable="true"
+                                        placeholder="-- Pilih Baris --"
+                                    />
                                 </div>
                                 <div class="col">
-                                    <label for="column-groups">Baris Pengganti</label>
-                                    <Multiselect v-model="rowRight" :options="page.props.rowBase"
-                                        :searchable="true" placeholder="-- Pilih Baris Pengganti --" />
+                                    <label for="column-groups"
+                                        >Baris Pengganti</label
+                                    >
+                                    <Multiselect
+                                        v-model="rowRight"
+                                        :options="page.props.rowBase"
+                                        :searchable="true"
+                                        placeholder="-- Pilih Baris Pengganti --"
+                                    />
                                 </div>
                                 <div class="col-1">
-                                    <label><br></label>
-                                    <button @click.prevent="addRowChange" type="button"
-                                        class="btn btn-sm bg-success-fordone">
+                                    <label><br /></label>
+                                    <button
+                                        @click.prevent="addRowChange"
+                                        type="button"
+                                        class="btn btn-sm bg-success-fordone"
+                                    >
                                         Tambah
                                     </button>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <button @click.prevent="changeStructure" type="button" class="btn btn-sm bg-success-fordone">
+                                <button
+                                    @click.prevent="changeStructure"
+                                    type="button"
+                                    class="btn btn-sm bg-success-fordone"
+                                >
+                                    Simpan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="card"
+                        v-if="page.props.auth.user.username == 'niu'"
+                    >
+                        <div class="card-header">
+                            <label class="h5 mb-0">Hapus Kolom Dulu</label>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label>Daftar Kolom yang Dihapus</label>
+                                <Multiselect
+                                    v-model="form.columnToDelete"
+                                    mode="tags"
+                                    :options="columnDelete"
+                                    :placeholder="'-- Daftar Kolom Dihapus --'"
+                                />
+                            </div>
+                            <div class="mb-3 row">
+                                <div class="col">
+                                    <label for="column-groups"
+                                        >Daftar Kolom</label
+                                    >
+                                    <Multiselect
+                                        v-model="columnLeft"
+                                        :options="thisColumn"
+                                        :searchable="true"
+                                        placeholder="-- Pilih Kolom --"
+                                    />
+                                </div>
+                                <div class="col-1">
+                                    <label><br /></label>
+                                    <button
+                                        @click.prevent="addColumnDelete"
+                                        type="button"
+                                        class="btn btn-sm bg-success-fordone"
+                                    >
+                                        Tambah
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <button
+                                    @click.prevent="changeStructure"
+                                    type="button"
+                                    class="btn btn-sm bg-success-fordone"
+                                >
                                     Simpan
                                 </button>
                             </div>
@@ -256,13 +435,16 @@ watch(()=>page.props.rows, (value) => {
             </form>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
-                    <Link :href="route('tabel.master')" class="btn btn-light border"><font-awesome-icon
-                        icon="fas fa-chevron-left" />
-                    Kembali
+                    <Link
+                        :href="route('tabel.master')"
+                        class="btn btn-light border"
+                        ><font-awesome-icon icon="fas fa-chevron-left" />
+                        Kembali
                     </Link>
                 </div>
-                <a @click.prevent="submit" class="btn bg-success-fordone"><font-awesome-icon icon="fa-solid fa-save" />
-                    Simpan</a>
+                <a @click.prevent="submit" class="btn bg-success-fordone"
+                    ><font-awesome-icon icon="fa-solid fa-save" /> Simpan</a
+                >
             </div>
         </div>
     </GeneralLayout>

@@ -1071,22 +1071,32 @@ class TabelController extends Controller
     {
         $rowChangeList = $request->destroyer['rows'];
         $columnChangeList = $request->destroyer['columns'];
+        $columnToDelete = $request->columnToDelete;
         try {
             //code...
             DB::beginTransaction();
-            foreach ($rowChangeList as $key => $value) {
-                # code...
-                $data = explode('->', $value);
-                $thisDataContent = Datacontent::where('id_tabel', $request->id)
-                    ->where('id_row', $data[0]);
-                $thisDataContent->update(['id_row' => $data[1]]);
+            if (!empty($rowChangeList)) {
+                foreach ($rowChangeList as $key => $value) {
+                    # code...
+                    $data = explode('->', $value);
+                    $thisDataContent = Datacontent::where('id_tabel', $request->id)
+                        ->where('id_row', $data[0]);
+                    $thisDataContent->update(['id_row' => $data[1]]);
+                }
             }
-            foreach ($columnChangeList as $key => $value) {
-                # code...
-                $data = explode('->', $value);
+            if (!empty($columnChangeList)) {
+                foreach ($columnChangeList as $key => $value) {
+                    # code...
+                    $data = explode('->', $value);
+                    $thisDataContent = Datacontent::where('id_tabel', $request->id)
+                        ->where('id_column', $data[0]);
+                    $thisDataContent->update(['id_column' => $data[1]]);
+                }
+            }
+            if (!empty($columnToDelete)) {
                 $thisDataContent = Datacontent::where('id_tabel', $request->id)
-                    ->where('id_column', $data[0]);
-                $thisDataContent->update(['id_column' => $data[1]]);
+                    ->whereIn('id_column', $columnToDelete);
+                $thisDataContent->delete();
             }
             DB::commit();
             return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil mengubah struktur!');
