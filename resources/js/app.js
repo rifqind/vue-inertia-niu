@@ -117,7 +117,6 @@ library.add(
     faUsers
 );
 config.autoAddCss = false;
-
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 createInertiaApp({
@@ -128,11 +127,13 @@ createInertiaApp({
             import.meta.glob("./Pages/**/*.vue")
         ),
     setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
+        const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .component("font-awesome-icon", FontAwesomeIcon)
-            .mount(el);
+            .component("font-awesome-icon", FontAwesomeIcon);
+
+        // vueApp.config.globalProperties.debounce = debounce;
+        return vueApp.mount(el);
     },
     // progress: false,
     progress: {

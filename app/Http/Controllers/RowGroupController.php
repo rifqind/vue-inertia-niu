@@ -11,17 +11,43 @@ class RowGroupController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = RowGroup::query();
+
         $number = 1;
-        $RowGroups = RowGroup::orderBy('label')->get();
+        $dataToCounted = $query;
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('label');
+        } else $query->orderBy('label');
+
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label'])) $query->where('label', 'like', '%' . $filter['label'] . '%');
+        }
+        $countData = $dataToCounted->count();
+        $RowGroups = $query->paginate($paginated, ['*'], 'page', $currentPage);
         foreach ($RowGroups as $key => $value) {
             # code...
             $value->number = $number;
             $number++;
         }
+        if ($request->paginated) {
+            return response()->json([
+                'RowGroup' => $RowGroups,
+                'countData' => $countData
+            ]);
+        }
         return Inertia::render('Master/RowGroup', [
-            'RowGroup' => $RowGroups
+            'RowGroup' => $RowGroups,
+            'countData' => $countData
         ]);
     }
 
@@ -81,7 +107,6 @@ class RowGroupController extends Controller
         } catch (\Throwable $th) {
             //throw $th;
             return redirect()->route('row_group.index')->with('error', 'Gagal menghapus kelompok baris tersebut, Periksa apakah masih ada baris di bawah kelompok baris ini');
-
         }
         // Delete the subject
 

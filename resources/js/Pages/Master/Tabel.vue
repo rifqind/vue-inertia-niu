@@ -87,15 +87,15 @@ const ArrayBigObjects = [
     { key: 'updated', valueFilter: searchUpdated },
 ]
 
-const debounce = (func, wait = 400) => {
-    let timeout;
-    return function (...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            func.apply(this, args);
-        }, wait);
-    };
-}
+// const debounce = (func, wait = 400) => {
+//     let timeout;
+//     return function (...args) {
+//         clearTimeout(timeout);
+//         timeout = setTimeout(() => {
+//             func.apply(this, args);
+//         }, wait);
+//     };
+// }
 
 const delayedFetchData = debounce(() => {
     fetchData()

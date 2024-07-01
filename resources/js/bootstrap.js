@@ -7,6 +7,8 @@
 import axios from 'axios';
 window.axios = axios;
 import 'admin-lte'
+import { debounce } from './debounce';
+window.debounce = debounce;
 // import 'bootstrap'
 
 // import 'admin-lte/plugins/jquery/jquery'

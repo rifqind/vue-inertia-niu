@@ -51,15 +51,15 @@ const ArrayBigObjects = [
     { key: 'status', valueFilter: searchStatus },
     { key: 'updated', valueFilter: searchUpdated },
 ]
-const debounce = (func, wait = 400) => {
-    let timeout;
-    return function (...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            func.apply(this, args);
-        }, wait);
-    };
-}
+// const debounce = (func, wait = 400) => {
+//     let timeout;
+//     return function (...args) {
+//         clearTimeout(timeout);
+//         timeout = setTimeout(() => {
+//             func.apply(this, args);
+//         }, wait);
+//     };
+// }
 // const filteredColumns = computed(() => {
 //     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
 //     if (filters.length === 0) {

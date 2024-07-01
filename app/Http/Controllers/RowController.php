@@ -12,20 +12,49 @@ class RowController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
-        $rows = Row::leftJoin('row_groups as rg', 'rg.id', '=', 'rows.id_row_groups')
-            ->get(['rows.*', 'rg.label as rowGroupsLabel']);
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Row::query();
+
+        $number = 1;
+        $dataToCounted = $query->join('row_groups as rg', 'rg.id', '=', 'rows.id_row_groups')
+            ->select([
+                'rows.*', 'rg.label as rowGroupsLabel'
+            ]);
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+        }
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label'])) $query->where('rows.label', 'like', '%' . $filter['label'] . '%');
+            if (!empty($filter['rowGroupsLabel'])) $query->where('rg.label', 'like', '%' . $filter['rowGroupsLabel'] . '%');
+        }
+
+        $countData = $dataToCounted->count();
+        $rows = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
         foreach ($rows as $key => $value) {
             # code...
-            $value->number = $key + 1;
+            $value->number = $number;
+            $number++;
         }
         $row_groups = RowGroup::orderBy('label')->get(['row_groups.label as label', 'row_groups.id as value']);
+        if ($request->paginated) {
+            return response()->json([
+                'rows' => $rows,
+                'countData' => $countData
+            ]);
+        }
         return Inertia::render('Master/Row', [
             'rows' => $rows,
-            'row_groups' => $row_groups
+            'row_groups' => $row_groups,
+            'countData' => $countData
         ]);
     }
 

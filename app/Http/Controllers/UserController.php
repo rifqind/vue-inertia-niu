@@ -16,22 +16,64 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = User::query();
+
         $number = 1;
         $id_wilayah = MasterWilayah::getDinasWilayah();
-        $users = User::orderBy('dinas.nama')
+        $dataToCounted = $query
             ->leftJoin('dinas', 'users.id_dinas', '=', 'dinas.id')
             ->leftJoin('master_wilayah as w', 'w.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
-            ->whereIn('dinas.wilayah_fullcode', $id_wilayah)->with('dinas')->get(['users.*', 'dinas.nama as nama_dinas', 'w.label as wilayah_label']);
+            ->whereIn('dinas.wilayah_fullcode', $id_wilayah)->with('dinas')
+            ->select(['users.*', 'dinas.nama as nama_dinas', 'w.label as wilayah_label']);
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('dinas.nama');
+        } else $query->orderBy('dinas.nama');
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['username'])) {
+                $query->where('username', 'like', '%' . $filter['username'] . '%');
+            }
+            if (!empty($filter['name'])) {
+                $query->where('name', 'like', '%' .  $filter['name'] . '%');
+            }
+            if (!empty($filter['nama_dinas'])) {
+                $query->where('dinas.nama', 'like', '%' .  $filter['nama_dinas'] . '%');
+            }
+            if (!empty($filter['wilayah_label'])) {
+                $query->where('w.label', 'like', '%' . $filter['wilayah_label'] . '%');
+            }
+            if (!empty($filter['noHp'])) {
+                $query->where('noHp', 'like', '%' . $filter['noHp'] . '%');
+            }
+            if (!empty($filter['role'])) {
+                $query->where('role', 'like', '%' . $filter['role'] . '%');
+            }
+        }
+        $countData = $dataToCounted->count();
+        $users = $query->paginate($paginated, ['*'], 'page', $currentPage);
         foreach ($users as $user) {
             $user->number = $number;
             $number++;
         }
-
+        if ($request->paginated) {
+            return response()->json([
+                'users' => $users,
+                'countData' => $countData,
+            ]);
+        }
         return Inertia::render('User/Index', [
             'users' => $users,
+            'countData' => $countData,
         ]);
     }
 
@@ -173,5 +215,4 @@ class UserController extends Controller
         // return response()->json('Berhasil Hapus');
         return redirect()->route('users.index')->with('message', 'Berhasil menghapus akun pengguna tersebut');
     }
-
 }

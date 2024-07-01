@@ -12,24 +12,51 @@ class ColumnController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         // get the resource
-        $columns = Column::leftJoin('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')
-            ->get([
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Column::query();
+
+        $number = 1;
+        $dataToCounted = $query->join('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')
+            ->select([
                 'columns.*',
                 'cg.label as columnGroupsLabel'
             ]);
-        $number = 1;
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+        }
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label'])) $query->where('columns.label', 'like', '%' . $filter['label'] . '%');
+            if (!empty($filter['columnGroupsLabel'])) $query->where('cg.label', 'like', '%' . $filter['columnGroupsLabel'] . '%');
+        }
+
+        $countData = $dataToCounted->count();
+        $columns = $query->paginate($paginated, ['*'], 'page', $currentPage);
         foreach ($columns as $key => $value) {
             # code...
             $value->number = $number;
             $number++;
         }
         $column_groups = ColumnGroup::orderBy('label')->get(['column_groups.label as label', 'column_groups.id as value']);
+
+        if ($request->paginated) {
+            return response()->json([
+                'columns' => $columns,
+                'countData' => $countData
+            ]);
+        }
+
         return Inertia::render('Master/Column', [
             'columns' => $columns,
-            'column_groups' => $column_groups
+            'column_groups' => $column_groups,
+            'countData' => $countData
         ]);
     }
 
@@ -48,7 +75,7 @@ class ColumnController extends Controller
             'id_column_groups' => 'required',
         ]);
         // dd($validatedData['label']);
-        if($request->id) {
+        if ($request->id) {
             $updated = Column::where('id', $request->id)->update([
                 'label' => $validatedData['label'][0],
                 'id_column_groups' => $validatedData['id_column_groups'],
@@ -80,13 +107,13 @@ class ColumnController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    
+
 
 
     /**
      * Update the specified resource in storage.
      */
-    
+
 
 
     /**

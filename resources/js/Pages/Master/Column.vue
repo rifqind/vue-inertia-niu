@@ -15,7 +15,7 @@ defineComponent({
     Multiselect
 })
 const page = usePage()
-var cGroup = page.props.columns
+var cGroup = page.props.columns.data
 var columns = ref(cGroup)
 const columnGroups = page.props.column_groups
 const createModalStatus = ref(false)
@@ -41,20 +41,25 @@ const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel },
     { key: 'columnGroupsLabel', valueFilter: searchColumnGroup },
 ]
-const filteredColumns = computed(() => {
-    let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
-    if (filters.length === 0) {
-        return page.props.columns
-    }
-    return page.props.columns.filter(item => {
-        return filters.every(obj => {
-            const filterValue = obj.valueFilter.value.toLowerCase()
-            return item[obj.key].toLowerCase().includes(filterValue)
-        })
-    })
-})
+// const filteredColumns = computed(() => {
+//     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
+//     if (filters.length === 0) {
+//         return page.props.columns
+//     }
+//     return page.props.columns.filter(item => {
+//         return filters.every(obj => {
+//             const filterValue = obj.valueFilter.value.toLowerCase()
+//             return item[obj.key].toLowerCase().includes(filterValue)
+//         })
+//     })
+// })
 watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
-    columns.value = filteredColumns.value
+    // columns.value = filteredColumns.value
+    currentPage.value = 1
+    delayedFetchData()
+})
+const delayedFetchData = debounce(() => {
+    fetchData()
 })
 
 const form = useForm({
@@ -107,6 +112,7 @@ const submit = async function () {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
             form.reset()
+            fetchData()
         },
         onError: function () { createModalStatus.value = true }
     })
@@ -126,34 +132,62 @@ const deleteForm = async function () {
             if (page.props.flash.message) toggleFlash.value = true
             if (page.props.flash.error) toggleFlashError.value = true
             form.reset()
+            fetchData()
         },
         onError: function () { deleteModalStatus.value = true }
     })
 }
 //new Pagination
-const showItemsValue = ref(10)
-const showItems = computed(() => {
-    if (filteredColumns.value.length < 10) return filteredColumns.value.length
-    return showItemsValue.value
-})
+// const showItemsValue = ref(10)
+// const showItems = computed(() => {
+//     const filteredLength = filteredColumns.value.length
+//     let thisLength = null
+//     if (filteredLength < 10) thisLength = filteredLength
+//     else thisLength = showItemsValue.value
+//     return thisLength
+// })
 const currentPage = ref(1)
+const showItems = ref(10)
 
 const updateShowItems = (value) => {
-    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
-    else showItemsValue.value = value
-    currentPage.value = 1
+    // if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    // else showItemsValue.value = value
+    // currentPage.value = 1
+    showItems.value = value
+    fetchData()
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
+    fetchData()
 }
-const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * showItems.value
-    const end = start + showItems.value
-    return filteredColumns.value.slice(start, end)
+const totalItems = ref(page.props.countData)
+watch(() => page.props.countData, (value) => {
+    totalItems.value = value
 })
-watch(() => page.props.columns, (value) => {
+const paginatedData = computed(() => {
+    // const start = (currentPage.value - 1) * showItems.value
+    // const end = start + showItems.value
+    // return filteredColumns.value.slice(start, end)
+    return columns.value
+})
+watch(() => page.props.columns.data, (value) => {
     columns.value = value
 })
+const orderAttribute = ref({
+    before: null,
+    label: null,
+    value: 'asc',
+})
+const clickToOrder = (value) => {
+    orderAttribute.value.label = value
+    if (orderAttribute.value.before == null || orderAttribute.value.before == value) {
+        if (orderAttribute.value.value == 'asc') orderAttribute.value.value = 'desc'
+        else if (orderAttribute.value.value == 'desc') orderAttribute.value.value = null
+        else orderAttribute.value.value = 'asc'
+    } else orderAttribute.value.value = 'asc'
+    orderAttribute.value.before = value
+    fetchData()
+}
 const listInput = ref({
     value: [],
     options: []
@@ -174,7 +208,24 @@ const closeCreateModalStatus = () => {
     listInput.value.options = []
     isUpdate.value = false
 }
-
+const fetchData = async () => {
+    try {
+        const response = await axios.get(route('columns.index'), {
+            params: {
+                currentPage: currentPage.value, paginated: showItems.value,
+                ArrayFilter: {
+                    label: searchLabel.value,
+                    columnGroupsLabel: searchColumnGroup.value
+                },
+                orderAttribute: orderAttribute.value
+            }
+        })
+        columns.value = response.data.columns.data
+        totalItems.value = response.data.countData
+    } catch (error) {
+        console.error('Error fetching data: ', error)
+    }
+}
 </script>
 <template>
 
@@ -196,13 +247,13 @@ const closeCreateModalStatus = () => {
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
         <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
             :types="'alert-danger'" />
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelColumns" id="tabel-kolom">
+        <table class="table table-hover table-bordered table-search" ref="tabelColumns" id="tabel-kolom">
             <thead>
                 <tr class="bg-info-fordone">
-                    <th class="first-column tabel-width-10" @click="clickSortProperties(columns, 'number')">No.</th>
-                    <th class="text-center tabel-width-30" @click="clickSortProperties(columns, 'label')">Nama Kolom
+                    <th class="first-column th-order tabel-width-10">No.</th>
+                    <th class="text-center th-order tabel-width-30" @click="clickToOrder('label')">Nama Kolom
                     </th>
-                    <th class="text-center tabel-width-30" @click="clickSortProperties(columns, 'columnGroupsLabel')">
+                    <th class="text-center th-order tabel-width-30" @click="clickToOrder('cg.label')">
                         Nama Kelompok Kolom
                     </th>
                     <th class="text-center deleted tabel-width-8">Edit</th>
@@ -308,7 +359,12 @@ const closeCreateModalStatus = () => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage"
+            :total-items="totalItems" :current-page="currentPage"
             :current-show-items="paginatedData.length" />
     </GeneralLayout>
 </template>
+<style scoped>
+.th-order{
+    cursor: pointer;
+}
+</style>

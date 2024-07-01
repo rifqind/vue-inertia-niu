@@ -36,7 +36,7 @@ const tingkatan = ref({
         { label: "Desa/Kelurahan", value: 3 },
     ]
 })
-var dObject = page.props.dinas
+var dObject = page.props.dinas.data
 var d = ref(dObject)
 const kabsDrop = ref({
     value: null,
@@ -129,28 +129,36 @@ const loadDesa = async (valueKecs) => {
         console.error('Error fetching desa:', error);
     }
 }
-const filteredColumns = computed(() => {
-    if (searchNama.value && !searchWilayah.value) {
-        return page.props.dinas.filter(x =>
-            x.nama.toLowerCase().includes(searchNama.value.toLowerCase()))
-    } else if (searchWilayah.value && !searchNama.value) {
-        return page.props.dinas.filter(x =>
-            x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
-        )
-    } else if (searchNama.value && searchWilayah.value) {
-        return page.props.dinas.filter(x =>
-            x.nama.toLowerCase().includes(searchNama.value.toLowerCase()) &&
-            x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
-        )
-    } else {
-        return page.props.dinas
-    }
-})
-watch([searchNama, searchWilayah], () => {
+const ArrayBigObjects = [
+    { key: 'name', valueFilter: searchNama },
+    { key: 'wilayah_label', valueFilter: searchWilayah },
+]
+// const filteredColumns = computed(() => {
+//     if (searchNama.value && !searchWilayah.value) {
+//         return page.props.dinas.filter(x =>
+//             x.nama.toLowerCase().includes(searchNama.value.toLowerCase()))
+//     } else if (searchWilayah.value && !searchNama.value) {
+//         return page.props.dinas.filter(x =>
+//             x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
+//         )
+//     } else if (searchNama.value && searchWilayah.value) {
+//         return page.props.dinas.filter(x =>
+//             x.nama.toLowerCase().includes(searchNama.value.toLowerCase()) &&
+//             x.wilayah_label.toLowerCase().includes(searchWilayah.value.toLowerCase())
+//         )
+//     } else {
+//         return page.props.dinas
+//     }
+// })
+watch(ArrayBigObjects.map(obj => obj.valueFilter), () => {
     // filterData()
-    d.value = filteredColumns.value
+    // d.value = filteredColumns.value
+    currentPage.value = 1
+    delayedFetchData()
 })
-
+const delayedFetchData = debounce(() => {
+    fetchData()
+})
 defineComponent({
     Multiselect
 })
@@ -166,6 +174,7 @@ const submit = async function () {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
             form.reset()
+            fetchData()
         },
         onFinish: function () {
             triggerSpinner.value = false
@@ -185,6 +194,7 @@ const deleteForm = async function () {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
             form.reset()
+            fetchData()
         },
         onFinish: function () {
             triggerSpinner.value = false
@@ -193,29 +203,72 @@ const deleteForm = async function () {
     })
 }
 //new Pagination
-const showItemsValue = ref(10)
-const showItems = computed(() => {
-    if (filteredColumns.value.length < 10) return filteredColumns.value.length
-    return showItemsValue.value
-})
+// const showItemsValue = ref(10)
+// const showItems = computed(() => {
+//     if (filteredColumns.value.length < 10) return filteredColumns.value.length
+//     return showItemsValue.value
+// })
+const showItems = ref(10)
 const currentPage = ref(1)
 
 const updateShowItems = (value) => {
-    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
-    else showItemsValue.value = value
-    currentPage.value = 1
+    // if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    // else showItemsValue.value = value
+    // currentPage.value = 1
+    showItems.value = value
+    fetchData()
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
+    fetchData()
 }
-const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * showItems.value
-    const end = start + showItems.value
-    return filteredColumns.value.slice(start, end)
+
+const totalItems = ref(page.props.countData)
+watch(() => page.props.countData, (value) => {
+    totalItems.value = value
 })
-watch(() => page.props.dinas, (value) => {
+const paginatedData = computed(() => {
+    // const start = (currentPage.value - 1) * showItems.value
+    // const end = start + showItems.value
+    // return filteredColumns.value.slice(start, end)
+    return d.value
+})
+watch(() => page.props.dinas.data, (value) => {
     d.value = value
 })
+const orderAttribute = ref({
+    before: null,
+    label: null,
+    value: 'asc',
+})
+const clickToOrder = (value) => {
+    orderAttribute.value.label = value
+    if (orderAttribute.value.before == null || orderAttribute.value.before == value) {
+        if (orderAttribute.value.value == 'asc') orderAttribute.value.value = 'desc'
+        else if (orderAttribute.value.value == 'desc') orderAttribute.value.value = null
+        else orderAttribute.value.value = 'asc'
+    } else orderAttribute.value.value = 'asc'
+    orderAttribute.value.before = value
+    fetchData()
+}
+const fetchData = async () => {
+    try {
+        const response = await axios.get(route('dinas.index'), {
+            params: {
+                currentPage: currentPage.value, paginated: showItems.value,
+                ArrayFilter: {
+                    nama: searchNama.value,
+                    wilayah_label: searchWilayah.value
+                },
+                orderAttribute: orderAttribute.value
+            }
+        })
+        d.value = response.data.dinas.data
+        totalItems.value = response.data.countData
+    } catch (error) {
+        console.error('Error fetching data: ', error)
+    }
+}
 </script>
 
 <template>
@@ -235,14 +288,14 @@ watch(() => page.props.dinas, (value) => {
                 Tambah Produsen Data Baru</Link>
             </div>
             <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-            <table class="table table-sorted table-hover table-bordered" ref="tabelDinas" id="tabel-dinas">
+            <table class="table table-hover table-bordered" ref="tabelDinas" id="tabel-dinas">
                 <thead>
                     <tr>
-                        <th class="first-column" @click="clickSortProperties(d, 'number')">No.</th>
-                        <th class="text-center tabel-width-50" @click="clickSortProperties(d, 'nama')">Nama Produsen
+                        <th class="first-column">No.</th>
+                        <th class="text-center th-order tabel-width-50" @click="clickToOrder('nama')">Nama Produsen
                             Data
                         </th>
-                        <th class="text-center" @click="clickSortProperties(d, 'wilayah_label')">Wilayah Kerja</th>
+                        <th class="text-center th-order" @click="clickToOrder('mw.label')">Wilayah Kerja</th>
                         <th class="text-center deleted">Edit</th>
                         <th class="text-center deleted">Hapus</th>
                     </tr>
@@ -279,7 +332,7 @@ watch(() => page.props.dinas, (value) => {
             </table>
         </div>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="d.length" :current-page="currentPage" :current-show-items="paginatedData.length" />
+            :total-items="totalItems" :current-page="currentPage" :current-show-items="paginatedData.length" />
         <Teleport to="body">
             <ModalBs :-modal-status="downloadModalStatus" @close="downloadModalStatus = false" :title="'Download Data'">
                 <template #modalBody>
@@ -344,3 +397,8 @@ watch(() => page.props.dinas, (value) => {
         </Teleport>
     </GeneralLayout>
 </template>
+<style scoped>
+.th-order {
+    cursor: pointer;
+}
+</style>

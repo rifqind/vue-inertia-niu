@@ -13,27 +13,55 @@ class DinasController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Dinas::query();
+
         $number = 1;
         $wilayah = MasterWilayah::getMyWilayah();
-        $id_wilayah = MasterWilayah::getMyWilayahId();
         $kabs = $wilayah["kabs"];
-        $dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')
-        ->leftJoin('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')    
-        ->whereIn(
+        $dataToCounted = $query
+            ->leftJoin('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+            ->whereIn(
                 'dinas.wilayah_fullcode',
                 MasterWilayah::getDinasWilayah()
-            )->get(['dinas.*', 'mw.label as wilayah_label']);
+            )->select(['dinas.*', 'mw.label as wilayah_label']);
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('wilayah_fullcode')->orderBy('nama');
+        } else $query->orderBy('wilayah_fullcode')->orderBy('nama');
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['nama'])) {
+                $query->where('nama', 'like', '%' .  $filter['nama'] . '%');
+            }
+            if (!empty($filter['wilayah_label'])) {
+                $query->where('mw.label', 'like', '%' . $filter['wilayah_label'] . '%');
+            }
+        }
+        $countData = $dataToCounted->count();
+        $dinas = $query->paginate($paginated, ['*'], 'page', $currentPage);
         foreach ($dinas as $din) {
             $din->number = $number;
             $number++;
         }
-
+        if ($request->paginated) {
+            return response()->json([
+                'dinas' => $dinas,
+                'countData' => $countData,
+            ]);
+        }
         return Inertia::render('Dinas/Index', [
             'dinas' => $dinas,
             'kabs' => $kabs,
+            'countData' => $countData,
         ]);
     }
 

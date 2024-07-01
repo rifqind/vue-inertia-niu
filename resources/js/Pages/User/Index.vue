@@ -9,9 +9,11 @@ import { onMounted, ref, watch } from 'vue';
 import { clickSortProperties } from '@/sortAttribute';
 import { GoDownload } from '@/download'
 import { computed } from 'vue';
+import axios from 'axios';
+import { debounce } from '@/debounce';
 
 const page = usePage()
-var uObject = page.props.users
+var uObject = page.props.users.data
 var users = ref(uObject)
 const toggleFlash = ref(false)
 const searchUsername = ref(null)
@@ -49,6 +51,7 @@ const changeRolesLink = async function (id) {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
             form.reset
+            fetchData()
         },
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () { triggerSpinner.value = false }
@@ -85,20 +88,25 @@ const ArrayBigObjects = [
     { key: 'noHp', valueFilter: searchNoHp },
     { key: 'role', valueFilter: searchRole },
 ]
-const filteredColumns = computed(() => {
-    let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
-    if (filters.length === 0) {
-        return page.props.users
-    }
-    return page.props.users.filter(item => {
-        return filters.every(obj => {
-            const filterValue = obj.valueFilter.value.toLowerCase()
-            return item[obj.key].toLowerCase().includes(filterValue)
-        })
-    })
-})
+// const filteredColumns = computed(() => {
+//     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
+//     if (filters.length === 0) {
+//         return page.props.users
+//     }
+//     return page.props.users.filter(item => {
+//         return filters.every(obj => {
+//             const filterValue = obj.valueFilter.value.toLowerCase()
+//             return item[obj.key].toLowerCase().includes(filterValue)
+//         })
+//     })
+// })
 watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
-    users.value = filteredColumns.value
+    // users.value = filteredColumns.value
+    currentPage.value = 1
+    delayedFetchData()
+})
+const delayedFetchData = debounce(() => {
+    fetchData()
 })
 onMounted(function () {
     //flash
@@ -112,6 +120,7 @@ const deleteForm = async function () {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
             form.reset()
+            fetchData()
         },
         onBefore: function () {
             deleteModalStatus.value = false
@@ -127,29 +136,75 @@ const changeNumber = (number) => {
     return number.replace(/^0/, '+62')
 }
 //new Pagination
-const showItemsValue = ref(10)
-const showItems = computed(() => {
-    if (filteredColumns.value.length < 10) return filteredColumns.value.length
-    return showItemsValue.value
-})
+// const showItemsValue = ref(10)
+// const showItems = computed(() => {
+//     if (filteredColumns.value.length < 10) return filteredColumns.value.length
+//     return showItemsValue.value
+// })
+const showItems = ref(10)
 const currentPage = ref(1)
-
 const updateShowItems = (value) => {
-    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
-    else showItemsValue.value = value
-    currentPage.value = 1
+    // if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    // else showItemsValue.value = value
+    // currentPage.value = 1
+    showItems.value = value
+    fetchData()
 }
 const updateCurrentPage = (value) => {
     currentPage.value = value
+    fetchData()
 }
-const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * showItems.value
-    const end = start + showItems.value
-    return filteredColumns.value.slice(start, end)
+const totalItems = ref(page.props.countData)
+watch(() => page.props.countData, (value) => {
+    totalItems.value = value
 })
-watch(() => page.props.users, (value) => {
+const paginatedData = computed(() => {
+    // const start = (currentPage.value - 1) * showItems.value
+    // const end = start + showItems.value
+    // return filteredColumns.value.slice(start, end)
+    return users.value
+})
+watch(() => page.props.users.data, (value) => {
     users.value = value
 })
+const orderAttribute = ref({
+    before: null,
+    label: null,
+    value: 'asc',
+})
+const clickToOrder = (value) => {
+    orderAttribute.value.label = value
+    if (orderAttribute.value.before == null || orderAttribute.value.before == value) {
+        if (orderAttribute.value.value == 'asc') orderAttribute.value.value = 'desc'
+        else if (orderAttribute.value.value == 'desc') orderAttribute.value.value = null
+        else orderAttribute.value.value = 'asc'
+    } else orderAttribute.value.value = 'asc'
+    orderAttribute.value.before = value
+    fetchData()
+}
+const fetchData = async () => {
+    try {
+        const response = await axios.get(route('users.index'), {
+            params: {
+                currentPage: currentPage.value, paginated: showItems.value,
+                ArrayFilter: {
+                    username: searchUsername.value,
+                    name: searchNama.value,
+                    nama_dinas: searchInstansi.value,
+                    wilayah_label: searchWilayah.value,
+                    noHp: searchNoHp.value,
+                    role: searchRole.value,
+                },
+                orderAttribute: orderAttribute.value,
+            }
+        })
+        // console.log(response.data.users.data)
+        users.value = response.data.users.data
+        totalItems.value = response.data.countData
+    } catch (error) {
+        console.error('Error fetching data: ', error)
+    }
+}
 </script>
 <template>
 
@@ -169,21 +224,21 @@ watch(() => page.props.users, (value) => {
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-        <table class="table table-sorted table-hover table-bordered table-search" ref="tabelUser" id="tabel-user">
+        <table class="table table-hover table-bordered table-search" ref="tabelUser" id="tabel-user">
             <thead>
                 <tr class="bg-info-fordone">
-                    <th class="first-column" @click="clickSortProperties(users, 'number')">No.</th>
-                    <th class="text-center" @click="clickSortProperties(users, 'username')">Username</th>
-                    <th class="text-center tabel-width-15" @click="clickSortProperties(users, 'name')">Nama</th>
-                    <th class="text-center tabel-width-20" @click="clickSortProperties(users, 'nama_dinas')">Nama
+                    <th class="first-column">No.</th>
+                    <th class="text-center th-order" @click="clickToOrder('username')">Username</th>
+                    <th class="text-center th-order tabel-width-15" @click="clickToOrder('name')">Nama</th>
+                    <th class="text-center th-order tabel-width-20" @click="clickToOrder('dinas.nama')">Nama
                         Instansi</th>
-                    <th class="text-center tabel-width-20" @click="clickSortProperties(users, 'wilayah_label')">Wilayah
+                    <th class="text-center th-order tabel-width-20" @click="clickToOrder('w.label')">Wilayah
                         Kerja
                     </th>
-                    <th class="text-center" @click="clickSortProperties(users, 'noHp')">No. HP</th>
-                    <th class="text-center" @click="clickSortProperties(users, 'role')">Peran</th>
-                    <th class="text-center deleted tabel-width-8">Edit</th>
-                    <th class="text-center deleted">Hapus</th>
+                    <th class="text-center th-order" @click="clickToOrder('noHp')">No. HP</th>
+                    <th class="text-center th-order" @click="clickToOrder('role')">Peran</th>
+                    <th class="text-center th-order deleted tabel-width-8">Edit</th>
+                    <th class="text-center th-order deleted">Hapus</th>
                 </tr>
                 <tr class="">
                     <td class="search-header"></td>
@@ -196,7 +251,7 @@ watch(() => page.props.users, (value) => {
                     <td class="search-header"><input v-model.trim="searchWilayah" type="text"
                             class="search-input form-control"></td>
                     <td class="search-header"><input v-model.trim="searchNoHp" type="text"
-                            class="search-input form-control"></td>
+                            class="search-input form-control" placeholder="cari dengan 08..." ></td>
                     <td class="search-header"><input v-model.trim="searchRole" type="text"
                             class="search-input form-control"></td>
                     <td class="search-header deleted"></td>
@@ -255,11 +310,12 @@ watch(() => page.props.users, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage" :current-show-items="paginatedData.length"/>
+            :total-items="totalItems" :current-page="currentPage" :current-show-items="paginatedData.length" />
     </GeneralLayout>
 </template>
 <style scoped>
-.role-update {
+.role-update,
+.th-order {
     cursor: pointer;
 }
 </style>
