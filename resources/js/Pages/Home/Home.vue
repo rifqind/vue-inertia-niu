@@ -22,7 +22,7 @@ const triggerSpinner = ref(false)
 const visibleKecs = ref([])
 const visibleDesa = ref([])
 const updateResult = ref(false)
-var dataFiltered = ref(page.props.tabels)
+var dataFiltered = ref(page.props.tabels.data)
 const countDataFiltered = ref(page.props.counttabels)
 const form = useForm({
     year: [],
@@ -43,12 +43,12 @@ const dinasDrop = ref({
     options: [...all, ...page.props.dinas]
 })
 visibleKecs.value = page.props.kecs.map((kec, index) => ({
-    index: kec.index,
+    index: index,
     parent_code: kec.parent_code,
     value: false
 }))
 visibleDesa.value = page.props.desa.map((desa, index) => ({
-    index: desa.index,
+    index: index,
     parent_code: desa.parent_code,
     value: false
 }))
@@ -63,8 +63,15 @@ const isVisibleDesa = (parent_code) => {
 const toggleCheck = function (index, object) {
     object[index] = !object[index];
 };
-const submit = () => {
-    dataFiltered.value = page.props.tabels
+const ArrayBigObjects = ref([
+    { key: 'tahun', valueFilter: [] },
+    { key: 'kode_wilayah', valueFilter: [] },
+    { key: 'id_dinas', valueFilter: [] },
+    { key: 'id_subjek', valueFilter: [] },
+    { key: 'label', valueFilter: [] }
+])
+const submit = async () => {
+    // dataFiltered.value = page.props.tabels
     triggerSpinner.value = true
     wilayahSelected.value = page.props.wilayahs.filter((_, index) => {
         return wilayahCheckBox.value[index]
@@ -90,46 +97,71 @@ const submit = () => {
         searchWilayah = [...searchWilayah, ...desaSelected.value]
         searchWilayah = searchWilayah.filter(item => !parentDeleted.includes(item.wilayah_fullcode))
     }
-    let isDinasAll = false
-    let isYearAll = false
-    if (form.dinas.includes('all')) {
-        form.dinas.splice(form.dinas.indexOf('all'), 1)
-        isDinasAll = true
-    }
-    if (form.year.includes('all')) {
-        form.year.splice(form.year.indexOf('all'), 1)
-        isYearAll = true
-    }
+    // let isDinasAll = false
+    // let isYearAll = false
+    // if (form.dinas.includes('all')) {
+    //     form.dinas.splice(form.dinas.indexOf('all'), 1)
+    //     isDinasAll = true
+    // }
+    // if (form.year.includes('all')) {
+    //     form.year.splice(form.year.indexOf('all'), 1)
+    //     isYearAll = true
+    // }
     form.wilayah = searchWilayah.map(obj => obj.wilayah_fullcode)
     form.subject = subjectSelected.value.map(obj => obj.id)
     form.kec = kecamatanSelected.value.map(obj => obj.wilayah_fullcode)
     form.desa = desaSelected.value.map(obj => obj.wilayah_fullcode)
-    const ArrayBigObjects = [
+    ArrayBigObjects.value = [
         { key: 'tahun', valueFilter: form.year },
         { key: 'kode_wilayah', valueFilter: form.wilayah },
         { key: 'id_dinas', valueFilter: form.dinas },
         { key: 'id_subjek', valueFilter: form.subject },
         { key: 'label', valueFilter: form.label }
     ]
-    let filters = ArrayBigObjects.filter(obj => obj.valueFilter)
-    let result = dataFiltered.value.filter(item => {
-        let isValid = true;
-        filters.forEach(filter => {
-            const tempt = filter.valueFilter;
-            if (filter.key == 'label' && tempt.length > 0) {
-                if (!item[filter.key].toLowerCase().includes(tempt.toLowerCase())) isValid = false
-            } else {
-                if (tempt.length > 0 && !tempt.includes(item[filter.key])) isValid = false
+    // ArrayBigObjects.value = {
+    //     tahun: form.year,
+    //     kode_wilayah: form.wilayah,
+    //     id_dinas: form.dinas,
+    //     id_subjek: form.subject,
+    //     label: form.label,
+    // }
+    try {
+        const response = await axios.get(route('home'), {
+            params: {
+                currentPage: 1, paginated: 10,
+                ArrayFilter: {
+                    tahun: form.year,
+                    kode: form.wilayah,
+                    dinas: form.dinas,
+                    subjek: form.subject,
+                    label: form.label,
+                }
             }
-        });
-        return isValid;
-    });
-    dataFiltered.value = result
-    countDataFiltered.value = result.length
+        })
+        dataFiltered.value = response.data.tabels.data
+        countDataFiltered.value = response.data.countTabels
+    } catch (error) {
+        console.error('Error Fetching Data : ', error)
+    }
+    // let filters = ArrayBigObjects.filter(obj => obj.valueFilter)
+    // let result = dataFiltered.value.filter(item => {
+    //     let isValid = true;
+    //     filters.forEach(filter => {
+    //         const tempt = filter.valueFilter;
+    //         if (filter.key == 'label' && tempt.length > 0) {
+    //             if (!item[filter.key].toLowerCase().includes(tempt.toLowerCase())) isValid = false
+    //         } else {
+    //             if (tempt.length > 0 && !tempt.includes(item[filter.key])) isValid = false
+    //         }
+    //     });
+    //     return isValid;
+    // });
+    // dataFiltered.value = result
+    // countDataFiltered.value = result.length
     updateResult.value = false
     setTimeout(() => {
-        if (isYearAll) form.year.push('all')
-        if (isDinasAll) form.dinas.push('all')
+        // if (isYearAll) form.year.push('all')
+        // if (isDinasAll) form.dinas.push('all')
         triggerSpinner.value = false
     }, 500);
 }
@@ -145,9 +177,28 @@ const reset = () => {
     if (kecamatanCheckBox.value.length > 0) kecamatanCheckBox.value = Array(kecamatanCheckBox.value.length).fill(false)
     if (desaCheckBox.value.length > 0) desaCheckBox.value = Array(desaCheckBox.value.length).fill(false)
     if (subjectCheckBox.value.length > 0) subjectCheckBox.value = Array(subjectCheckBox.value.length).fill(false)
-    dataFiltered.value = page.props.tabels
-    countDataFiltered.value = dataFiltered.value.length
+    dataFiltered.value = page.props.tabels.data
+    countDataFiltered.value = page.props.counttabels
     updateResult.value = false
+    visibleKecs.value = visibleKecs.value.map(item => {
+        return {
+            ...item, value: false
+        }
+    })
+    visibleDesa.value = visibleDesa.value.map(item => {
+        return {
+            ...item, value: false
+        }
+    })
+    ArrayBigObjects.value = [
+        { key: 'tahun', valueFilter: [] },
+        { key: 'kode_wilayah', valueFilter: [] },
+        { key: 'id_dinas', valueFilter: [] },
+        { key: 'id_subjek', valueFilter: [] },
+        { key: 'label', valueFilter: [] }
+    ]
+    pageNumber.value = 2
+    resetComponent.value = true
     setTimeout(() => {
         triggerSpinner.value = false
     }, 500);
@@ -231,6 +282,14 @@ const showCard = (targetVisible) => {
 }
 const updateResultResults = (value) => {
     updateResult.value = value
+}
+const pageNumber = ref(1)
+const updatePageNumber = (value) => {
+    pageNumber.value = value
+}
+const resetComponent = ref(false)
+const updateResetComponent = (value) => {
+    resetComponent.value = value
 }
 </script>
 <template>
@@ -395,7 +454,10 @@ const updateResultResults = (value) => {
                 <div class="col-xl-8 col-lg-5">
                     <div class="card shadow" id="tabel-list">
                         <TabelListTimeline :count-tabels="countDataFiltered" :data="dataFiltered"
-                            :update-result="updateResult" @update:update-result="updateResultResults" />
+                            :-array-filter="ArrayBigObjects" :update-result="updateResult"
+                            @update:update-result="updateResultResults" :page-number="pageNumber"
+                            @update:updatePageNumber="updatePageNumber" :reset-data="resetComponent"
+                            @update:updateResetComponent="updateResetComponent" />
                     </div>
                 </div>
             </div>

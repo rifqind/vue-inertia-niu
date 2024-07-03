@@ -1,8 +1,9 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import axios from 'axios';
 import InfiniteLoading from 'v3-infinite-loading'
 import "v3-infinite-loading/lib/style.css"
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
     countTabels: {
@@ -17,24 +18,74 @@ const props = defineProps({
         type: Boolean,
         required: true,
         default: false,
+    },
+    ArrayFilter: {
+        type: Array,
+        required: false,
+        default: false,
+    },
+    pageNumber: {
+        type: Number,
+        required: false,
+        default: 1
+    },
+    resetData : {
+        type: Boolean,
+        required: true,
+        default: false,
     }
 })
 const displayedData = ref([])
+const filter = ref(props.ArrayFilter)
+const dinas = computed(() => getValueOfArray('id_dinas'))
+const tahun = computed(() => getValueOfArray('tahun'))
 // const loadInitialData = () => {
 //     displayedData.value = props.data.slice(0, 20)
 // }
+const getValueOfArray = (key) => {
+    const obj = filter.value.find(item => item.key == key)
+    return obj.valueFilter
+}
 watch(() => props.data, (value) => {
-    displayedData.value = value.slice(0, 20)
+    displayedData.value = value
 })
-const emits = defineEmits(['update:updateResult'])
-const loadMoreData = (state) => {
-    let nextData = props.data.slice(displayedData.value.length, displayedData.value.length + 20)
-    if (nextData.length) {
-        displayedData.value = displayedData.value.concat(nextData)
-        state.loaded()
-    } else {
-        (nextData.length == 0) ? emits('update:updateResult', true) : emits('update:updateResult', false)
-        state.complete()
+watch(() => props.resetData, (value) => {
+    if (value == true) {
+        displayedData.value = props.data
+        emits('update:updateResetComponent', false)
+    }
+})
+watch(() => props.ArrayFilter, (value) => {
+    filter.value = value
+})
+const emits = defineEmits(['update:updateResult', 'update:updatePageNumber', 'update:updateResetComponent'])
+const loadMoreData = async (state) => {
+    try {
+        const response = await axios.get(route('home'), {
+            params: {
+                currentPage: props.pageNumber, paginated: 20,
+                ArrayFilter: {
+                    tahun: tahun.value,
+                    kode: getValueOfArray('kode_wilayah'),
+                    dinas: dinas.value,
+                    subjek: getValueOfArray('id_subjek'),
+                    label: getValueOfArray('label'),
+                }
+            }
+        })
+        let nextData = response.data.tabels.data
+        // let nextData = props.data.slice(displayedData.value.length, displayedData.value.length + 20)
+        if (nextData.length) {
+            displayedData.value = displayedData.value.concat(nextData)
+            state.loaded()
+            emits('update:updatePageNumber', props.pageNumber + 1)
+        } else {
+            (nextData.length == 0) ? emits('update:updateResult', true) : emits('update:updateResult', false)
+            state.complete()
+        }
+
+    } catch (error) {
+        console.error('Error Fetching Data :', error)
     }
 }
 // onMounted(() => {

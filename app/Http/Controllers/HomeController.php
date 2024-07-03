@@ -13,6 +13,7 @@ use App\Models\Row;
 use App\Models\RowGroup;
 use App\Models\RowOrder;
 use App\Models\Statustables;
+use App\Models\Subject;
 use App\Models\Tabel;
 use App\Models\Turtahun;
 use Illuminate\Http\Request;
@@ -21,15 +22,23 @@ use Inertia\Inertia;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         //
-        $tabels = Statustables::where('status', 5)
-            ->leftJoin('tabels', 'statustables.id_tabel', '=', 'tabels.id')
-            ->leftJoin('dinas', 'tabels.id_dinas', '=', 'dinas.id')
-            ->leftJoin('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
-            ->leftJoin('subjects', 'tabels.id_subjek', '=', 'subjects.id')
-            ->get([
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Statustables::query();
+        $dataToCounted = $query
+            ->where('status', 5)
+            ->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
+            ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
+            ->join('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
+            ->join('subjects', 'tabels.id_subjek', '=', 'subjects.id')
+            ->orderBy('statustables.tahun', 'desc')
+            ->orderBy('statustables.updated_at', 'desc')
+            ->select([
                 'statustables.id as id_statustables',
                 'statustables.tahun',
                 'tabels.*',
@@ -37,10 +46,39 @@ class HomeController extends Controller
                 'dinas.nama as nama_dinas',
                 'master_wilayah.wilayah_fullcode as kode_wilayah',
                 'master_wilayah.label as nama_regions',
-                'subjects.id as id_subjects',
+                'subjects.id as id_subjects', 
                 'subjects.label as nama_subjects',
                 'statustables.updated_at as status_updated',
             ]);
+
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['tahun'])) {
+                $filter['tahun'] = array_values(array_filter($filter['tahun'], function($value) {
+                    return $value !== 'all';
+                }));
+                if (!empty($filter['tahun'])) $query->whereIn('statustables.tahun', $filter['tahun']);
+            } 
+            if (!empty($filter['kode'])) $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
+            if (!empty($filter['dinas'])) {
+                $filter['dinas'] = array_values(array_filter($filter['dinas'], function($value) {
+                    return $value !== 'all';
+                }));
+                if (!empty($filter['dinas'])) $query->whereIn('dinas.id', $filter['dinas']);
+            } 
+            if (!empty($filter['subjek'])) $query->whereIn('subjects.id', $filter['subjek']);
+            if (!empty($filter['label'])) {
+                $query
+                    ->where('master_wilayah.label', 'like', '%' . $filter['label'] . '%')
+                    ->orWhere('statustables.tahun', 'like', '%' . $filter['label'] . '%')
+                    ->orWhere('dinas.nama', 'like', '%' . $filter['label'] . '%')
+                    ->orWhere('subjects.label', 'like', '%' . $filter['label'] . '%')
+                    ->orWhere('tabels.label', 'like', '%' . $filter['label'] . '%')
+                    ->orWhere('statustables.updated_at', 'like', '%' . $filter['label'] . '%');
+            }
+        }
+        $countData = $dataToCounted->count();
+        $tabels = $query->paginate($paginated, ['*'], 'page', $currentPage);
         $dinas = [];
         $tempt_dinas = [];
         $provs = [];
@@ -48,20 +86,28 @@ class HomeController extends Controller
         $kecs = [];
         $desa = [];
         $subjects = [];
-        foreach ($tabels as $key => $tabel) {
+
+        $getIDtabel = Statustables::where('status', 5)->distinct()->pluck('id_tabel');
+        $getIDDinas = Tabel::whereIn('id', $getIDtabel)->distinct()->pluck('id_dinas');
+        $dinasUsed = Dinas::whereIn('id', $getIDDinas)
+            ->join('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+            ->select(['dinas.*', 'mw.label as label_region'])->get();
+        $getIDSubject = Tabel::whereIn('id', $getIDtabel)->distinct()->pluck('id_subjek');
+        $subjects = Subject::whereIn('id', $getIDSubject)->get();
+        foreach ($dinasUsed as $key => $value) {
             # code...
-            if (!isset($tempt_dinas[$tabel->id_dinas])) {
-                $tempt_dinas[$tabel->id_dinas] = [
-                    'value' => $tabel->id_dinas,
-                    'label' => $tabel->nama_dinas,
+            if (!isset($tempt_dinas[$value->id])) {
+                $tempt_dinas[$value->id] = [
+                    'value' => $value->id,
+                    'label' => $value->nama,
                 ];
             }
-            $text = $tabel->nama_regions;
+            $text = $value->label_region;
             $partOfText = explode(' ', $text);
             array_shift($partOfText);
             $modifiedText = implode(' ', $partOfText);
 
-            $kode = $tabel->kode_wilayah;
+            $kode = $value->wilayah_fullcode;
             $kabupaten_kode = substr($kode, 2, 2);
             $kecamatan_kode = substr($kode, 4, 3);
             $desa_kode = substr($kode, 7, 3);
@@ -99,10 +145,6 @@ class HomeController extends Controller
                     }
                 }
             }
-            $subjects[] = [
-                'id' => $tabel->id_subjects,
-                'label' => $tabel->nama_subjects,
-            ];
         }
         $provs[] = [
             'label' => 'SULAWESI UTARA',
@@ -111,14 +153,20 @@ class HomeController extends Controller
         $kabs = array_values(array_unique($kabs, SORT_REGULAR));
         $kecs = array_values(array_unique($kecs, SORT_REGULAR));
         $desa = array_values(array_unique($desa, SORT_REGULAR));
-        $wilayahs = (sizeof($tabels) > 0) ? array_merge($provs, $kabs) : [];
-
-        $subjects = array_values(array_unique($subjects, SORT_REGULAR));
-        $tahuns = Statustables::where('status', 5)->distinct()->get(['tahun as value', 'tahun as label']);
+        $wilayahs = (sizeof($dataToCounted->get()) > 0) ? array_merge($provs, $kabs) : [];
+        $tahuns = Statustables::where('status', 5)
+            ->distinct()
+            ->orderBy('tahun', 'desc')
+            ->get(['tahun as value', 'tahun as label']);
         $countfinals = Statustables::where('status', 5)->count();
-        $counttabels = $tabels->count();
         $dinas = array_values($tempt_dinas);
-        // dd($wilayahs);
+
+        if ($request->paginated) {
+            return response()->json([
+                'countTabels' => $countData,
+                'tabels' => $tabels,
+            ]);
+        }
         return Inertia::render('Home/Home', [
             'kecs' => $this->sortHome($kecs),
             'desa' => $this->sortHome($desa),
@@ -126,7 +174,8 @@ class HomeController extends Controller
             'dinas' => $dinas,
             'tabels' => $tabels,
             'subjects' => $subjects,
-            'counttabels' => $counttabels,
+            // 'counttabels' => $counttabels,
+            'counttabels' => $countData,
             'countfinals' => $countfinals,
             'tahuns' => $tahuns,
         ]);
