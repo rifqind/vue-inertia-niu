@@ -1019,6 +1019,8 @@ class TabelController extends Controller
     public function edit(string $id)
     {
         $tabel = Tabel::where('id', $id)->first();
+        $tabelList = Tabel::get(['id as value', 'label as label']);
+
         $daftar_dinas = Dinas::orderBy('wilayah_fullcode')->orderBy('nama')
             ->whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())
             ->get(['dinas.id as value', 'dinas.nama as label']);
@@ -1064,6 +1066,7 @@ class TabelController extends Controller
             'columnBase' => $columnBase,
             'rowBase' => $rowBase,
             'rows' => $rows,
+            'tabelList' => $tabelList,
         ]);
     }
 
@@ -1072,6 +1075,7 @@ class TabelController extends Controller
         $rowChangeList = $request->destroyer['rows'];
         $columnChangeList = $request->destroyer['columns'];
         $columnToDelete = $request->columnToDelete;
+        $transferTable = $request->transfer;
         try {
             //code...
             DB::beginTransaction();
@@ -1097,6 +1101,17 @@ class TabelController extends Controller
                 $thisDataContent = Datacontent::where('id_tabel', $request->id)
                     ->whereIn('id_column', $columnToDelete);
                 $thisDataContent->delete();
+            }
+
+            if (!empty($transferTable)) {
+                $thisDataContent = Datacontent::where('id_tabel', $request->id);
+                $thisDataContent->update([
+                    'id_tabel' => $transferTable,
+                ]);
+                $thisStatus = Statustables::where('id_tabel', $request->id);
+                $thisStatus->update([
+                    'id_tabel' => $transferTable,
+                ]);
             }
             DB::commit();
             return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil mengubah struktur!');

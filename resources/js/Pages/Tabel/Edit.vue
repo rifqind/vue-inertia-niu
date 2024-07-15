@@ -57,6 +57,7 @@ const form = useForm({
         columns: [],
     },
     columnToDelete: [],
+    transfer: null,
     _token: null,
 });
 
@@ -182,6 +183,7 @@ watch(
 );
 </script>
 <template>
+
     <Head title="Edit Tabel" />
     <SpinnerBorder v-if="triggerSpinner" />
     <GeneralLayout>
@@ -200,232 +202,142 @@ watch(
                         <div class="card-body">
                             <div class="mb-3">
                                 <label for="dinas">Produsen Data</label>
-                                <Multiselect
-                                    v-model="form.tabel.id_dinas"
-                                    :options="dinasDrop.options"
-                                    placeholder="-- Pilih Produsen Data --"
-                                    :searchable="true"
-                                />
-                                <div
-                                    class="text-danger text-left"
-                                    v-if="true"
-                                    id="error-dinas"
-                                ></div>
+                                <Multiselect v-model="form.tabel.id_dinas" :options="dinasDrop.options"
+                                    placeholder="-- Pilih Produsen Data --" :searchable="true" />
+                                <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
                             </div>
                             <div class="mb-3">
                                 <label for="nomor">Nomor Tabel</label>
-                                <input
-                                    v-model="form.tabel.nomor"
-                                    type="text"
-                                    id="nomor"
-                                    class="form-control"
-                                    placeholder="1.1.1"
-                                />
-                                <div
-                                    class="text-danger text-left"
-                                    v-if="true"
-                                    id="error-nomor"
-                                ></div>
+                                <input v-model="form.tabel.nomor" type="text" id="nomor" class="form-control"
+                                    placeholder="1.1.1" />
+                                <div class="text-danger text-left" v-if="true" id="error-nomor"></div>
                             </div>
                             <div class="mb-3">
                                 <label for="judul">Judul Tabel</label>
-                                <input
-                                    v-model="form.tabel.label"
-                                    type="text"
-                                    id="judul"
-                                    class="form-control"
-                                    placeholder="Isikan judul tabel"
-                                />
-                                <div
-                                    class="text-danger text-left"
-                                    v-if="true"
-                                    id="error-judul"
-                                ></div>
+                                <input v-model="form.tabel.label" type="text" id="judul" class="form-control"
+                                    placeholder="Isikan judul tabel" />
+                                <div class="text-danger text-left" v-if="true" id="error-judul"></div>
                             </div>
                             <div class="mb-3">
                                 <label for="subjek">Subjek Tabel</label>
-                                <Multiselect
-                                    v-model="form.tabel.id_subjek"
-                                    :options="subjectDrop.options"
-                                    placeholder="-- Pilih Subjek --"
-                                    :searchable="true"
-                                />
-                                <div
-                                    class="text-danger text-left"
-                                    v-if="true"
-                                    id="error-subjek"
-                                ></div>
+                                <Multiselect v-model="form.tabel.id_subjek" :options="subjectDrop.options"
+                                    placeholder="-- Pilih Subjek --" :searchable="true" />
+                                <div class="text-danger text-left" v-if="true" id="error-subjek"></div>
                             </div>
                             <div class="mb-3">
                                 <label for="unit">Satuan/Unit Data</label>
-                                <input
-                                    v-model="form.tabel.unit"
-                                    type="text"
-                                    id="unit"
-                                    class="form-control"
-                                    placeholder="Isikan satuan/unit data"
-                                />
-                                <div
-                                    class="text-danger text-left"
-                                    v-if="true"
-                                    id="error-unit"
-                                ></div>
+                                <input v-model="form.tabel.unit" type="text" id="unit" class="form-control"
+                                    placeholder="Isikan satuan/unit data" />
+                                <div class="text-danger text-left" v-if="true" id="error-unit"></div>
                             </div>
                         </div>
                     </div>
-                    <div
-                        class="card"
-                        v-if="page.props.auth.user.username == 'niu'"
-                    >
+                    <div class="card" v-if="page.props.auth.user.username == 'niu'">
                         <div class="card-header">
-                            <label class="h5 mb-0"
-                                >The One Who Destroy The Database</label
-                            >
+                            <label class="h5 mb-0">Transfer Column to Another Table</label>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label>Pilih Tabel Tujuan :</label>
+                                <Multiselect v-model="form.transfer" :searchable="true" :options="page.props.tabelList"
+                                    placeholder="-- Pilih Tabel --" />
+                            </div>
+                            <div class="mb-3">
+                                <button @click.prevent="changeStructure" type="button"
+                                    class="btn btn-sm bg-success-fordone">
+                                    Simpan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" v-if="page.props.auth.user.username == 'niu'">
+                        <div class="card-header">
+                            <label class="h5 mb-0">The One Who Destroy The Database</label>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 <label>Daftar Perubahan di Kolom</label>
-                                <Multiselect
-                                    v-model="columnChange.value"
-                                    mode="tags"
-                                    :options="columnChange.options"
-                                    :placeholder="'-- Daftar Perubahan di Kolom --'"
-                                />
+                                <Multiselect v-model="columnChange.value" mode="tags" :options="columnChange.options"
+                                    :placeholder="'-- Daftar Perubahan di Kolom --'" />
                             </div>
                             <div class="mb-3 row">
                                 <div class="col">
-                                    <label for="column-groups"
-                                        >Daftar Kolom</label
-                                    >
-                                    <Multiselect
-                                        v-model="columnLeft"
-                                        :options="columns"
-                                        :searchable="true"
-                                        placeholder="-- Pilih Kolom --"
-                                    />
+                                    <label for="column-groups">Daftar Kolom</label>
+                                    <Multiselect v-model="columnLeft" :options="columns" :searchable="true"
+                                        placeholder="-- Pilih Kolom --" />
                                 </div>
                                 <div class="col">
-                                    <label for="column-groups"
-                                        >Kolom Pengganti</label
-                                    >
-                                    <Multiselect
-                                        v-model="columnRight"
-                                        :options="page.props.columnBase"
-                                        :searchable="true"
-                                        placeholder="-- Pilih Kolom Pengganti --"
-                                    />
+                                    <label for="column-groups">Kolom Pengganti</label>
+                                    <Multiselect v-model="columnRight" :options="page.props.columnBase"
+                                        :searchable="true" placeholder="-- Pilih Kolom Pengganti --" />
                                 </div>
                                 <div class="col-1">
                                     <label><br /></label>
-                                    <button
-                                        @click.prevent="addColumnChange"
-                                        type="button"
-                                        class="btn btn-sm bg-success-fordone"
-                                    >
+                                    <button @click.prevent="addColumnChange" type="button"
+                                        class="btn btn-sm bg-success-fordone">
                                         Tambah
                                     </button>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label>Daftar Perubahan di Baris</label>
-                                <Multiselect
-                                    v-model="rowChange.value"
-                                    mode="tags"
-                                    :options="rowChange.options"
-                                    :placeholder="'-- Daftar Perubahan di Baris --'"
-                                />
+                                <Multiselect v-model="rowChange.value" mode="tags" :options="rowChange.options"
+                                    :placeholder="'-- Daftar Perubahan di Baris --'" />
                             </div>
                             <div class="mb-3 row">
                                 <div class="col">
-                                    <label for="column-groups"
-                                        >Daftar Baris</label
-                                    >
-                                    <Multiselect
-                                        v-model="rowLeft"
-                                        :options="rows"
-                                        :searchable="true"
-                                        placeholder="-- Pilih Baris --"
-                                    />
+                                    <label for="column-groups">Daftar Baris</label>
+                                    <Multiselect v-model="rowLeft" :options="rows" :searchable="true"
+                                        placeholder="-- Pilih Baris --" />
                                 </div>
                                 <div class="col">
-                                    <label for="column-groups"
-                                        >Baris Pengganti</label
-                                    >
-                                    <Multiselect
-                                        v-model="rowRight"
-                                        :options="page.props.rowBase"
-                                        :searchable="true"
-                                        placeholder="-- Pilih Baris Pengganti --"
-                                    />
+                                    <label for="column-groups">Baris Pengganti</label>
+                                    <Multiselect v-model="rowRight" :options="page.props.rowBase" :searchable="true"
+                                        placeholder="-- Pilih Baris Pengganti --" />
                                 </div>
                                 <div class="col-1">
                                     <label><br /></label>
-                                    <button
-                                        @click.prevent="addRowChange"
-                                        type="button"
-                                        class="btn btn-sm bg-success-fordone"
-                                    >
+                                    <button @click.prevent="addRowChange" type="button"
+                                        class="btn btn-sm bg-success-fordone">
                                         Tambah
                                     </button>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <button
-                                    @click.prevent="changeStructure"
-                                    type="button"
-                                    class="btn btn-sm bg-success-fordone"
-                                >
+                                <button @click.prevent="changeStructure" type="button"
+                                    class="btn btn-sm bg-success-fordone">
                                     Simpan
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div
-                        class="card"
-                        v-if="page.props.auth.user.username == 'niu'"
-                    >
+                    <div class="card" v-if="page.props.auth.user.username == 'niu'">
                         <div class="card-header">
                             <label class="h5 mb-0">Hapus Kolom Dulu</label>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 <label>Daftar Kolom yang Dihapus</label>
-                                <Multiselect
-                                    v-model="form.columnToDelete"
-                                    mode="tags"
-                                    :options="columnDelete"
-                                    :placeholder="'-- Daftar Kolom Dihapus --'"
-                                />
+                                <Multiselect v-model="form.columnToDelete" mode="tags" :options="columnDelete"
+                                    :placeholder="'-- Daftar Kolom Dihapus --'" />
                             </div>
                             <div class="mb-3 row">
                                 <div class="col">
-                                    <label for="column-groups"
-                                        >Daftar Kolom</label
-                                    >
-                                    <Multiselect
-                                        v-model="columnLeft"
-                                        :options="thisColumn"
-                                        :searchable="true"
-                                        placeholder="-- Pilih Kolom --"
-                                    />
+                                    <label for="column-groups">Daftar Kolom</label>
+                                    <Multiselect v-model="columnLeft" :options="thisColumn" :searchable="true"
+                                        placeholder="-- Pilih Kolom --" />
                                 </div>
                                 <div class="col-1">
                                     <label><br /></label>
-                                    <button
-                                        @click.prevent="addColumnDelete"
-                                        type="button"
-                                        class="btn btn-sm bg-success-fordone"
-                                    >
+                                    <button @click.prevent="addColumnDelete" type="button"
+                                        class="btn btn-sm bg-success-fordone">
                                         Tambah
                                     </button>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <button
-                                    @click.prevent="changeStructure"
-                                    type="button"
-                                    class="btn btn-sm bg-success-fordone"
-                                >
+                                <button @click.prevent="changeStructure" type="button"
+                                    class="btn btn-sm bg-success-fordone">
                                     Simpan
                                 </button>
                             </div>
@@ -435,16 +347,13 @@ watch(
             </form>
             <div class="mb-2 d-flex">
                 <div class="flex-grow-1">
-                    <Link
-                        :href="route('tabel.master')"
-                        class="btn btn-light border"
-                        ><font-awesome-icon icon="fas fa-chevron-left" />
-                        Kembali
+                    <Link :href="route('tabel.master')" class="btn btn-light border"><font-awesome-icon
+                        icon="fas fa-chevron-left" />
+                    Kembali
                     </Link>
                 </div>
-                <a @click.prevent="submit" class="btn bg-success-fordone"
-                    ><font-awesome-icon icon="fa-solid fa-save" /> Simpan</a
-                >
+                <a @click.prevent="submit" class="btn bg-success-fordone"><font-awesome-icon icon="fa-solid fa-save" />
+                    Simpan</a>
             </div>
         </div>
     </GeneralLayout>
