@@ -16,6 +16,7 @@ const page = usePage()
 var uObject = page.props.users.data
 var users = ref(uObject)
 const toggleFlash = ref(false)
+const toggleFlashError = ref(false)
 const searchUsername = ref(null)
 const searchNama = ref(null)
 const searchInstansi = ref(null)
@@ -119,6 +120,7 @@ const deleteForm = async function () {
     form.post(route('users.delete'), {
         onSuccess: function () {
             if (page.props.flash.message) toggleFlash.value = true
+            if (page.props.flash.error) toggleFlashError.value = true
             form.reset()
             fetchData()
         },
@@ -224,6 +226,8 @@ const fetchData = async () => {
             </div>
         </div>
         <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
+        <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
+            :types="'alert-danger'" />
         <table class="table table-hover table-bordered table-search" ref="tabelUser" id="tabel-user">
             <thead>
                 <tr class="bg-info-fordone">

@@ -211,8 +211,14 @@ class UserController extends Controller
         //
         $id = $request->id;
         // dd($id);
-        User::destroy($id);
-        // return response()->json('Berhasil Hapus');
-        return redirect()->route('users.index')->with('message', 'Berhasil menghapus akun pengguna tersebut');
+        try {
+            //code...
+            User::destroy($id);
+            // return response()->json('Berhasil Hapus');
+            return redirect()->route('users.index')->with('message', 'Berhasil menghapus akun pengguna tersebut');
+        } catch (\Throwable $th) {
+            //throw $th;
+            return redirect()->route('users.index')->with('error', 'Gagal menghapus akun pengguna tersebut, akun ini sudah digunakan');
+        }
     }
 }

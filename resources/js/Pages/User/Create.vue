@@ -123,6 +123,8 @@ const submit = async function () {
                             </div>
                             <div class="col-7 d-flex flex-column">
                                 <input type="password" id="password" v-model="form.password" class="form-control">
+                                <div class="text-danger text-left" v-if="form.errors.password"
+                                    id="error-password">{{ form.errors.password }}</div>
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -133,7 +135,7 @@ const submit = async function () {
                                 <input type="password" id="password_confirmation" v-model="form.password_confirmation"
                                     class="form-control">
                                 <div class="text-danger text-left" v-if="form.errors.password_confirmation"
-                                    id="error-password">{{ form.errors.password_confirmation }}</div>
+                                    id="error-password_confirmation">{{ form.errors.password_confirmation }}</div>
                             </div>
                         </div>
                         <div class="text-right">
