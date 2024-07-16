@@ -314,9 +314,16 @@ class TabelController extends Controller
             }
             if (!empty($filter['nama_dinas'])) $query->where('dinas.nama', 'like', '%' . $filter['nama_dinas'] . '%');
             if (!empty($filter['columns'])) {
-                $targetTabels = Datacontent::join('columns as c', 'c.id', '=', 'datacontents.id_column')
-                    ->where('c.label', 'like', '%' . $filter['columns'] . '%')->pluck('datacontents.id_tabel')->unique();
-                $query->whereIn('tabels.id', $targetTabels);
+                if ($filter['columns'] == 'tidak ada data') {
+                    $targetTabels = Tabel::leftJoin('statustables', 'statustables.id_tabel', '=', 'tabels.id')
+                        ->whereNull('statustables.id_tabel')
+                        ->pluck('tabels.id'); // Optionally, specify the columns you want to retrieve
+                    $query->whereIn('tabels.id', $targetTabels);
+                } else {
+                    $targetTabels = Datacontent::join('columns as c', 'c.id', '=', 'datacontents.id_column')
+                        ->where('c.label', 'like', '%' . $filter['columns'] . '%')->pluck('datacontents.id_tabel')->unique();
+                    $query->whereIn('tabels.id', $targetTabels);
+                }
             }
             if (!empty($filter['row_label'])) {
                 $targetTabels = Datacontent::join('rows as r', 'r.id', '=', 'datacontents.id_row')
@@ -1058,6 +1065,15 @@ class TabelController extends Controller
             # code...
             $value->label = $value->rowGroup . ' - ' . $value->label;
         }
+
+        $transferStatus = Statustables::join('tabels as t', 't.id', '=', 'statustables.id_tabel')
+            ->where('id_tabel', $id)
+            ->get(['statustables.tahun as value', 't.label as label'])
+            ->map(function ($item) {
+                $item->label = $item->label . ' - ' . $item->value;
+                return $item;
+            });
+
         return Inertia::render('Tabel/Edit', [
             'tabel' => $tabel,
             'dinas' => $daftar_dinas,
@@ -1067,6 +1083,7 @@ class TabelController extends Controller
             'rowBase' => $rowBase,
             'rows' => $rows,
             'tabelList' => $tabelList,
+            'transferStatus' => $transferStatus,
         ]);
     }
 
@@ -1076,6 +1093,9 @@ class TabelController extends Controller
         $columnChangeList = $request->destroyer['columns'];
         $columnToDelete = $request->columnToDelete;
         $transferTable = $request->transfer;
+        // $columnChangeToTransfer = $request->columnChangeToTransfer;
+        $columnToTransfer = $request->columnToTransfer;
+
         try {
             //code...
             DB::beginTransaction();
@@ -1088,6 +1108,23 @@ class TabelController extends Controller
                     $thisDataContent->update(['id_row' => $data[1]]);
                 }
             }
+
+            if (!empty($columnToTransfer)) {
+                foreach ($columnToTransfer as $key => $value) {
+                    # code...
+                    $data = explode('->', $value);
+                    $thisDataContent = Datacontent::where('id_tabel', $request->id)
+                        ->where('id_column', $data[0]);
+                    $thisDataContent->update(['tahun' => $data[1]]);
+                }
+                $thisStatus = Statustables::where('id_tabel', $request->id)
+                    ->orderBy('updated_at', 'asc')
+                    ->first();
+                $toUpdateStatus = Statustables::where('id_tabel', $request->id)
+                    ->where('id', '!=', $thisStatus->id);
+                $toUpdateStatus->update(['status' => $thisStatus->status]);
+            }
+
             if (!empty($columnChangeList)) {
                 foreach ($columnChangeList as $key => $value) {
                     # code...
@@ -1097,6 +1134,7 @@ class TabelController extends Controller
                     $thisDataContent->update(['id_column' => $data[1]]);
                 }
             }
+
             if (!empty($columnToDelete)) {
                 $thisDataContent = Datacontent::where('id_tabel', $request->id)
                     ->whereIn('id_column', $columnToDelete);
@@ -1113,6 +1151,7 @@ class TabelController extends Controller
                     'id_tabel' => $transferTable,
                 ]);
             }
+
             DB::commit();
             return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil mengubah struktur!');
         } catch (\Throwable $th) {

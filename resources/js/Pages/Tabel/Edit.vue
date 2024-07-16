@@ -33,6 +33,11 @@ const columnChange = ref({
 const columnTemp = ref([]);
 const thisColumn = ref(page.props.columns);
 
+const columnTransfer = ref({
+    value: [],
+    options: [],
+})
+
 const rowLeft = ref(null);
 const rowRight = ref(null);
 const rowChange = ref({
@@ -57,6 +62,7 @@ const form = useForm({
         columns: [],
     },
     columnToDelete: [],
+    columnToTransfer: [],
     transfer: null,
     _token: null,
 });
@@ -145,11 +151,33 @@ const addColumnDelete = () => {
         columnLeft.value = null;
     }
 };
+const addTransferColumn = () => {
+    if (columnLeft.value && columnRight.value) {
+        let columnLabel = thisColumn.value.filter(
+            (x) => x.value == columnLeft.value
+        );
+        let columnLabel2 = page.props.transferStatus.filter(
+            (x) => x.value == columnRight.value
+        );
+        let theArray = columnLeft.value + "->" + columnRight.value;
+        let arrayLabel = columnLabel[0].label + " -> " + columnLabel2[0].label;
+        let arrayValue = theArray;
+        columnTransfer.value.options.push({
+            value: arrayValue,
+            label: arrayLabel,
+        });
+        columnTransfer.value.value.push(arrayValue);
+        // columnTemp.value.push(columnLeft.value);
+        columnLeft.value = null;
+        columnRight.value = null;
+    }
+}
 const changeStructure = async () => {
     const response = await axios.get(route("token"));
     form._token = response.data;
     form.destroyer.columns = columnChange.value.value;
     form.destroyer.rows = rowChange.value.value;
+    form.columnToTransfer = columnTransfer.value.value
     if (form.processing) return;
     form.post(route("tabel.changeStructure"), {
         onBefore: function () {
@@ -241,6 +269,43 @@ watch(
                                 <label>Pilih Tabel Tujuan :</label>
                                 <Multiselect v-model="form.transfer" :searchable="true" :options="page.props.tabelList"
                                     placeholder="-- Pilih Tabel --" />
+                            </div>
+                            <div class="mb-3">
+                                <button @click.prevent="changeStructure" type="button"
+                                    class="btn btn-sm bg-success-fordone">
+                                    Simpan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" v-if="page.props.auth.user.username == 'niu'">
+                        <div class="card-header">
+                            <label class="h5 mb-0">Transfer Column to Another Year</label>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label>Daftar Transfer</label>
+                                <Multiselect v-model="columnTransfer.value" mode="tags"
+                                    :options="columnTransfer.options" :placeholder="'-- Daftar Transfer --'" />
+                            </div>
+                            <div class="mb-3 row">
+                                <div class="col">
+                                    <label for="column-groups">Daftar Kolom</label>
+                                    <Multiselect v-model="columnLeft" :options="thisColumn" :searchable="true"
+                                        placeholder="-- Pilih Kolom --" />
+                                </div>
+                                <div class="col">
+                                    <label for="column-groups">Tabel Tahun Pengganti</label>
+                                    <Multiselect v-model="columnRight" :options="page.props.transferStatus"
+                                        :searchable="true" placeholder="-- Pilih Tabel Tahun --" />
+                                </div>
+                                <div class="col-1">
+                                    <label><br /></label>
+                                    <button @click.prevent="addTransferColumn" type="button"
+                                        class="btn btn-sm bg-success-fordone">
+                                        Tambah
+                                    </button>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <button @click.prevent="changeStructure" type="button"

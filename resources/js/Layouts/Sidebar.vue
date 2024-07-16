@@ -63,14 +63,15 @@ const toggleMenuOpen = function (x) {
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :navIcon="'fa-solid fa-building'"
-                        :menuOpen="menuOpenMetadata || currentRoute == 'metavar.index' || currentRoute == 'metavar.lists'" :toggleMenuOpen="toggleMenuOpen"
-                        :params="'meta'">
+                        :menuOpen="menuOpenMetadata || currentRoute == 'metavar.index' || currentRoute == 'metavar.lists'"
+                        :toggleMenuOpen="toggleMenuOpen" :params="'meta'">
 
                         <template v-slot:label> Kelola Metadata</template>
 
                         <template v-slot:content>
                             <NavLinkSidebar :navIcon="'fa-solid fa-list-ol'" :href="route('metavar.index')"
-                                :currentRoute="currentRoute == 'metavar.index' || currentRoute == 'metavar.lists'"> Variabel</NavLinkSidebar>
+                                :currentRoute="currentRoute == 'metavar.index' || currentRoute == 'metavar.lists'">
+                                Variabel</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
                     <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-users'"
