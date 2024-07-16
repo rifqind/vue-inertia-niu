@@ -107,6 +107,7 @@ class UserController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
             'noHp' => $request->noHp,
             'id_dinas' => $request->id_dinas,
         ]);
