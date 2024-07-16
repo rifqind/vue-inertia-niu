@@ -64,6 +64,7 @@ const form = useForm({
     columnToDelete: [],
     columnToTransfer: [],
     transfer: null,
+    year: [],
     _token: null,
 });
 
@@ -156,7 +157,7 @@ const addTransferColumn = () => {
         let columnLabel = thisColumn.value.filter(
             (x) => x.value == columnLeft.value
         );
-        let columnLabel2 = page.props.transferStatus.filter(
+        let columnLabel2 = yearFor.value.filter(
             (x) => x.value == columnRight.value
         );
         let theArray = columnLeft.value + "->" + columnRight.value;
@@ -209,6 +210,24 @@ watch(
         thisRow.value = value;
     }
 );
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 11 }, (_, index) => currentYear - index);
+const yearDrop = ref({
+    value: null,
+    options: [],
+});
+yearDrop.value.options = years.map((year) => ({
+    label: year.toString(),
+    value: year.toString(),
+}));
+const yearFor = computed(() => {
+    return form.year.map((x) => {
+        return {
+            label: x,
+            value: x
+        };
+    });
+})
 </script>
 <template>
 
@@ -284,6 +303,11 @@ watch(
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
+                                <label>Daftar Tahun</label>
+                                <Multiselect v-model="form.year" mode="tags" :searchable="true"
+                                    :options="yearDrop.options" :placeholder="'-- Daftar Tahun --'" />
+                            </div>
+                            <div class="mb-3">
                                 <label>Daftar Transfer</label>
                                 <Multiselect v-model="columnTransfer.value" mode="tags"
                                     :options="columnTransfer.options" :placeholder="'-- Daftar Transfer --'" />
@@ -296,7 +320,7 @@ watch(
                                 </div>
                                 <div class="col">
                                     <label for="column-groups">Tabel Tahun Pengganti</label>
-                                    <Multiselect v-model="columnRight" :options="page.props.transferStatus"
+                                    <Multiselect v-model="columnRight" :options="yearFor"
                                         :searchable="true" placeholder="-- Pilih Tabel Tahun --" />
                                 </div>
                                 <div class="col-1">

@@ -1093,8 +1093,8 @@ class TabelController extends Controller
         $columnChangeList = $request->destroyer['columns'];
         $columnToDelete = $request->columnToDelete;
         $transferTable = $request->transfer;
-        // $columnChangeToTransfer = $request->columnChangeToTransfer;
         $columnToTransfer = $request->columnToTransfer;
+        $yearFor = $request->year;
 
         try {
             //code...
@@ -1110,6 +1110,15 @@ class TabelController extends Controller
             }
 
             if (!empty($columnToTransfer)) {
+                foreach ($yearFor as $key => $value) {
+                    # code...
+                    $newStatus = Statustables::create([
+                        'id_tabel' => $request->id,
+                        'tahun' => $value,
+                        'status' => '1',
+                        'edited_by' => auth()->user()->id,
+                    ]);
+                }
                 foreach ($columnToTransfer as $key => $value) {
                     # code...
                     $data = explode('->', $value);
