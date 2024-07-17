@@ -200,6 +200,70 @@ const indexExpanded = ref(Array(page.props.columns.length).fill(true))
 page.props.columns.forEach((column, index) => {
     if (column.label.length > 30) indexExpanded.value[index] = false
 })
+
+// const setFormatGermanyNumber = () => {
+//     firstClick.value = false
+//     form.dataContents.forEach((value) => {
+//         // console.log(Number(value.value))
+//         let result
+//         let numericValue = Number(value.value)
+//         if (!Number.isNaN(numericValue))
+//             result = numericValue.toLocaleString('de-DE')
+//         else {
+//             let temp = value.value
+//             let SpaceThousand = temp.replace(' ', '')
+//             if (!Number.isNaN(Number(SpaceThousand))) {
+//                 result = Number(SpaceThousand).toLocaleString('de-DE')
+//                 return //want to next iteration
+//             }
+//             let ComaWithoutThousand = temp.replace(',', '.')
+//             if (!Number.isNaN(Number(ComaWithoutThousand))) {
+//                 result = Number(ComaWithoutThousand).toLocaleString('de-DE')
+//                 return //want to next iteration
+//             }
+//             let ComaThousand = temp.replace(',', '')
+//             //still confuse
+//         }
+//     })
+// }
+const setFormatGermanyNumber = () => {
+    firstClick.value = false;
+
+    form.dataContents.forEach((item) => {
+        let result;
+        let temp = item.value;
+
+        // Remove spaces
+        temp = temp.replace(/\s+/g, '');
+
+        // Check for commas
+        if (temp.includes(',')) {
+            // Check if it's a decimal point (e.g., 27,924506)
+            let decimalMatch = temp.match(/,\d{2}$/);
+            if (decimalMatch) {
+                // Replace comma with dot for decimal point
+                temp = temp.replace(',', '.');
+            } else {
+                // Remove all commas for thousand separators
+                temp = temp.replace(/,/g, '');
+            }
+        }
+
+        // Convert the cleaned string to a number
+        let numericValue = Number(temp);
+
+        if (!Number.isNaN(numericValue)) {
+            // Format the number to German format
+            result = numericValue.toLocaleString('de-DE');
+        }
+
+        // Update the value only if it was successfully formatted
+        if (result) {
+            item.value = result;
+        }
+    });
+};
+const firstClick = ref(true)
 </script>
 <template>
 
@@ -261,8 +325,9 @@ page.props.columns.forEach((column, index) => {
                                 <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
                                     <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
                                         <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                                            <input type="text" class="w-100 text-center" :id="setId(nodeRow, nodeColumn)"
-                                                :value="getData(nodeRow, nodeColumn)" :disabled="inputDisabled"
+                                            <input type="text" class="w-100 text-center"
+                                                :id="setId(nodeRow, nodeColumn)" :value="getData(nodeRow, nodeColumn)"
+                                                :disabled="inputDisabled"
                                                 @paste="(event) => { handlePaste(event, nodeRow, nodeColumn) }"
                                                 @input="(event) => { handleInput(event, nodeRow, nodeColumn) }">
                                         </td>
@@ -329,6 +394,8 @@ page.props.columns.forEach((column, index) => {
                     class="btn bg-success-fordone save-send" id="save-table"><font-awesome-icon
                         icon="fas fa-paper-plane" />
                     Kirim</button>
+                <button v-if="firstClick && defineButton(page.props.auth.user.role, 'right')" class="btn bg-info mr-2"
+                    @click="setFormatGermanyNumber" id="save-table">Format Angka</button>
                 <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'reject')"
                     class="btn badge-status-empat mr-2" id="save-table"><font-awesome-icon icon="fas fa-ban" />
                     Reject</button>

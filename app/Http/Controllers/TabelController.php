@@ -1267,6 +1267,12 @@ class TabelController extends Controller
         try {
             //code...
             DB::beginTransaction();
+            foreach ($data as $item) {
+                Datacontent::where('id', $item['id'])
+                    ->update([
+                        'value' => $item['value']
+                    ]);
+            }
             Statustables::where('id_tabel', $data[0]['id_tabel'])
                 ->where('tahun', $data[0]['tahun'])
                 ->update([
