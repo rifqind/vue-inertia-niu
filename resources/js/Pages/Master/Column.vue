@@ -10,6 +10,7 @@ import FlashMessage from '@/Components/FlashMessage.vue';
 import Multiselect from '@vueform/multiselect';
 import { GoDownload } from '@/download'
 import { computed } from 'vue';
+import * as XLSX from 'xlsx'
 
 defineComponent({
     Multiselect
@@ -21,7 +22,6 @@ const columnGroups = page.props.column_groups
 const createModalStatus = ref(false)
 const deleteModalStatus = ref(false)
 const toggleFlash = ref(false)
-const toggleFlashError = ref(false)
 const searchLabel = ref(null)
 const searchColumnGroup = ref(null)
 const triggerSpinner = ref(false)
@@ -29,6 +29,7 @@ const columnsFetched = ref(null)
 const modalTitle = ref('Tambah Kolom Baru')
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
+const uploadModal = ref(false)
 const colGroupsDrop = ref({
     value: null,
     options: columnGroups
@@ -76,6 +77,7 @@ const form = useForm({
     id: null,
     label: null,
     id_column_groups: null,
+    fileUpload: null,
     _token: null,
 })
 const isUpdate = ref(false)
@@ -117,6 +119,7 @@ const submit = async function () {
             isUpdate.value = false
             triggerSpinner.value = true
             createModalStatus.value = false
+            uploadModal.value = false
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
@@ -235,6 +238,29 @@ const fetchData = async () => {
         console.error('Error fetching data: ', error)
     }
 }
+const handleUpload = (e) => {
+    let fileS = e.target.files ? e.target.files[0] : null
+    if (fileS) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            /* Parse data */
+            const bstr = e.target.result;
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            /* Get first worksheet */
+            const wsname = wb.SheetNames[0];
+            const ws = wb.Sheets[wsname];
+            /* Convert array of arrays */
+            const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            // console.log(data)
+            form.fileUpload = data
+        }
+        reader.readAsBinaryString(fileS)
+        // console.log(result)
+    }
+}
+const downloadTemplate = () => {
+    window.location.href = '/download-template/columns-template'
+}
 </script>
 <template>
 
@@ -246,6 +272,8 @@ const fetchData = async () => {
                 <div class="h4 flex-grow-1">
                     Daftar Kolom
                 </div>
+                <button class="btn bg-info mr-1" @click="uploadModal = !uploadModal"><font-awesome-icon
+                    icon="fa-solid fa-file" /></button>
                 <button class="btn bg-success-fordone mr-2" title="Download"
                     @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
                 <a @click="createModalStatus = true" class="btn bg-info-fordone"><font-awesome-icon
@@ -347,6 +375,26 @@ const fetchData = async () => {
                 </template>
                 <template #modalFunction>
                     <button id="" type="button" class="btn btn-sm bg-success-fordone" :disabled="form.processing"
+                        @click.prevent="submit">Simpan</button>
+                </template>
+            </ModalBs>
+            <ModalBs :ModalStatus="uploadModal" @close="uploadModal = false" :title="'Tambah dengan Template'">
+                <template #modalBody>
+                    <div class="mb-3 row">
+                        <div class="col-6">
+                            <label>Download Template</label>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="btn btn-sm bg-success-fordone"
+                                @click="downloadTemplate">Download</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <input type="file" @change="handleUpload" class="form-control">
+                    </div>
+                </template>
+                <template #modalFunction>
+                    <button id="" type="button" class="btn btn-sm bg-success-fordone"
                         @click.prevent="submit">Simpan</button>
                 </template>
             </ModalBs>

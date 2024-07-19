@@ -67,17 +67,45 @@ class RowGroupController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'label' => 'required',
-        ]);
-        if ($request->id) {
-            $updated = RowGroup::where('id', $request->id)->update(['label' => $request->label]);
-            return redirect()->route('row_group.index')->with('message', 'Berhasil mengedit kelompok kolom');
+        if ($request->fileUpload) {
+            $fileData = $request->fileUpload;
+            // dd($fileData);
+            if ($fileData[0][0] != 'label') {
+                return redirect()->route('row_group.index')->with('message', 'Gagal Upload, tidak sesuai template');
+            };
+            foreach ($fileData as $key => $value) {
+                # code...
+                if ($key > 0) {
+                    // Check if the value is empty
+                    if (empty($value[0])) {
+                        return redirect()->route('row_group.index')->with('error', 'Gagal Upload, kolom label tidak boleh kosong');
+                    }
+
+                    // Check for uniqueness in a case-insensitive manner
+                    $exists = RowGroup::whereRaw('LOWER(label) = ?', [strtolower($value[0])])->exists();
+                    if ($exists) {
+                        return redirect()->route('row_group.index')->with('error', 'Gagal Upload, label ' . $value[0] . ' sudah ada');
+                    }
+
+                    $insertedRow = RowGroup::create([
+                        'label' => $value[0]
+                    ]);
+                }
+            }
+            return redirect()->route('row_group.index')->with('message', 'Berhasil menambah kelompok baris baru');
+        } else {
+            $request->validate([
+                'label' => 'required',
+            ]);
+            if ($request->id) {
+                $updated = RowGroup::where('id', $request->id)->update(['label' => $request->label]);
+                return redirect()->route('row_group.index')->with('message', 'Berhasil mengedit kelompok kolom');
+            }
+            $insertedRow = RowGroup::create($request->validate([
+                'label' => 'required',
+            ]));
+            return redirect()->route('row_group.index')->with('message', 'Berhasil menambah kelompok kolom baru');
         }
-        $insertedRow = RowGroup::create($request->validate([
-            'label' => 'required',
-        ]));
-        return redirect()->route('row_group.index')->with('message', 'Berhasil menambah kelompok kolom baru');
     }
 
     /**

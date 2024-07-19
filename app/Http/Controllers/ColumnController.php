@@ -69,27 +69,64 @@ class ColumnController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'label' => ['required', 'array'],
-            'label.*' => ['required', 'string'],
-            'id_column_groups' => 'required',
-        ]);
-        // dd($validatedData['label']);
-        if ($request->id) {
-            $updated = Column::where('id', $request->id)->update([
-                'label' => $validatedData['label'][0],
-                'id_column_groups' => $validatedData['id_column_groups'],
+        if ($request->fileUpload) {
+            $fileData = $request->fileUpload;
+            if ($fileData[0][0] != 'label' && $fileData[0][1] != 'column_groups') {
+                return redirect()->route('columns.index')->with('error', 'Gagal Upload, tidak sesuai template');
+            };
+            foreach ($fileData as $key => $value) {
+                # code...
+                if ($key > 0) {
+                    // Check if the value is empty
+                    if (empty($value[0])) {
+                        return redirect()->route('columns.index')->with('error', 'Gagal Upload, kolom label tidak boleh kosong');
+                    }
+                    if (empty($value[1])) {
+                        return redirect()->route('columns.index')->with('error', 'Gagal Upload, kolom column_groups tidak boleh kosong');
+                    }
+
+                    // Check for uniqueness in a case-insensitive manner
+                    $thisCG = ColumnGroup::where('label', $value[1])->value('id');
+
+                    //cek
+                    $countCG = ColumnGroup::where('label', $value[1])->count();
+
+                    $exists = Column::where('id_column_groups', $thisCG)
+                        ->whereRaw('LOWER(label) = ?', [strtolower($value[0])])->exists();
+                    if ($exists) {
+                        return redirect()->route('columns.index')->with('error', 'Gagal Upload, label ' . $value[0] . ' sudah ada');
+                    }
+
+                    $insertedRow = Column::create([
+                        'label' => $value[0],
+                        'id_column_groups' => $thisCG, 
+                    ]);
+                }
+            }
+            return redirect()->route('columns.index')->with('message', 'Berhasil menambah kelompok kolom baru');
+        } else {
+            $validatedData = $request->validate([
+                'label' => ['required', 'array'],
+                'label.*' => ['required', 'string'],
+                'id_column_groups' => 'required',
             ]);
-            return redirect()->route('columns.index')->with('message', 'Berhasil mengedit kolom tersebut');
+            // dd($validatedData['label']);
+            if ($request->id) {
+                $updated = Column::where('id', $request->id)->update([
+                    'label' => $validatedData['label'][0],
+                    'id_column_groups' => $validatedData['id_column_groups'],
+                ]);
+                return redirect()->route('columns.index')->with('message', 'Berhasil mengedit kolom tersebut');
+            }
+            foreach ($validatedData['label'] as $key => $value) {
+                # code...
+                $insertedRow = Column::create([
+                    'label' => $value,
+                    'id_column_groups' => $validatedData['id_column_groups']
+                ]);
+            }
+            return redirect()->route('columns.index')->with('message', 'Berhasil menambahkan kolom baru');
         }
-        foreach ($validatedData['label'] as $key => $value) {
-            # code...
-            $insertedRow = Column::create([
-                'label' => $value,
-                'id_column_groups' => $validatedData['id_column_groups']
-            ]);
-        }
-        return redirect()->route('columns.index')->with('message', 'Berhasil menambahkan kolom baru');
         //
     }
 

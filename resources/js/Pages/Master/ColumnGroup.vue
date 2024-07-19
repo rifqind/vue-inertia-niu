@@ -8,6 +8,7 @@ import FlashMessage from '@/Components/FlashMessage.vue';
 import { GoDownload } from '@/download'
 import Pagination from '@/Components/Pagination.vue';
 import { computed } from 'vue';
+import * as XLSX from 'xlsx'
 
 const page = usePage()
 var cGObject = page.props.columnGroup.data
@@ -15,13 +16,24 @@ var columnGroup = ref(cGObject)
 const createModalStatus = ref(false)
 const deleteModalStatus = ref(false)
 const toggleFlash = ref(false)
-const toggleFlashError = ref(false)
 const searchLabel = ref(null)
 const triggerSpinner = ref(false)
 const columnGroupFetched = ref(null)
 const modalTitle = ref('Tambah Kelompok Kolom Baru')
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
+const uploadModal = ref(false)
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
 
 //pagination
 const tabelColumnGroup = ref(null)
@@ -52,6 +64,7 @@ const delayedFetchData = debounce(() => {
 const form = useForm({
     id: null,
     label: null,
+    fileUpload: null,
     _token: null,
 })
 const toggleUpdateModal = function (id) {
@@ -86,10 +99,11 @@ const submit = async function () {
         onBefore: function () {
             triggerSpinner.value = true
             createModalStatus.value = false
+            uploadModal.value = false
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -107,8 +121,7 @@ const deleteForm = async function () {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
-            if (page.props.flash.error) toggleFlashError.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -183,6 +196,29 @@ const fetchData = async () => {
         console.error('Error fetching data: ', error)
     }
 }
+const handleUpload = (e) => {
+    let fileS = e.target.files ? e.target.files[0] : null
+    if (fileS) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            /* Parse data */
+            const bstr = e.target.result;
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            /* Get first worksheet */
+            const wsname = wb.SheetNames[0];
+            const ws = wb.Sheets[wsname];
+            /* Convert array of arrays */
+            const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            // console.log(data)
+            form.fileUpload = data
+        }
+        reader.readAsBinaryString(fileS)
+        // console.log(result)
+    }
+}
+const downloadTemplate = () => {
+    window.location.href = '/download-template/column-group-template'
+}
 </script>
 <template>
 
@@ -194,6 +230,8 @@ const fetchData = async () => {
                 <div class="h4 flex-grow-1">
                     Daftar Kelompok Kolom
                 </div>
+                <button class="btn bg-info mr-1" @click="uploadModal = !uploadModal"><font-awesome-icon
+                        icon="fa-solid fa-file" /></button>
                 <button class="btn bg-success-fordone mr-2" title="Download"
                     @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
                 <a @click="createModalStatus = true" class="btn bg-info-fordone"><font-awesome-icon
@@ -201,9 +239,7 @@ const fetchData = async () => {
                     Tambah Kelompok Kolom Baru</a>
             </div>
         </div>
-        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-        <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
-            :types="'alert-danger'" />
+        <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
         <table class="table table-hover table-bordered table-search" ref="tabelColumnGroup" id="tabel-kelompok-kolom">
             <thead>
                 <tr class="bg-info-fordone">
@@ -285,6 +321,26 @@ const fetchData = async () => {
                 <template v-slot:modalFunction>
                     <button type="button" class="btn btn-sm badge-status-empat" :disabled="form.processing"
                         @click.prevent="deleteForm">Hapus</button>
+                </template>
+            </ModalBs>
+            <ModalBs :ModalStatus="uploadModal" @close="uploadModal = false" :title="'Tambah dengan Template'">
+                <template #modalBody>
+                    <div class="mb-3 row">
+                        <div class="col-6">
+                            <label>Download Template</label>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="btn btn-sm bg-success-fordone"
+                                @click="downloadTemplate">Download</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <input type="file" @change="handleUpload" class="form-control">
+                    </div>
+                </template>
+                <template #modalFunction>
+                    <button id="" type="button" class="btn btn-sm bg-success-fordone"
+                        @click.prevent="submit">Simpan</button>
                 </template>
             </ModalBs>
         </Teleport>
