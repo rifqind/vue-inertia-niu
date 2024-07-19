@@ -1320,11 +1320,11 @@ class TabelController extends Controller
             //code...
             $thisStatus = Statustables::where('id', $request->id);
             $thisStatus->update(['status' => '6']);
+            return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json($th->getMessage());
+            return back()->with('error', 'Gagal menghapus tabel tahun tersebut');
         }
-        // return redirect()->route('tabel.index')->with('message', 'Berhasil menghapus tabel tahun tersebut');
     }
 
     public function forceDeleteStatusTables(Request $request)

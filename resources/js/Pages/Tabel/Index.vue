@@ -101,12 +101,6 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
     currentPage.value = 1
     delayedFetchData()
 })
-onMounted(() => {
-    if (flashObject) {
-        toggleFlash.value = true
-    }
-    // searchCell(tabelTabels.value, 10)
-})
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
