@@ -23,6 +23,18 @@ const modalTitle = ref('Tambah Subjek Baru')
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
 
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
+
 //pagination
 const tabelSubjek = ref(null)
 
@@ -84,7 +96,7 @@ const submit = async function () {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
         },
         onError: function () { createModalStatus.value = true }
@@ -101,7 +113,7 @@ const deleteForm = async function () {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
         },
         onError: function () { deleteModalStatus.value = true }
@@ -148,7 +160,7 @@ watch(() => page.props.subjects, (value) => {
                     Tambah Subjek Baru</a>
             </div>
         </div>
-        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
+        <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
         <table class="table table-sorted table-hover table-bordered table-search" ref="tabelSubjek" id="tabel-subjek">
             <thead>
                 <tr class="bg-info-fordone">
@@ -228,6 +240,7 @@ watch(() => page.props.subjects, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage" :current-show-items="paginatedData.length"/>
+            :total-items="filteredColumns.length" :current-page="currentPage"
+            :current-show-items="paginatedData.length" />
     </GeneralLayout>
 </template>

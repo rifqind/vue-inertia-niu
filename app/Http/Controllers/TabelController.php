@@ -1357,4 +1357,21 @@ class TabelController extends Controller
             return response()->json($th->getMessage());
         }
     }
+
+    public function deleteMaster(Request $request)
+    {
+        try {
+            //code...
+            DB::beginTransaction();
+            $thisTable = Tabel::where('id', $request->id);
+            $thisTable->delete();
+
+            DB::commit();
+            return redirect()->route('tabel.master')->with('message', 'Berhasil hapus master tabel');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return back()->with('error', 'Master tabel masih digunakan di beberapa tabel');
+        }
+    }
 }

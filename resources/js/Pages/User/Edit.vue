@@ -16,6 +16,18 @@ const changePassword = ref(false)
 const toggleFlash = ref(false)
 const triggerSpinner = ref(false)
 
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
+
 const dinasDrop = ref({
     value: null,
     options: dinas
@@ -40,7 +52,7 @@ const submit = async function () {
         onBefore: function () { triggerSpinner.value = true },
         onFinish: function () {
             triggerSpinner.value = false
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             hideFlashMessage()
             changePassword.value = false
         }
@@ -64,9 +76,7 @@ const goBack = function () {
             <div class="h4">
                 Edit Profil : {{ user.name }}
             </div>
-            <div class="alert alert-success" v-if="toggleFlash" role="alert">
-                {{ page.props.flash.message }}
-            </div>
+            <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
             <form @submit.prevent="submit">
                 <div class="card mb-3">
                     <div class="card-body">

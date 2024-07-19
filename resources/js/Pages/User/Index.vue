@@ -28,6 +28,17 @@ const triggerSpinner = ref(false)
 const deleteModalStatus = ref(false)
 const downloadModalStatus = ref(false)
 
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
 //pagination
 const tabelUser = ref(null)
 
@@ -50,7 +61,7 @@ const changeRolesLink = async function (id) {
     if (form.processing) return
     form.post(route('users.roleChange'), {
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset
             fetchData()
         },
@@ -111,7 +122,7 @@ const delayedFetchData = debounce(() => {
 })
 onMounted(function () {
     //flash
-    if (page.props.flash.message) toggleFlash.value = true
+    if (flashObject) toggleFlash.value = true
 })
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
@@ -119,8 +130,7 @@ const deleteForm = async function () {
     if (form.processing) return
     form.post(route('users.delete'), {
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
-            if (page.props.flash.error) toggleFlashError.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -225,9 +235,7 @@ const fetchData = async () => {
                 Tambah Pengguna Baru</Link>
             </div>
         </div>
-        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-        <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
-            :types="'alert-danger'" />
+        <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
         <table class="table table-hover table-bordered table-search" ref="tabelUser" id="tabel-user">
             <thead>
                 <tr class="bg-info-fordone">
@@ -255,7 +263,7 @@ const fetchData = async () => {
                     <td class="search-header"><input v-model.trim="searchWilayah" type="text"
                             class="search-input form-control"></td>
                     <td class="search-header"><input v-model.trim="searchNoHp" type="text"
-                            class="search-input form-control" placeholder="cari dengan 08..." ></td>
+                            class="search-input form-control" placeholder="cari dengan 08..."></td>
                     <td class="search-header"><input v-model.trim="searchRole" type="text"
                             class="search-input form-control"></td>
                     <td class="search-header deleted"></td>

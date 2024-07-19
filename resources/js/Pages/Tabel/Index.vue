@@ -40,6 +40,17 @@ const searchTahun = ref(null)
 const searchStatus = ref(null)
 const searchUpdated = ref(null)
 
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
 const tabelTabels = ref(null)
 
 const ArrayBigObjects = [
@@ -91,7 +102,7 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
     delayedFetchData()
 })
 onMounted(() => {
-    if (page.props.flash.message) {
+    if (flashObject) {
         toggleFlash.value = true
     }
     // searchCell(tabelTabels.value, 10)
@@ -107,7 +118,7 @@ const deleteForm = async function () {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -137,7 +148,7 @@ const changeOrder = async () => {
             triggerSpinner.value = false; orderDropColumn.value = 2
         },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             order.reset()
             fetchData()
         },
@@ -299,7 +310,7 @@ const forceDelete = async () => {
                 triggerSpinner.value = false;
             },
             onSuccess: function () {
-                if (page.props.flash.message) toggleFlash.value = true
+                if (flashObject) toggleFlash.value = true
                 form.reset()
                 fetchData()
             },
@@ -325,7 +336,7 @@ const forceDelete = async () => {
                     Download</button>
             </div>
         </div>
-        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
+        <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
         <table class="table table-hover table-bordered table-search" ref="tabelTabels" id="tabel-kolom">
             <thead>
                 <tr class="bg-info-fordone">

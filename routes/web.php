@@ -17,6 +17,7 @@ use App\Models\Column;
 use App\Models\MetadataVariabel;
 use App\Models\Row;
 use App\Models\Turtahun;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -135,6 +136,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/tabel/statusDestroy', [TabelController::class, 'statusDestroy'])->name('tabel.statusDestroy');
     Route::post('/tabel/destroy', [TabelController::class, 'destroy'])->name('tabel.destroy');
     Route::post('/tabel/forceDelete', [TabelController::class, 'forceDeleteStatusTables'])->name('tabel.forceDelete');
+    Route::post('/tabel/deleteMaster', [TabelController::class, 'deleteMaster'])->name('tabel.deleteMaster');
     Route::post('/tabel/changeStructure', [TabelController::class, 'changeStructure'])->name('tabel.changeStructure');
 });
 
@@ -180,4 +182,8 @@ Route::get('/export/{id}/{title}', [MetadataVariabelController::class, 'export']
 Route::get('/export-view/{id}/{title}', function (string $id, $title) {
     return Excel::download(new BatchViewExport($id), $title . ".xlsx");
 })->name('exportView');
+Route::get('/download-template/{name}', function(String $name) {
+    $filePath = public_path('templates/'. $name . '.xlsx');
+    return Response::download($filePath);
+})->name('downloadTemplate');
 require __DIR__ . '/auth.php';

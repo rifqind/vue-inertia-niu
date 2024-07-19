@@ -21,6 +21,17 @@ const searchWilayah = ref(null)
 const triggerSpinner = ref(false)
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
 const produsenFetched = ref({
     data: [],
     kabs: [],
@@ -172,7 +183,7 @@ const submit = async function () {
             updateModalStatus.value = false
         },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -192,7 +203,7 @@ const deleteForm = async function () {
             deleteModalStatus.value = false
         },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -287,7 +298,7 @@ const fetchData = async () => {
                     icon="fa-solid fa-plus" />
                 Tambah Produsen Data Baru</Link>
             </div>
-            <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
+            <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
             <table class="table table-hover table-bordered" ref="tabelDinas" id="tabel-dinas">
                 <thead>
                     <tr>

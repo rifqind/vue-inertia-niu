@@ -23,6 +23,17 @@ const modalTitle = ref('Tambah Kelompok Baris Baru')
 const downloadModalStatus = ref(false)
 const downloadTitle = ref(null)
 
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
 //pagination
 const tabelRowGroup = ref(null)
 
@@ -89,7 +100,7 @@ const submit = async function () {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -107,8 +118,7 @@ const deleteForm = async function () {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
-            if (page.props.flash.error) toggleFlashError.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -201,9 +211,7 @@ const fetchData = async () => {
                     Tambah Kelompok Baris Baru</a>
             </div>
         </div>
-        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-        <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
-            :types="'alert-danger'" />
+        <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
         <table class="table table-hover table-bordered table-search" ref="tabelRowGroup" id="tabel-kelompok-Baris">
             <thead>
                 <tr class="bg-info-fordone">

@@ -43,9 +43,19 @@ yearDrop.value.options = years.map((year) => ({
     value: year.toString(),
 }));
 
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
 const triggerSpinner = ref(false)
 const toggleFlash = ref(false)
-const toggleFlashError = ref(false)
 const deleteModalStatus = ref(false)
 const addYearModalStatus = ref(false)
 const downloadModalStatus = ref(false)
@@ -239,15 +249,16 @@ const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
     if (form.processing) return
-    form.post(route('tabel.statusDestroy'), {
+    form.post(route('tabel.deleteMaster'), {
         onBefore: function () {
             triggerSpinner.value = true
             deleteModalStatus.value = false
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
+            fetchData()
         },
         onError: function () { deleteModalStatus.value = true }
     })
@@ -263,8 +274,7 @@ const submit = async function () {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
-            if (page.props.flash.error) toggleFlashError.value = true
+            if (flashObject) toggleFlash.value = true
             form.reset()
             fetchData()
         },
@@ -285,8 +295,7 @@ const duplicate = async () => {
         },
         onFinish: function () { triggerSpinner.value = false },
         onSuccess: function () {
-            if (page.props.flash.message) toggleFlash.value = true
-            if (page.props.flash.error) toggleFlashError.value = true
+            if (flashObject) toggleFlash.value = true
             duplicateForm.reset()
             fetchData()
         },
@@ -400,9 +409,7 @@ const openOtherCol = (index) => {
                 Tambah Master Tabel Baru</Link>
             </div>
         </div>
-        <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
-        <FlashMessage :toggleFlash="toggleFlashError" @close="toggleFlashError = false" :flash="page.props.flash.error"
-            :types="'alert-danger'" />
+        <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
         <table class="table table-hover table-bordered table-search" ref="tabelTabels" id="tabel-master">
             <thead>
                 <tr class="bg-info-fordone">
@@ -526,6 +533,14 @@ const openOtherCol = (index) => {
     }" class="delete-trash">
                             <font-awesome-icon icon="fa-solid fa-trash-can icon-trash-color" title="Hapus" />
                         </a>
+                        <a @click.prevent="() => {
+                            deleteModalStatus = true; 
+                            form.id = table.id
+                        }" 
+                        class="edit-pen mx-1">
+                            <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color mx-1"
+                                title="Force Delete" />
+                        </a>
                     </td>
                 </tr>
                 <tr v-else>
@@ -635,8 +650,6 @@ const openOtherCol = (index) => {
                         :disabled="duplicateForm.processing" @click.prevent="duplicate">Simpan</button>
                 </template>
             </ModalBs>
-        </Teleport>
-        <Teleport to="body">
             <ModalBs :ModalStatus="deleteModalStatus" @close="function () {
         deleteModalStatus = false
         form.reset()
