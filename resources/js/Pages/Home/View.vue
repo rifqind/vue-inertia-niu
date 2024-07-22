@@ -99,6 +99,11 @@ const indexExpanded = ref(Array(page.props.columns.length).fill(true))
 page.props.columns.forEach((column, index) => {
     if (column.label.length > 30) indexExpanded.value[index] = false
 })
+const HeaderColumn = (value) => {
+    if (value == 'Tahun') {
+        return page.props.tahun
+    } else return value
+}
 </script>
 <template>
 
@@ -139,7 +144,7 @@ page.props.columns.forEach((column, index) => {
                             <thead ref="Columnee">
                                 <tr>
                                     <th class="text-center" :colspan="page.props.columns.length"
-                                        v-for="(node, index) in page.props.turtahuns" :key="index">{{ node.label }}</th>
+                                        v-for="(node, index) in page.props.turtahuns" :key="index">{{ HeaderColumn(node.label) }}</th>
                                 </tr>
                                 <tr>
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
@@ -220,7 +225,8 @@ page.props.columns.forEach((column, index) => {
                     </template>
                     <template #modalFunction>
                         <button v-if="check" type="button" class="btn btn-sm bg-success-fordone"
-                            @click.prevent="downloadTabel(downloadTitle)">Simpan</button>
+                            @click.prevent="downloadTabel(downloadTitle)">
+                            Simpan</button>
                         <button v-else type="button" class="btn btn-sm bg-success-fordone"
                             @click.prevent="download(downloadTitle)">Simpan</button>
                     </template>
@@ -313,7 +319,7 @@ page.props.columns.forEach((column, index) => {
                     </Link>
                 </div>
                 <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="() => { downloadModalStatus = true; check = true }"><font-awesome-icon
+                    @click="() => { downloadModalStatus = true; indexExpanded.fill(true); check = true }"><font-awesome-icon
                         icon="fa-solid fa-circle-down" />
                     Download
                     Data</button>

@@ -6,7 +6,7 @@ import { usePage, useForm, Head, Link } from '@inertiajs/vue3'
 import { onMounted, ref, onUpdated } from 'vue';
 import ModalBs from '@/Components/ModalBs.vue';
 import { downloadTabel } from '@/download'
-import { nextTick } from 'vue';
+import { watch } from 'vue';
 
 const page = usePage()
 const form = useForm({
@@ -27,6 +27,19 @@ const Rowee = ref(null)
 const Columnee = ref(null)
 const RowTbody = ref(null)
 const ColumnTbody = ref(null)
+const confirmationModal = ref(false)
+
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
 
 var columnComponents, rowComponents
 var status = page.props.status_desc
@@ -120,18 +133,25 @@ const submit = async function (decision) {
     const response = await axios.get(route('token'))
     form._token = response.data
     if (form.processing) return
+    decisionConfirm.value = null
     if (decision == 'save' || decision == 'send') {
         form.post(route('tabel.update_content'), {
             onSuccess: function () { toggleFlash.value = true },
             onBefore: function () { triggerSpinner.value = true },
-            onFinish: function () { triggerSpinner.value = false },
+            onFinish: function () {
+                triggerSpinner.value = false
+                confirmationModal.value = false
+            },
             onError: function () { triggerSpinner.value = false }
         })
     } else {
         form.post(route('tabel.adminHandleData'), {
             onSuccess: function () { toggleFlash.value = true },
             onBefore: function () { triggerSpinner.value = true },
-            onFinish: function () { triggerSpinner.value = false },
+            onFinish: function () {
+                triggerSpinner.value = false
+                confirmationModal.value = false
+            },
             onError: function () { triggerSpinner.value = false }
         })
     }
@@ -264,6 +284,17 @@ const setFormatGermanyNumber = () => {
     });
 };
 const firstClick = ref(true)
+const HeaderColumn = (value) => {
+    if (value == 'Tahun') {
+        return page.props.years
+    } else return value
+}
+const warningCard = ref(true)
+const decisionConfirm = ref(null)
+const triggerConfirmation = (value) => {
+    confirmationModal.value = true
+    decisionConfirm.value = value
+}
 </script>
 <template>
 
@@ -277,12 +308,33 @@ const firstClick = ref(true)
                     </h3>
                     <h4 class="my-0 d-flex">
                         <span class="badge" :class="badges" id="badges-status"> {{ status[1] }}</span>
-                        <span class="ml-auto text-right small" id=""> Terakhir diupdate : {{
-        page.props.status_updated }}</span>
+                        <span class="ml-auto text-right small" id="">
+                            Terakhir diupdate : {{ page.props.status_updated }}
+                        </span>
                     </h4>
                 </div>
             </div>
-            <FlashMessage :toggleFlash="toggleFlash" @close="toggleFlash = false" :flash="page.props.flash.message" />
+            <Teleport to="body" v-if="warningCard">
+                <div class="container-float">
+                    <div class="card card-float">
+                        <div class="chat-header">
+                            <button type="button" @click="warningCard = false" class="close mr-3 mt-2"
+                                aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <ul class="text-white warning">
+                                <li>Ribuan harus dipisahkan dengan titik (.)</li>
+                                <li>Desimal harus dipisahkan dengan koma (,)</li>
+                                <li>Jika ada desimal, maka minimal ada digit dua angka setelah desimal. Jika hanya satu
+                                    digit maka ganti dengan angka 0 untuk digit keduanya.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </Teleport>
+            <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
             <div class="table-container">
                 <div class="row mb-3">
                     <div class="overflow-x-scroll p-0" id="imaginer">
@@ -307,7 +359,9 @@ const firstClick = ref(true)
                             <thead ref="Columnee">
                                 <tr>
                                     <th class="text-center" :colspan="page.props.columns.length"
-                                        v-for="(node, index) in page.props.turtahuns" :key="index">{{ node.label }}</th>
+                                        v-for="(node, index) in page.props.turtahuns" :key="index">
+                                        {{ HeaderColumn(node.label) }}
+                                    </th>
                                 </tr>
                                 <tr>
                                     <template v-for="(node, index) in page.props.turtahuns" :key="index">
@@ -390,7 +444,7 @@ const firstClick = ref(true)
                     class="btn bg-primary-fordone save-send mr-2" id="save-table"><font-awesome-icon
                         icon="fas fa-save" />
                     Simpan</button>
-                <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="submit(decision = 'send')"
+                <button v-if="defineButton(page.props.auth.user.role, 'left')" @click="triggerConfirmation('send')"
                     class="btn bg-success-fordone save-send" id="save-table"><font-awesome-icon
                         icon="fas fa-paper-plane" />
                     Kirim</button>
@@ -399,7 +453,7 @@ const firstClick = ref(true)
                 <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'reject')"
                     class="btn badge-status-empat mr-2" id="save-table"><font-awesome-icon icon="fas fa-ban" />
                     Reject</button>
-                <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="submit(decision = 'final')"
+                <button v-if="defineButton(page.props.auth.user.role, 'right')" @click="triggerConfirmation('final')"
                     class="btn bg-success-fordone" id="save-table"><font-awesome-icon icon="fas fa-flag-checkered" />
                     Final</button>
             </div>
@@ -412,7 +466,21 @@ const firstClick = ref(true)
                     </template>
                     <template #modalFunction>
                         <button type="button" class="btn btn-sm bg-success-fordone"
-                            @click.prevent="downloadTabel(downloadTitle)">Simpan</button>
+                            @click.prevent="downloadTabel(downloadTitle)">
+                            Simpan
+                        </button>
+                    </template>
+                </ModalBs>
+                <ModalBs :ModalStatus="confirmationModal" @close="confirmationModal = false" :title="'Konfirmasi'">
+                    <template #modalBody>
+                        <label>Apakah format titik (.) dan koma (,) sudah sesuai? Harap diperhatikan karena berdampak
+                            pada hasil unduh data</label>
+                    </template>
+                    <template #modalFunction>
+                        <button type="button" class="btn btn-sm bg-success-fordone"
+                            @click="submit(decision = decisionConfirm)">
+                            Setuju
+                        </button>
                     </template>
                 </ModalBs>
             </Teleport>
@@ -420,6 +488,31 @@ const firstClick = ref(true)
     </GeneralLayout>
 </template>
 <style scoped>
+.container-float {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    /* Adjust as needed */
+    z-index: 1000;
+    /* Ensures it stays on top of other elements */
+}
+
+.card-float {
+    background-color: rgb(239, 171, 46);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+}
+
+.warning {
+    font-size: 14px;
+}
+
 #container-of-entry {
     margin-right: 5%;
     margin-left: 5%;

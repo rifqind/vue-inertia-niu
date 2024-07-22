@@ -102,7 +102,6 @@ function getReady() {
             // row.Komponen = row.Komponen.trim();
             for (let key in row) {
                 let numericValue = parseFloat(row[key]);
-
                 // Check if the parsed value is a number
                 if (!isNaN(numericValue)) {
                     // If it's a number, store the numeric value
@@ -116,6 +115,7 @@ function getReady() {
         });
         contents.forEach(function (row, index) {
             for (let key in row) {
+                // console.log(row[key])
                 let numericValue = parseFloat(row[key]);
 
                 // Check if the parsed value is a number
@@ -192,10 +192,18 @@ function s2ab(s) {
 }
 
 export function GoDownload(idTabel, titles) {
-    let datas = getReadyOnGeneral(idTabel);
-    downloadExcel(datas, titles);
+    try {
+        let datas = getReadyOnGeneral(idTabel);
+        downloadExcel(datas, titles);
+    } catch (error) {
+        alert("Error : Data tidak sesuai format");
+    }
 }
 export function downloadTabel(titles) {
-    let datas = getReady();
-    downloadExcel(datas, titles);
+    try {
+        let datas = getReady();
+        downloadExcel(datas, titles);
+    } catch (error) {
+        alert("Error : Data tidak sesuai format");
+    }
 }
