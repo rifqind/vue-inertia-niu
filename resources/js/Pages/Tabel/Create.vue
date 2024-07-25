@@ -5,13 +5,13 @@ import ModalBs from "@/Components/ModalBs.vue";
 import TabelPreview from "@/Components/TabelPreview.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import draggable from 'vuedraggable';
-
+import FlashMessage from '@/Components/FlashMessage.vue'
 import { ref, defineComponent, onMounted, watch, onUnmounted } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
 import axios from "axios";
 
 defineComponent({
-    Multiselect, draggable
+    Multiselect, draggable, FlashMessage
 });
 const page = usePage();
 const subjects = page.props.subjects;
@@ -32,7 +32,18 @@ const provinsi = {
     label: "PROVINSI SULAWESI UTARA",
     value: "7100000000",
 };
-
+const flashObject = ref(page.props.flash)
+watch(() => page.props.flash, (value) => {
+    flashObject.value = value
+})
+const flashHandle = () => {
+    toggleFlash.value = false
+    flashObject.value = {
+        message: null,
+        error: null,
+    }
+}
+const toggleFlash = ref(false)
 const rowGroups = page.props.row_groups;
 var notUsedRowGroups = [{ label: '-- Tidak Menggunakan Kelompok Baris --', value: -1 }]
 const rowGroupsDrop = ref({
@@ -317,7 +328,10 @@ const submit = async function () {
     if (form.processing) return
     form.post(route('tabel.store'), {
         onBefore: function () { triggerSpinner.value = true },
-        onFinish: function () { triggerSpinner.value = false },
+        onFinish: function () {
+            triggerSpinner.value = false
+            if (flashObject) toggleFlash.value = true
+        },
         onError: function () {
             triggerSpinner.value = false
             errorModalStatus.value = true
@@ -398,6 +412,7 @@ watch(() => colGroupsDrop.value.value, (value) => {
                     <h2>Buat Tabel Baru</h2>
                 </div>
             </div>
+            <FlashMessage :toggleFlash="toggleFlash" @close="flashHandle" :flashObject="flashObject" />
             <form @submit.prevent="submit" id="form-create-tabel">
                 <div class="form-group">
                     <div class="card mb-3">

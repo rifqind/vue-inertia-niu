@@ -228,58 +228,7 @@ class TabelController extends Controller
             // 'data' => $tables,
         ]);
     }
-    private function backup($rows, $wilayah_fullcodes, $wilayah_parent_code, $table)
-    {
-        try {
-            //code...
-            if ($rows[0]->id == 0) {
-                // dd($table->tabelUuid, $rows[0]);
-                $wilayah_parent_code = '';
-                $jenis = "DAFTAR ";
 
-                $desa = substr($wilayah_fullcodes[0], 7, 3);
-                $kec = substr($wilayah_fullcodes[0], 4, 3);
-                $kab = substr($wilayah_fullcodes[0], 2, 2);
-                // dd($kec);
-                if ($desa != '000') {
-                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
-                    $jenis = $jenis . "DESA DI ";
-                } else if ($kec != '000') {
-                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
-                    $jenis = $jenis . "KECAMATAN DI ";
-                } else if ($kab != '00') {
-                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
-                    $jenis = $jenis . "KABUPATEN DI ";
-                }
-                if ($wilayah_parent_code == '') {
-                    $rowLabel = 'PROVINSI SULAWESI UTARA';
-                } else {
-                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
-                    $rowLabel = strtolower($rowLabel);
-                    $rowLabel = ucwords($rowLabel);
-                }
-            } else {
-                $listRowGroups = [];
-                foreach ($rows as $key => $value) {
-                    # code...
-                    array_push($listRowGroups, $value->id_row_groups);
-                }
-                $isUnique = count(array_unique($listRowGroups));
-                if ($isUnique > 1) {
-                    $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
-                    $text = 'Gabungan Kelompok Baris dari : ';
-                    foreach ($tempt as $key => $value) {
-                        # code...
-                        if ($key == sizeof($tempt) - 1) $text .= $value;
-                        else $text .= $value . ' - ';
-                    }
-                    $rowLabel = $text;
-                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
-            }
-        } catch (\Exception $e) {
-            return response()->json(array('error' => $e->getMessage(), 'tersangka' => $table->tabelUuid, 'rows' => $rows, 'wilayah_parent_code' => $wilayah_parent_code));
-        }
-    }
     public function master(Request $request)
     {
         //
@@ -463,6 +412,11 @@ class TabelController extends Controller
             'tahun' => ['required'],
             'id_turtahun' => ['required'],
         ]);
+        $exists = Tabel::where('nomor', $request->tabel['nomor'])
+            ->whereRaw('LOWER(label) = ?', [$request->tabel['label']])->exists();
+        if ($exists) {
+            return redirect()->route('tabel.create')->with('error', 'Tabel dengan judul yang sama sudah ada!');
+        }
         try {
             //code...
             DB::beginTransaction();
@@ -1074,6 +1028,20 @@ class TabelController extends Controller
                 return $item;
             });
 
+        $transporseRow = Datacontent::select('id_row as value', 'r.label as label')
+            ->where('id_row', '!=', 0)
+            ->where('id_tabel', $id)
+            ->leftJoin('rows as r', 'r.id', '=', 'datacontents.id_row')
+            ->distinct()
+            ->get();
+
+        $transporseColumn = Datacontent::select('id_column as value', 'c.label as label')
+            ->where('id_row', '!=', 0)
+            ->where('id_tabel', $id)
+            ->leftJoin('columns as c', 'c.id', '=', 'datacontents.id_column')
+            ->distinct()
+            ->get();
+
         return Inertia::render('Tabel/Edit', [
             'tabel' => $tabel,
             'dinas' => $daftar_dinas,
@@ -1084,6 +1052,8 @@ class TabelController extends Controller
             'rows' => $rows,
             'tabelList' => $tabelList,
             'transferStatus' => $transferStatus,
+            'transporseRow' => $transporseRow,
+            'transporseColumn' => $transporseColumn
         ]);
     }
 
@@ -1094,11 +1064,37 @@ class TabelController extends Controller
         $columnToDelete = $request->columnToDelete;
         $transferTable = $request->transfer;
         $columnToTransfer = $request->columnToTransfer;
+        $rowToTransfer = $request->rowToTransfer;
+        $setWilayah = $request->setWilayah;
         $yearFor = $request->year;
 
         try {
             //code...
             DB::beginTransaction();
+            if (!empty($rowToTransfer)) {
+                foreach ($yearFor as $key => $value) {
+                    # code...
+                    $newStatus = Statustables::create([
+                        'id_tabel' => $request->id,
+                        'tahun' => $value,
+                        'status' => '1',
+                        'edited_by' => auth()->user()->id,
+                    ]);
+                }
+                foreach ($rowToTransfer as $key => $value) {
+                    # code...
+                    $data = explode('->', $value);
+                    $thisDataContent = Datacontent::where('id_tabel', $request->id)
+                        ->where('id_row', $data[0]);
+                    $thisDataContent->update(['tahun' => $data[1]]);
+                }
+                $thisStatus = Statustables::where('id_tabel', $request->id)
+                    ->orderBy('updated_at', 'asc')
+                    ->first();
+                $toUpdateStatus = Statustables::where('id_tabel', $request->id)
+                    ->where('id', '!=', $thisStatus->id);
+                $toUpdateStatus->update(['status' => $thisStatus->status]);
+            }
             if (!empty($rowChangeList)) {
                 foreach ($rowChangeList as $key => $value) {
                     # code...
@@ -1161,6 +1157,12 @@ class TabelController extends Controller
                 ]);
             }
 
+            if (!empty($setWilayah)) {
+                $thisDataContent = Datacontent::where('id_tabel', $request->id);
+                $thisDataContent->update([
+                    'id_row' => 0
+                ]);
+            }
             DB::commit();
             return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil mengubah struktur!');
         } catch (\Throwable $th) {
@@ -1169,8 +1171,6 @@ class TabelController extends Controller
             return response()->json($th->getMessage());
         }
     }
-
-
     //     /**
     //      * Update the specified resource in storage.
     //      */

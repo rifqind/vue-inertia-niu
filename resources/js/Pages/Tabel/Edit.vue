@@ -15,7 +15,6 @@ const page = usePage();
 const subjects = page.props.subjects;
 const dinas = page.props.dinas;
 const triggerSpinner = ref(false);
-const previewModalStatus = ref(false);
 const subjectDrop = ref({
     value: null,
     options: subjects,
@@ -34,6 +33,10 @@ const columnTemp = ref([]);
 const thisColumn = ref(page.props.columns);
 
 const columnTransfer = ref({
+    value: [],
+    options: [],
+})
+const rowTransfer = ref({
     value: [],
     options: [],
 })
@@ -63,10 +66,13 @@ const form = useForm({
     },
     columnToDelete: [],
     columnToTransfer: [],
+    rowToTransfer: [],
+    setWilayah: null,
     transfer: null,
     year: [],
     _token: null,
 });
+
 
 const submit = async function () {
     const response = await axios.get(route("token"));
@@ -173,12 +179,58 @@ const addTransferColumn = () => {
         columnRight.value = null;
     }
 }
+const addTransferRow = () => {
+    if (rowLeft.value && columnRight.value) {
+        let columnLabel = rows.value.filter(
+            (x) => x.value == rowLeft.value
+        );
+        let columnLabel2 = yearFor.value.filter(
+            (x) => x.value == columnRight.value
+        );
+        let theArray = rowLeft.value + "->" + columnRight.value;
+        let arrayLabel = columnLabel[0].label + " -> " + columnLabel2[0].label;
+        let arrayValue = theArray;
+        rowTransfer.value.options.push({
+            value: arrayValue,
+            label: arrayLabel,
+        });
+        rowTransfer.value.value.push(arrayValue);
+        // columnTemp.value.push(columnLeft.value);
+        columnLeft.value = null;
+        columnRight.value = null;
+    }
+}
+const rowTransporse = ref(null)
+const columnTransporsed = ref(null)
+const rowListForTransporse = ref([])
+const rowTransporseNext = ref(null)
+const columnTransporsedNext = ref(null)
+const addRowToColumn = () => {
+    if (rowTransporse.value && columnTransporsed.value) {
+        let rowTransLabel = page.props.transporseRow.filter(
+            (x) => x.value == rowTransporse.value
+        )
+        let columnTransLabel = page.props.transporseColumn.filter(
+            (x) => x.value == columnTransporsed.value
+        )
+        let theArray = rowTransporse.value + "->" + columnTransporsed.value
+        let arrayLabel = rowTransLabel[0].label + " -> " + columnTransLabel[0].label
+        let arrayValue = theArray
+        rowListForTransporse.value.push({
+            value: arrayValue,
+            label: arrayLabel
+        })
+        rowTransporse.value = null
+        columnTransporsed.value = null
+    }
+}
 const changeStructure = async () => {
     const response = await axios.get(route("token"));
     form._token = response.data;
     form.destroyer.columns = columnChange.value.value;
     form.destroyer.rows = rowChange.value.value;
     form.columnToTransfer = columnTransfer.value.value
+    form.rowToTransfer = rowTransfer.value.value
     if (form.processing) return;
     form.post(route("tabel.changeStructure"), {
         onBefore: function () {
@@ -308,7 +360,7 @@ const yearFor = computed(() => {
                                     :options="yearDrop.options" :placeholder="'-- Daftar Tahun --'" />
                             </div>
                             <div class="mb-3">
-                                <label>Daftar Transfer</label>
+                                <label>Daftar Transfer Kolom</label>
                                 <Multiselect v-model="columnTransfer.value" mode="tags"
                                     :options="columnTransfer.options" :placeholder="'-- Daftar Transfer --'" />
                             </div>
@@ -320,12 +372,36 @@ const yearFor = computed(() => {
                                 </div>
                                 <div class="col">
                                     <label for="column-groups">Tabel Tahun Pengganti</label>
-                                    <Multiselect v-model="columnRight" :options="yearFor"
-                                        :searchable="true" placeholder="-- Pilih Tabel Tahun --" />
+                                    <Multiselect v-model="columnRight" :options="yearFor" :searchable="true"
+                                        placeholder="-- Pilih Tabel Tahun --" />
                                 </div>
                                 <div class="col-1">
                                     <label><br /></label>
                                     <button @click.prevent="addTransferColumn" type="button"
+                                        class="btn btn-sm bg-success-fordone">
+                                        Tambah
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>Daftar Transfer Baris</label>
+                                <Multiselect v-model="rowTransfer.value" mode="tags" :options="rowTransfer.options"
+                                    :placeholder="'-- Daftar Transfer --'" />
+                            </div>
+                            <div class="mb-3 row">
+                                <div class="col">
+                                    <label for="column-groups">Daftar Baris</label>
+                                    <Multiselect v-model="rowLeft" :options="rows" :searchable="true"
+                                        placeholder="-- Pilih Baris --" />
+                                </div>
+                                <div class="col">
+                                    <label for="column-groups">Tabel Tahun Pengganti</label>
+                                    <Multiselect v-model="columnRight" :options="yearFor" :searchable="true"
+                                        placeholder="-- Pilih Tabel Tahun --" />
+                                </div>
+                                <div class="col-1">
+                                    <label><br /></label>
+                                    <button @click.prevent="addTransferRow" type="button"
                                         class="btn btn-sm bg-success-fordone">
                                         Tambah
                                     </button>
@@ -383,6 +459,68 @@ const yearFor = computed(() => {
                                     <label for="column-groups">Baris Pengganti</label>
                                     <Multiselect v-model="rowRight" :options="page.props.rowBase" :searchable="true"
                                         placeholder="-- Pilih Baris Pengganti --" />
+                                </div>
+                                <div class="col-1">
+                                    <label><br /></label>
+                                    <button @click.prevent="addRowChange" type="button"
+                                        class="btn btn-sm bg-success-fordone">
+                                        Tambah
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>Ubah Baris menjadi Wilayah</label>
+                                <Multiselect v-model="form.setWilayah"
+                                    :options="[{ value: 1, label: 'Ya' }, { value: 0, label: 'Tidak' }]"
+                                    :placeholder="'-- Daftar Perubahan di Baris --'" />
+                            </div>
+                            <div class="mb-3">
+                                <button @click.prevent="changeStructure" type="button"
+                                    class="btn btn-sm bg-success-fordone">
+                                    Simpan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" v-if="page.props.auth.user.username == 'niu'">
+                        <div class="card-header">
+                            <label class="h5 mb-0">Transporse</label>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label>Daftar Perubahan di Baris</label>
+                                <Multiselect v-model="rowChange.value" mode="tags" :options="rowChange.options"
+                                    :placeholder="'-- Daftar Perubahan di Baris --'" />
+                            </div>
+                            <div class="mb-3 row">
+                                <div class="col">
+                                    <label for="column-groups">Daftar Baris</label>
+                                    <Multiselect v-model="rowTransporse" :options="page.props.transporseRow"
+                                        :searchable="true" placeholder="-- Pilih Baris --" />
+                                </div>
+                                <div class="col">
+                                    <label for="column-groups">Pilih Kolom</label>
+                                    <Multiselect v-model="columnTransporsed" :options="page.props.transporseColumn"
+                                        :searchable="true" placeholder="-- Pilih Kolom --" />
+                                </div>
+                                <div class="col-1">
+                                    <label><br /></label>
+                                    <button @click.prevent="addRowToColumn" type="button"
+                                        class="btn btn-sm bg-success-fordone">
+                                        Tambah
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3 row">
+                                <div class="col">
+                                    <label for="column-groups">Daftar Baris Transporse Kolom</label>
+                                    <Multiselect v-model="rowTransporseNext" :options="rowListForTransporse"
+                                        :searchable="true" placeholder="-- Pilih Baris --" />
+                                </div>
+                                <div class="col">
+                                    <label for="column-groups">Pilih Baris</label>
+                                    <Multiselect v-model="columnTransporsedNext" :options="page.props.transporseRow"
+                                        :searchable="true" placeholder="-- Pilih Baris --" />
                                 </div>
                                 <div class="col-1">
                                     <label><br /></label>
