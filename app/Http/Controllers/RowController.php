@@ -87,6 +87,7 @@ class RowController extends Controller
                     // Check for uniqueness in a case-insensitive manner
                     $thisRG = RowGroup::where('label', $value[1])->value('id');
 
+                    if (!$thisRG) return redirect()->route('rows.index')->with('error', 'Kelompok Baris ' . $value[1] . ' belum ada');
                     //cek
                     $countCG = RowGroup::where('label', $value[1])->count();
 
@@ -110,6 +111,11 @@ class RowController extends Controller
                 'id_row_groups' => 'required',
             ]);
             if ($request->id) {
+                $exists = Row::where('id_row_groups', $validatedData['id_row_groups'])
+                    ->whereRaw('LOWER(label) = ?', [$validatedData['label'][0]])->exists();
+                if ($exists) {
+                    return redirect()->route('rows.index')->with('error', 'Baris ' . $validatedData['label'][0] . ' sudah ada');
+                }
                 $updated = Row::where('id', $request->id)->update([
                     'label' => $validatedData['label'][0],
                     'id_row_groups' => $validatedData['id_row_groups'],
@@ -119,6 +125,11 @@ class RowController extends Controller
             // $inserted = Row::create($validatedData);
             foreach ($validatedData['label'] as $key => $value) {
                 # code...
+                $exists = Row::where('id_row_groups', $validatedData['id_row_groups'])
+                    ->whereRaw('LOWER(label) = ?', [$value])->exists();
+                if ($exists) {
+                    return redirect()->route('rows.index')->with('error', 'Baris ' . $value . ' sudah ada');
+                }
                 $insertedRow = Row::create([
                     'label' => $value,
                     'id_row_groups' => $validatedData['id_row_groups']

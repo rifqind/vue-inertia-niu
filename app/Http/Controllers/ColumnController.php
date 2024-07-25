@@ -88,6 +88,7 @@ class ColumnController extends Controller
                     // Check for uniqueness in a case-insensitive manner
                     $thisCG = ColumnGroup::where('label', $value[1])->value('id');
 
+                    if (!$thisCG) return redirect()->route('columns.index')->with('error', 'Kelompok Kolom ' . $value[1] . ' belum ada');
                     //cek
                     $countCG = ColumnGroup::where('label', $value[1])->count();
 
@@ -99,7 +100,7 @@ class ColumnController extends Controller
 
                     $insertedRow = Column::create([
                         'label' => $value[0],
-                        'id_column_groups' => $thisCG, 
+                        'id_column_groups' => $thisCG,
                     ]);
                 }
             }
@@ -110,8 +111,12 @@ class ColumnController extends Controller
                 'label.*' => ['required', 'string'],
                 'id_column_groups' => 'required',
             ]);
-            // dd($validatedData['label']);
             if ($request->id) {
+                $exists = Column::where('id_column_groups', $validatedData['id_column_groups'])
+                    ->whereRaw('LOWER(label) = ?', [$validatedData['label'][0]])->exists();
+                if ($exists) {
+                    return redirect()->route('columns.index')->with('error', 'Kolom ' . $validatedData['label'][0] . ' sudah ada');
+                }
                 $updated = Column::where('id', $request->id)->update([
                     'label' => $validatedData['label'][0],
                     'id_column_groups' => $validatedData['id_column_groups'],
@@ -120,6 +125,11 @@ class ColumnController extends Controller
             }
             foreach ($validatedData['label'] as $key => $value) {
                 # code...
+                $exists = Column::where('id_column_groups', $validatedData['id_column_groups'])
+                    ->whereRaw('LOWER(label) = ?', [$value])->exists();
+                if ($exists) {
+                    return redirect()->route('columns.index')->with('error', 'Kolom ' . $value . ' sudah ada');
+                }
                 $insertedRow = Column::create([
                     'label' => $value,
                     'id_column_groups' => $validatedData['id_column_groups']

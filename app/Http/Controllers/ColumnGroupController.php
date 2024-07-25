@@ -95,8 +95,14 @@ class ColumnGroupController extends Controller
             return redirect()->route('column_group.index')->with('message', 'Berhasil menambah kelompok kolom baru');
         } else {
             $request->validate([
-                'label' => 'required',
+                'label' => ['required'],
             ]);
+            // Check for uniqueness in a case-insensitive manner
+            $exists = ColumnGroup::whereRaw('LOWER(label) = ?', [$request->label])->exists();
+            if ($exists) {
+                return redirect()->route('column_group.index')->with('error', 'Gagal Upload, label ' . $request->label . ' sudah ada');
+            }
+
             if ($request->id) {
                 $updated = ColumnGroup::where('id', $request->id)->update(['label' => $request->label]);
                 return redirect()->route('column_group.index')->with('message', 'Berhasil mengedit kelompok kolom');

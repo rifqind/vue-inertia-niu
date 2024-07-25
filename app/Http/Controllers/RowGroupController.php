@@ -95,8 +95,12 @@ class RowGroupController extends Controller
             return redirect()->route('row_group.index')->with('message', 'Berhasil menambah kelompok baris baru');
         } else {
             $request->validate([
-                'label' => 'required',
+                'label' => ['required'],
             ]);
+            $exists = RowGroup::whereRaw('LOWER(label) = ?', [strtolower($request->label)])->exists();
+            if ($exists) {
+                return redirect()->route('row_group.index')->with('error', 'Gagal Upload, label ' . $request->label . ' sudah ada');
+            }
             if ($request->id) {
                 $updated = RowGroup::where('id', $request->id)->update(['label' => $request->label]);
                 return redirect()->route('row_group.index')->with('message', 'Berhasil mengedit kelompok kolom');
