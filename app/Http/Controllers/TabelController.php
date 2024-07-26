@@ -138,13 +138,15 @@ class TabelController extends Controller
                 $query->whereIn('tabels.id', $targetTabels);
             }
             if (!empty($filter['row_label'])) {
-                $targetTabels = Datacontent::join('rows as r', 'r.id', '=', 'datacontents.id_row')
+                $targetNonWilayah = Datacontent::join('rows as r', 'r.id', '=', 'datacontents.id_row')
                     ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
-                if (empty($targetTabels) || !$targetTabels || !sizeof($targetTabels) > 0) {
-                    $targetTabels = Datacontent::join('master_wilayah as m', 'm.wilayah_fullcode', '=', 'datacontents.wilayah_fullcode')
-                        ->where('datacontents.id_row', '=', 0)
-                        ->where('m.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
-                }
+                // if (empty($targetTabels) || !$targetTabels || !sizeof($targetTabels) > 0) {
+                $targetWilayah = Datacontent::join('master_wilayah as m', 'm.wilayah_fullcode', '=', 'datacontents.wilayah_fullcode')
+                    ->where('datacontents.id_row', '=', 0)
+                    ->where('m.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
+                // }
+                // dd($targetNonWilayah, $targetWilayah);
+                $targetTabels = $targetWilayah->merge($targetNonWilayah);
                 $query->whereIn('tabels.id', $targetTabels);
             }
             if (!empty($filter['tahun'])) $query->where('statustables.tahun', 'like', '%' . $filter['tahun'] . '%');
@@ -275,13 +277,15 @@ class TabelController extends Controller
                 }
             }
             if (!empty($filter['row_label'])) {
-                $targetTabels = Datacontent::join('rows as r', 'r.id', '=', 'datacontents.id_row')
+                $targetNonWilayah = Datacontent::join('rows as r', 'r.id', '=', 'datacontents.id_row')
                     ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
-                if (empty($targetTabels) || !$targetTabels || !sizeof($targetTabels) > 0) {
-                    $targetTabels = Datacontent::join('master_wilayah as m', 'm.wilayah_fullcode', '=', 'datacontents.wilayah_fullcode')
-                        ->where('datacontents.id_row', '=', 0)
-                        ->where('m.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
-                }
+                // if (empty($targetTabels) || !$targetTabels || !sizeof($targetTabels) > 0) {
+                $targetWilayah = Datacontent::join('master_wilayah as m', 'm.wilayah_fullcode', '=', 'datacontents.wilayah_fullcode')
+                    ->where('datacontents.id_row', '=', 0)
+                    ->where('m.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontents.id_tabel')->unique();
+                // }
+                // dd($targetNonWilayah, $targetWilayah);
+                $targetTabels = $targetWilayah->merge($targetNonWilayah);
                 $query->whereIn('tabels.id', $targetTabels);
             }
             if (!empty($filter['tahun'])) {

@@ -268,6 +268,20 @@ const fetchData = async () => {
         console.error('Error fetching data: ', error)
     }
 }
+const downloadRoute = () => {
+    try {
+        const response = route('export-tabelIndex') + '?' + new URLSearchParams({
+            label: searchLabel.value,
+            produsen: searchLabelDinas.value,
+            tahun: searchTahun.value,
+            status: searchStatus.value,
+            updatedBy: searchUpdated.value,
+        }).toString()
+        window.location.href = response
+    } catch (error) {
+        alert('Gagal Download Data')
+    }
+}
 const openRowList = (index) => {
     if (index < 3) return true
     else return false
@@ -325,8 +339,8 @@ const forceDelete = async () => {
                 <div class="h4 flex-grow-1">
                     Daftar Tabel
                 </div>
-                <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" />
+                <button class="btn bg-success-fordone mr-2" title="Download" @click="downloadRoute()"><font-awesome-icon
+                        icon="fa-solid fa-circle-down" />
                     Download</button>
             </div>
         </div>

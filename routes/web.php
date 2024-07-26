@@ -1,6 +1,7 @@
 <?php
 
 use App\Exports\BatchViewExport;
+use App\Exports\TabelListExport;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\DinasController;
 use App\Http\Controllers\HomeController;
@@ -17,6 +18,7 @@ use App\Models\Column;
 use App\Models\MetadataVariabel;
 use App\Models\Row;
 use App\Models\Turtahun;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
@@ -182,8 +184,16 @@ Route::get('/export/{id}/{title}', [MetadataVariabelController::class, 'export']
 Route::get('/export-view/{id}/{title}', function (string $id, $title) {
     return Excel::download(new BatchViewExport($id), $title . ".xlsx");
 })->name('exportView');
-Route::get('/download-template/{name}', function(String $name) {
-    $filePath = public_path('templates/'. $name . '.xlsx');
+Route::get('/export-tabelIndex', function (Request $request) {
+    $label = $request->label;
+    $produsen = $request->produsen;
+    $tahun = $request->tahun;
+    $status = $request->status;
+    $updatedBy = $request->updatedBy;
+    return Excel::download(new TabelListExport($label, $produsen, $tahun, $status, $updatedBy), "test.xlsx");
+})->name('export-tabelIndex')->middleware(['auth', 'verified']);
+Route::get('/download-template/{name}', function (String $name) {
+    $filePath = public_path('templates/' . $name . '.xlsx');
     return Response::download($filePath);
-})->name('downloadTemplate');
+})->name('downloadTemplate')->middleware(['auth', 'verified', 'role:admin']);
 require __DIR__ . '/auth.php';
