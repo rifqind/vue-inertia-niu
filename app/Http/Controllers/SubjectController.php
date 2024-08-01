@@ -11,18 +11,43 @@ class SubjectController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+
         $number = 1;
-        $subjects = Subject::orderBy('label')->get();
+        $query = Subject::query();
+        $dataToCounted = $query;
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('label');
+        } else $query->orderBy('label');
+
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label'])) $query->where('label', 'like', '%' . $filter['label'] . '%');
+        }
+        $countData = $dataToCounted->count();
+        $subjects = $query->paginate($paginated, ['*'], 'page', $currentPage);
         foreach ($subjects as $key => $value) {
             # code...
             $value->number = $number;
             $number++;
         }
+        if ($request->paginated) {
+            return response()->json([
+                'subjects' => $subjects,
+                'countData' => $countData
+            ]);
+        }
         return Inertia::render('Master/Subject', [
-            'subjects' => $subjects
+            'subjects' => $subjects,
+            'countData' => $countData
         ]);
     }
 

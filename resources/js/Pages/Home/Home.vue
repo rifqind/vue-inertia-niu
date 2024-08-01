@@ -435,7 +435,7 @@ const updateResetComponent = (value) => {
 
                         <div class="d-flex">
                             <input type="text" v-model="form.label" name="searchData"
-                                placeholder="Cari dengan Kata Kunci" class="form-control mb-3 mr-2 w-75">
+                                placeholder="Cari Judul Tabel" class="form-control mb-3 mr-2 w-75">
                             <!-- {{-- <div class="row pr-3 pb-2"> --}} -->
                             <div @click.prevent="submit" class="btn ml-auto mb-3 w-25 button-search">
                                 <div class="text-white">

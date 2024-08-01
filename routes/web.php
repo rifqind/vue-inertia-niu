@@ -1,7 +1,13 @@
 <?php
 
 use App\Exports\BatchViewExport;
+use App\Exports\ColumnGroupExport;
+use App\Exports\DinasExport;
+use App\Exports\RowExport;
+use App\Exports\RowGroupExport;
 use App\Exports\TabelListExport;
+use App\Exports\UserExport;
+use App\Http\Controllers\Api\HomeApiController;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\DinasController;
 use App\Http\Controllers\HomeController;
@@ -87,6 +93,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/subject/store', [SubjectController::class, 'store'])->name('subject.store');
     Route::get('/subject/fetch/{id}', [SubjectController::class, 'fetch'])->name('subject.fetch');
     Route::post('subject/destroy', [SubjectController::class, 'destroy'])->name('subject.destroy');
+});
+Route::middleware(['auth', 'verified', 'role:admin|kominfo'])->group(function () {
 
     Route::get('/column-group/index', [ColumnGroupController::class, 'index'])->name('column_group.index');
     Route::post('/column-group/store', [ColumnGroupController::class, 'store'])->name('column_group.store');
@@ -123,18 +131,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tabel/entri/{id}', [TabelController::class, 'entri'])->name('tabel.entri');
     Route::post('/tabel/update-content', [TabelController::class, 'update_content'])->name('tabel.update_content');
 });
-
-Route::post('/tabel/adminHandleData', [TabelController::class, 'adminHandleData'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('tabel.adminHandleData');
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin|kominfo'])->group(function () {
+    Route::post('/tabel/adminHandleData', [TabelController::class, 'adminHandleData'])->name('tabel.adminHandleData');
     Route::get('/tabel/master', [TabelController::class, 'master'])->name('tabel.master');
     Route::get('/tabel/create', [TabelController::class, 'create'])->name('tabel.create');
     Route::post('/tabel/create', [TabelController::class, 'store'])->name('tabel.store');
     Route::post('/tabel/update', [TabelController::class, 'update'])->name('tabel.update');
-    Route::get('/tabel/deletedList', [TabelController::class, 'index'])->name('tabel.deletedList');
-
+    Route::get('/tabel/edit/{id}', [TabelController::class, 'edit'])->name('tabel.edit');
     Route::get('/tabel/master/copy/{id}', [TabelController::class, 'copy'])->name('tabel.copy');
     Route::post('/tabel/copy', [TabelController::class, 'storeCopy'])->name('tabel.storeCopy');
-    Route::get('/tabel/edit/{id}', [TabelController::class, 'edit'])->name('tabel.edit');
+    Route::get('/tabel/deletedList', [TabelController::class, 'index'])->name('tabel.deletedList');
+});
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+
     Route::post('/tabel/statusDestroy', [TabelController::class, 'statusDestroy'])->name('tabel.statusDestroy');
     Route::post('/tabel/destroy', [TabelController::class, 'destroy'])->name('tabel.destroy');
     Route::post('/tabel/forceDelete', [TabelController::class, 'forceDeleteStatusTables'])->name('tabel.forceDelete');
@@ -190,10 +199,47 @@ Route::get('/export-tabelIndex', function (Request $request) {
     $tahun = $request->tahun;
     $status = $request->status;
     $updatedBy = $request->updatedBy;
-    return Excel::download(new TabelListExport($label, $produsen, $tahun, $status, $updatedBy), "test.xlsx");
+    return Excel::download(new TabelListExport($label, $produsen, $tahun, $status, $updatedBy), "tabel.xlsx");
 })->name('export-tabelIndex')->middleware(['auth', 'verified']);
+Route::get('/export-userIndex', function (Request $request) {
+    $username = $request->username;
+    $name = $request->name;
+    $nama_dinas = $request->nama_dinas;
+    $wilayah_label = $request->wilayah_label;
+    $noHp = $request->noHp;
+    $role = $request->role;
+    return Excel::download(new UserExport($username, $name, $nama_dinas, $wilayah_label, $noHp, $role), "users.xlsx");
+})->name('export-userIndex')->middleware(['auth', 'verified', 'role:admin|kominfo']);
+Route::get('/export-dinasIndex', function (Request $request) {
+    $nama = $request->nama;
+    $wilayah_label = $request->wilayah_label;
+    return Excel::download(new DinasExport($nama, $wilayah_label), "produsen.xlsx");
+})->name('export-dinasIndex')->middleware(['auth', 'verified', 'role:admin|kominfo']);
+Route::get('/export-rowGroupIndex', function (Request $request) {
+    $label = $request->label;
+    return Excel::download(new RowGroupExport($label), "Kelompok Baris.xlsx");
+})->name('export-rowGroupIndex')->middleware(['auth', 'verified', 'role:admin|kominfo']);
+Route::get('/export-columnGroupIndex', function (Request $request) {
+    $label = $request->label;
+    return Excel::download(new ColumnGroupExport($label), "Kelompok Kolom.xlsx");
+})->name('export-columnGroupIndex')->middleware(['auth', 'verified', 'role:admin|kominfo']);
+Route::get('/export-rowIndex', function (Request $request) {
+    $label = $request->label;
+    $rowGroupsLabel = $request->rowGroupsLabel;
+    return Excel::download(new RowExport($label, $rowGroupsLabel), "Baris.xlsx");
+})->name('export-rowIndex')->middleware(['auth', 'verified', 'role:admin|kominfo']);
+Route::get('/export-columnIndex', function (Request $request) {
+    $label = $request->label;
+    $columnGroupsLabel = $request->columnGroupsLabel;
+    return Excel::download(new RowExport($label, $columnGroupsLabel), "Kolom.xlsx");
+})->name('export-columnIndex')->middleware(['auth', 'verified', 'role:admin|kominfo']);
 Route::get('/download-template/{name}', function (String $name) {
     $filePath = public_path('templates/' . $name . '.xlsx');
     return Response::download($filePath);
 })->name('downloadTemplate')->middleware(['auth', 'verified', 'role:admin']);
+
+
+Route::get('/api/home', [HomeApiController::class, 'index'])->name('home-api.index');
+Route::get('/api/home/view', [HomeApiController::class, 'view'])->name('home-api.view');
+
 require __DIR__ . '/auth.php';

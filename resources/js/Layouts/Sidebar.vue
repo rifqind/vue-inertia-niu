@@ -57,8 +57,9 @@ const toggleMenuOpen = function (x) {
                             <NavLinkSidebar :href="route('tabel.create')" :currentRoute="currentRoute == 'tabel.create'"
                                 :role="role == 'admin'" :navIcon="'fa-solid fa-plus'"> Tambah Tabel
                             </NavLinkSidebar>
-                            <NavLinkSidebar :role="role == 'admin'" :href="route('tabel.deletedList')"
-                                :currentRoute="currentRoute == 'tabel.deletedList'" :navIcon="'fa-solid fa-recycle'">
+                            <NavLinkSidebar :role="role == 'admin' || role == 'kominfo'"
+                                :href="route('tabel.deletedList')" :currentRoute="currentRoute == 'tabel.deletedList'"
+                                :navIcon="'fa-solid fa-recycle'">
                                 Recycle Bin</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
@@ -98,7 +99,7 @@ const toggleMenuOpen = function (x) {
                                 :currentRoute="(currentRoute == 'dinas.create')"> Tambah Produsen</NavLinkSidebar>
                         </template>
                     </NavLinkParentSidebar>
-                    <NavLinkParentSidebar :role="role == 'admin'" :navIcon="'fa-solid fa-building'"
+                    <NavLinkParentSidebar :role="role == 'admin' || role == 'kominfo'" :navIcon="'fa-solid fa-building'"
                         :toggleMenuOpen="toggleMenuOpen" :params="'master'"
                         :menuOpen="currentRoute == 'tabel.master' || currentRoute == 'subject.index' || currentRoute == 'column_group.index' || currentRoute == 'columns.index' || currentRoute == 'row_group.index' || currentRoute == 'rows.index' || menuOpenMaster">
 
@@ -107,8 +108,8 @@ const toggleMenuOpen = function (x) {
                         <template v-slot:content>
                             <NavLinkSidebar :href="route('tabel.master')" :currentRoute="currentRoute == 'tabel.master'"
                                 :navIcon="'fas fa-table'"> Tabel</NavLinkSidebar>
-                            <NavLinkSidebar :href="route('subject.index')" :navIcon="'fa-solid fa-tags'"
-                                :currentRoute="currentRoute == 'subject.index'"> Subjek
+                            <NavLinkSidebar :role="role == 'admin'" :href="route('subject.index')"
+                                :navIcon="'fa-solid fa-tags'" :currentRoute="currentRoute == 'subject.index'"> Subjek
                             </NavLinkSidebar>
                             <NavLinkSidebar :href="route('column_group.index')" :navIcon="'fa-solid fas fa-bars'"
                                 :currentRoute="currentRoute == 'column_group.index'"> Kelompok Kolom</NavLinkSidebar>

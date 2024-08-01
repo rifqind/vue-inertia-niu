@@ -11,7 +11,7 @@ import Pagination from '@/Components/Pagination.vue'
 import { computed } from 'vue';
 
 const page = usePage()
-var sObject = page.props.subjects
+var sObject = page.props.subjects.data
 var subjects = ref(sObject)
 const createModalStatus = ref(false)
 const deleteModalStatus = ref(false)
@@ -41,20 +41,25 @@ const tabelSubjek = ref(null)
 const ArrayBigObjects = [
     { key: 'label', valueFilter: searchLabel }
 ]
-const filteredColumns = computed(() => {
-    let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
-    if (filters.length === 0) {
-        return page.props.subjects
-    }
-    return page.props.subjects.filter(item => {
-        return filters.every(obj => {
-            const filterValue = obj.valueFilter.value.toLowerCase()
-            return item[obj.key].toLowerCase().includes(filterValue)
-        })
-    })
-})
+// const filteredColumns = computed(() => {
+//     let filters = ArrayBigObjects.filter(obj => obj.valueFilter.value)
+//     if (filters.length === 0) {
+//         return page.props.subjects
+//     }
+//     return page.props.subjects.filter(item => {
+//         return filters.every(obj => {
+//             const filterValue = obj.valueFilter.value.toLowerCase()
+//             return item[obj.key].toLowerCase().includes(filterValue)
+//         })
+//     })
+// })
 watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
-    subjects.value = filteredColumns.value
+    // subjects.value = filteredColumns.value
+    currentPage.value = 1
+    delayedFetchData()
+})
+const delayedFetchData = debounce(() => {
+    fetchData()
 })
 const form = useForm({
     id: null,
@@ -120,28 +125,70 @@ const deleteForm = async function () {
     })
 }
 //new Pagination
-const showItemsValue = ref(10)
-const showItems = computed(() => {
-    if (filteredColumns.value.length < 10) return filteredColumns.value.length
-    return showItemsValue.value
-})
+// const showItemsValue = ref(10)
+// const showItems = computed(() => {
+//     if (filteredColumns.value.length < 10) return filteredColumns.value.length
+//     return showItemsValue.value
+// })
 const currentPage = ref(1)
+const showItems = ref(10)
 
 const updateShowItems = (value) => {
-    if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
-    else showItemsValue.value = value
+    // if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
+    // else showItemsValue.value = value
+    showItems.value = value
+    fetchData()
 }
+
 const updateCurrentPage = (value) => {
     currentPage.value = value
+    fetchData()
 }
-const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * showItems.value
-    const end = start + showItems.value
-    return filteredColumns.value.slice(start, end)
+const totalItems = ref(page.props.countData)
+watch(() => page.props.countData, (value) => {
+    totalItems.value = value
 })
-watch(() => page.props.subjects, (value) => {
+const paginatedData = computed(() => {
+    // const start = (currentPage.value - 1) * showItems.value
+    // const end = start + showItems.value
+    // return filteredColumns.value.slice(start, end)
+    return subjects.value
+})
+watch(() => page.props.subjects.data, (value) => {
     subjects.value = value
 })
+const orderAttribute = ref({
+    before: null,
+    label: null,
+    value: 'asc',
+})
+const clickToOrder = (value) => {
+    orderAttribute.value.label = value
+    if (orderAttribute.value.before == null || orderAttribute.value.before == value) {
+        if (orderAttribute.value.value == 'asc') orderAttribute.value.value = 'desc'
+        else if (orderAttribute.value.value == 'desc') orderAttribute.value.value = null
+        else orderAttribute.value.value = 'asc'
+    } else orderAttribute.value.value = 'asc'
+    orderAttribute.value.before = value
+    fetchData()
+}
+const fetchData = async () => {
+    try {
+        const response = await axios.get(route('subject.index'), {
+            params: {
+                currentPage: currentPage.value, paginated: showItems.value,
+                ArrayFilter: {
+                    label: searchLabel.value
+                },
+                orderAttribute: orderAttribute.value
+            }
+        })
+        subjects.value = response.data.subjects.data
+        totalItems.value = response.data.countData
+    } catch (error) {
+        console.error('Error fetching data: ', error)
+    }
+}
 </script>
 <template>
 
@@ -240,7 +287,6 @@ watch(() => page.props.subjects, (value) => {
             </ModalBs>
         </Teleport>
         <Pagination @update:currentPage="updateCurrentPage" @update:showItems="updateShowItems" :show-items="showItems"
-            :total-items="filteredColumns.length" :current-page="currentPage"
-            :current-show-items="paginatedData.length" />
+            :total-items="totalItems" :current-page="currentPage" :current-show-items="paginatedData.length" />
     </GeneralLayout>
 </template>

@@ -468,7 +468,7 @@ const forceDelete = async () => {
                                 title="Hapus" />
                         </a>
                         <a @click.prevent="toggleModalForceDelete(table.id_statustables)"
-                            v-if="page.props.route == 'tabel.deletedList'" class="edit-pen mx-1">
+                            v-if="page.props.route == 'tabel.deletedList' && page.props.auth.user.role == 'admin'" class="edit-pen mx-1">
                             <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color mx-1"
                                 title="Force Delete" />
                         </a>

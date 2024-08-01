@@ -280,6 +280,17 @@ const fetchData = async () => {
         console.error('Error fetching data: ', error)
     }
 }
+const downloadRoute = () => {
+    try {
+        const response = route('export-dinasIndex') + '?' + new URLSearchParams({
+            nama: searchNama.value,
+            wilayah_label: searchWilayah.value
+        }).toString()
+        window.location.href = response
+    } catch (error) {
+        alert('Gagal Download Data')
+    }
+}
 </script>
 
 <template>
@@ -293,7 +304,7 @@ const fetchData = async () => {
                     Daftar Produsen Data
                 </div>
                 <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                    @click="downloadRoute()"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
                 <Link :href="route('dinas.create')" class="btn bg-info-fordone"><font-awesome-icon
                     icon="fa-solid fa-plus" />
                 Tambah Produsen Data Baru</Link>

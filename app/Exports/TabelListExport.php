@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\MasterWilayah;
 use App\Models\Statustables;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -35,11 +36,18 @@ class TabelListExport implements FromCollection, WithHeadings
     {
         $query = Statustables::query();
         // dd($this->produsen);
+        $this_dinas = auth()->user()->id_dinas;
+        $this_role = auth()->user()->role;
+        if ($this_role == 'produsen') $query->where('dinas.id', $this_dinas);
+        else $query->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah());
+
         $query->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
             ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
             ->join('subjects', 'subjects.id', '=', 'tabels.id_subjek')
             ->join('users', 'statustables.edited_by', '=', 'users.id')
+            ->where('statustables.status', '<', 6)
+            ->orderBy('statustables.status', 'desc')
             ->select(
                 [
                     'tabels.nomor',
@@ -48,6 +56,7 @@ class TabelListExport implements FromCollection, WithHeadings
                     'statustables.tahun',
                     'statustables.updated_at',
                     'users.username',
+                    'sdesc.label as status',
                     'subjects.label as subjek'
                 ]
             );
@@ -71,6 +80,7 @@ class TabelListExport implements FromCollection, WithHeadings
                 'nama' => $item->nama,
                 'tahun' => $item->tahun,
                 'subjek' => $item->subjek,
+                'status' => $item->status,
                 'edited_by' => $item->username,
                 'updated_at' => $item->updated_at
             ];
@@ -81,7 +91,7 @@ class TabelListExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-            'Judul Tabel', 'Produsen Data', 'Tahun', 'Subjek', 'User Terakhir', 'Terakhir di-Edit'
+            'Judul Tabel', 'Produsen Data', 'Tahun', 'Subjek', 'Status Data', 'User Terakhir', 'Terakhir di-Edit'
         ];
     }
 }

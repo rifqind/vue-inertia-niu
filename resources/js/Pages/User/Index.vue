@@ -120,10 +120,7 @@ watch(ArrayBigObjects.map(obj => obj.valueFilter), function () {
 const delayedFetchData = debounce(() => {
     fetchData()
 })
-onMounted(function () {
-    //flash
-    if (flashObject) toggleFlash.value = true
-})
+
 const deleteForm = async function () {
     const response = await axios.get(route('token'))
     form._token = response.data
@@ -217,6 +214,21 @@ const fetchData = async () => {
         console.error('Error fetching data: ', error)
     }
 }
+const downloadRoute = () => {
+    try {
+        const response = route('export-userIndex') + '?' + new URLSearchParams({
+            username: searchUsername.value,
+            name: searchNama.value,
+            nama_dinas: searchInstansi.value,
+            wilayah_label: searchWilayah.value,
+            noHp: searchNoHp.value,
+            role: searchRole.value,
+        }).toString()
+        window.location.href = response
+    } catch (error) {
+        alert('Gagal Download Data')
+    }
+}
 </script>
 <template>
 
@@ -229,7 +241,7 @@ const fetchData = async () => {
                     Daftar Pengguna
                 </div>
                 <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                    @click="downloadRoute()"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
                 <Link :href="route('users.create')" class="btn bg-info-fordone"><font-awesome-icon
                     icon="fa-solid fa-plus" />
                 Tambah Pengguna Baru</Link>

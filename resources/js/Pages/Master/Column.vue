@@ -261,6 +261,17 @@ const handleUpload = (e) => {
 const downloadTemplate = () => {
     window.location.href = '/download-template/columns-template'
 }
+const downloadRoute = () => {
+    try {
+        const response = route('export-columnIndex') + '?' + new URLSearchParams({
+            label: searchLabel.value,
+            columnGroupsLabel: searchColumnGroup.value
+        }).toString()
+        window.location.href = response
+    } catch (error) {
+        alert('Gagal Download Data')
+    }
+}
 </script>
 <template>
 
@@ -275,7 +286,7 @@ const downloadTemplate = () => {
                 <button class="btn bg-info mr-1" @click="uploadModal = !uploadModal"><font-awesome-icon
                     icon="fa-solid fa-file" /></button>
                 <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                    @click="downloadRoute()"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
                 <a @click="createModalStatus = true" class="btn bg-info-fordone"><font-awesome-icon
                         icon="fa-solid fa-plus" />
                     Tambah Kolom Baru</a>

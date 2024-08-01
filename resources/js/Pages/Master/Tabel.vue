@@ -391,6 +391,20 @@ const indexExpandedCol = ref(Array(paginatedData.value.length).fill(false))
 const openOtherCol = (index) => {
     indexExpandedCol.value[index] = !indexExpandedCol.value[index]
 }
+const downloadRoute = () => {
+    try {
+        const response = route('export-tabelIndex') + '?' + new URLSearchParams({
+            label: searchLabel.value,
+            produsen: searchLabelDinas.value,
+            tahun: searchTahun.value,
+            status: searchStatus.value,
+            updatedBy: searchUpdated.value,
+        }).toString()
+        window.location.href = response
+    } catch (error) {
+        alert('Gagal Download Data')
+    }
+}
 </script>
 <template>
 
@@ -403,7 +417,7 @@ const openOtherCol = (index) => {
                     Master Tabel
                 </div>
                 <button class="btn bg-success-fordone mr-2" title="Download"
-                    @click="downloadModalStatus = true"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
+                    @click="downloadRoute()"><font-awesome-icon icon="fa-solid fa-circle-down" /></button>
                 <Link :href="route('tabel.create')" class="btn bg-info-fordone"><font-awesome-icon
                     icon="fa-solid fa-plus" />
                 Tambah Master Tabel Baru</Link>
@@ -533,7 +547,7 @@ const openOtherCol = (index) => {
     }" class="delete-trash">
                             <font-awesome-icon icon="fa-solid fa-trash-can icon-trash-color" title="Hapus" />
                         </a>
-                        <a @click.prevent="() => {
+                        <a v-if="page.props.auth.user.role == 'admin'" @click.prevent="() => {
                             deleteModalStatus = true; 
                             form.id = table.id
                         }" 
