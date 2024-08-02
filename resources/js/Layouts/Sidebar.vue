@@ -125,6 +125,8 @@ const toggleMenuOpen = function (x) {
                     <NavLinkSidebar :navIcon="'fas fa-user'" :href="route('users.edit')"
                         :currentRoute="currentRoute == 'users.edit'"> Edit
                         Profile</NavLinkSidebar>
+                    <NavLinkSidebar :role="page.props.auth.user.username == 'niu'" :navIcon="'fas fa-user'" :href="route('home-api.create')"
+                        :currentRoute="currentRoute == 'home-api.create'"> Daftar API </NavLinkSidebar>
                     <li class="nav-item">
                         <Link :href="route('/')" class="nav-link">
                         <font-awesome-icon icon="nav-icon fa-solid fa-home" />

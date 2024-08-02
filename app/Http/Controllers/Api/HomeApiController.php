@@ -3,23 +3,55 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiList;
 use App\Models\Column;
 use App\Models\Datacontent;
+use App\Models\Dinas;
 use App\Models\MasterWilayah;
 use App\Models\Row;
 use App\Models\Statustables;
+use App\Models\Subject;
 use App\Models\Turtahun;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class HomeApiController extends Controller
 {
-    public function index(Request $request)
+    private function getWilayah($wilayah)
     {
+        if ($wilayah == "7100000000") {
+            # code...
+            $lists = MasterWilayah::pluck('wilayah_fullcode');
+        } else {
+            if (auth()->user()->role == 'admin') {
+                # code...
+                if ($wilayah == "7101000000") {
+                    # code...
+                    $lists = MasterWilayah::whereIn('kab', ['01', '10'])->pluck('wilayah_fullcode');
+                } else if ($wilayah == "7105000000") {
+                    $lists = MasterWilayah::whereIn('kab', ['05', '09'])->pluck('wilayah_fullcode');
+                } else {
+                    $lists = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)->pluck('wilayah_fullcode');
+                }
+            } else {
+                $lists = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)->pluck('wilayah_fullcode');
+            }
+        }
+        return $lists;
+    }
+
+    public function index(Request $request, String $key)
+    {
+        $api = ApiList::where('key', $key)->first();
+        if (!$api) return response()->json(['message' => 'API not found'], 404);
         if ($request->paginated) $paginated = $request->paginated;
         else $paginated = 10;
         if ($request->currentPage) $currentPage = $request->currentPage;
         else $currentPage = 1;
         $query = Statustables::query();
+        $wilayah = $this->getWilayah($api->wilayah_fullcode);
+        $query->whereIn('dinas.wilayah_fullcode', $wilayah);
         $dataToCounted = $query
             ->where('status', 5)
             ->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
@@ -75,8 +107,10 @@ class HomeApiController extends Controller
         ]);
     }
 
-    public function view(Request $request)
+    public function view(Request $request, $key)
     {
+        $api = ApiList::where('key', $key)->first();
+        if (!$api) return response()->json(['message' => 'API not found'], 404);
         $id_tabel = $request->id;
         $tahun = $request->tahun;
 
@@ -117,5 +151,55 @@ class HomeApiController extends Controller
             'turtahuns' => $turtahuns,
             'wilayah_label' => $wilayah_label,
         ]);
+    }
+
+    public function list(Request $request, $key)
+    {
+        $api = ApiList::where('key', $key)->first();
+        if (!$api) return response()->json(['message' => 'API not found'], 404);
+        $wilayah = $this->getWilayah($api->wilayah_fullcode);
+
+        if ($request->list == 'dinas') {
+            $data = Dinas::join('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+                ->whereIn('dinas.wilayah_fullcode', $wilayah)
+                ->select(['dinas.*', 'mw.label as wilayah_label'])
+                ->get();
+            return response()->json(['dinas' => $data]);
+        }
+        if ($request->list == 'subjek') {
+            $data = Subject::get();
+            return response()->json(['subjek' => $data]);
+        }
+        if ($request->list == 'wilayah') {
+            $data = MasterWilayah::getMyWilayah();
+            return response()->json(['wilayah' => $data]);
+        }
+    }
+
+    public function create(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $data = $request->validate([
+                'wilayah_fullcode' => ['required', 'string', 'max:10', 'unique:' . ApiList::class]
+            ]);
+            $data['key'] = $this->generateUniqueKey();
+            ApiList::create($data);
+
+            return redirect()->route('home-api.create');
+        }
+        $data = ApiList::get();
+        $wilayah = MasterWilayah::getMyWilayah();
+        return Inertia::render('Master/Api', [
+            'api' => $data,
+            'kabs' => $wilayah['kabs']
+        ]);
+    }
+    private function generateUniqueKey()
+    {
+        do {
+            # code...
+            $key = Str::random(8);
+        } while (ApiList::where('key', $key)->exists());
+        return $key;
     }
 }
