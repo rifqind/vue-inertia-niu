@@ -97,6 +97,10 @@ class RowController extends Controller
                         return redirect()->route('rows.index')->with('error', 'Gagal Upload, label ' . $value[0] . ' sudah ada');
                     }
 
+                    if (str_starts_with($value[0], '19') || str_starts_with($value[0], '20')) {
+                        return redirect()->route('rows.index')->with('error', 'Gagal Upload, tidak boleh upload label tahun');
+                    }
+                    
                     $insertedRow = Row::create([
                         'label' => $value[0],
                         'id_row_groups' => $thisRG,
@@ -116,6 +120,9 @@ class RowController extends Controller
                 if ($exists) {
                     return redirect()->route('rows.index')->with('error', 'Baris ' . $validatedData['label'][0] . ' sudah ada');
                 }
+                if (str_starts_with($validatedData['label'][0], '19') || str_starts_with($validatedData['label'][0], '20')) {
+                    return redirect()->route('rows.index')->with('error', 'Gagal, tidak boleh upload label tahun');
+                }
                 $updated = Row::where('id', $request->id)->update([
                     'label' => $validatedData['label'][0],
                     'id_row_groups' => $validatedData['id_row_groups'],
@@ -129,6 +136,9 @@ class RowController extends Controller
                     ->whereRaw('LOWER(label) = ?', [$value])->exists();
                 if ($exists) {
                     return redirect()->route('rows.index')->with('error', 'Baris ' . $value . ' sudah ada');
+                }
+                if (str_starts_with($value, '19') || str_starts_with($value, '20')) {
+                    return redirect()->route('rows.index')->with('error', 'Gagal, tidak boleh upload label tahun');
                 }
                 $insertedRow = Row::create([
                     'label' => $value,
