@@ -62,6 +62,7 @@ const submit = async () => {
         <tr class="bg-info-fordone">
           <th class="first-column th-order tabel-width-10">No.</th>
           <th class="text-center th-order tabel-width-30">Wilayah</th>
+          <th class="text-center th-order tabel-width-30">Key</th>
           <th class="text-center deleted tabel-width-8">Edit</th>
           <th class="text-center deleted">Hapus</th>
         </tr>
@@ -70,6 +71,7 @@ const submit = async () => {
           <td class="search-header">
             <input type="text" class="search-input form-control" />
           </td>
+          <td class="search-header"></td>
           <td class="search-header deleted"></td>
           <td class="search-header deleted"></td>
         </tr>
@@ -78,6 +80,7 @@ const submit = async () => {
         <tr v-for="api in paginatedData" :key="api.key" v-if="apis.length > 0">
           <td>{{ api.number }}</td>
           <td>{{ api.wilayah_fullcode }}</td>
+          <td>{{ api.key }}</td>
           <td class="text-center deleted">
             <a @click.prevent="toggleUpdateModal(api.key)" class="edit-pen mx-1">
               <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />

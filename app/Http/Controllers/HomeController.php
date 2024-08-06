@@ -46,7 +46,7 @@ class HomeController extends Controller
                 'dinas.nama as nama_dinas',
                 'master_wilayah.wilayah_fullcode as kode_wilayah',
                 'master_wilayah.label as nama_regions',
-                'subjects.id as id_subjects', 
+                'subjects.id as id_subjects',
                 'subjects.label as nama_subjects',
                 'statustables.updated_at as status_updated',
             ]);
@@ -54,18 +54,18 @@ class HomeController extends Controller
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
             if (!empty($filter['tahun'])) {
-                $filter['tahun'] = array_values(array_filter($filter['tahun'], function($value) {
+                $filter['tahun'] = array_values(array_filter($filter['tahun'], function ($value) {
                     return $value !== 'all';
                 }));
                 if (!empty($filter['tahun'])) $query->whereIn('statustables.tahun', $filter['tahun']);
-            } 
+            }
             if (!empty($filter['kode'])) $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
             if (!empty($filter['dinas'])) {
-                $filter['dinas'] = array_values(array_filter($filter['dinas'], function($value) {
+                $filter['dinas'] = array_values(array_filter($filter['dinas'], function ($value) {
                     return $value !== 'all';
                 }));
                 if (!empty($filter['dinas'])) $query->whereIn('dinas.id', $filter['dinas']);
-            } 
+            }
             if (!empty($filter['subjek'])) $query->whereIn('subjects.id', $filter['subjek']);
             if (!empty($filter['label'])) {
                 $query
@@ -202,59 +202,65 @@ class HomeController extends Controller
         return $array;
     }
 
-    public function monitoring()
+    public function monitoring(Request $request)
     {
         $ourDinas = Dinas::whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->pluck('id');
         $myTabels = Tabel::whereIn('id_dinas', $ourDinas)->pluck('id');
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
 
-        $this_monitoring = DB::table('statustables as s')
-            ->join('tabels as t', 't.id', '=', 's.id_tabel')
+        $query = Statustables::query();
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) {
+                $query->orderBy($order['label'], $order['value']);
+            }
+        }
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['nama_dinas'])) {
+                $query->where('d.nama', 'like', '%' . $filter['nama_dinas'] . '%');
+            }
+            if (!empty($filter['years'])) {
+                $query->where('statustables.tahun', $filter['years']);
+            }
+            if (!empty($filter['wilayah'])) {
+                $query->where('d.wilayah_fullcode', $filter['wilayah']);
+            }
+        }
+        $this_monitoring = $query->join('tabels as t', 't.id', '=', 'statustables.id_tabel')
             ->join('dinas as d', 'd.id', '=', 't.id_dinas')
             ->select(
                 'd.nama as nama_dinas',
-                DB::raw('count(case when s.status = 1 then 1 end) as jumlah_satu'),
-                DB::raw('count(case when s.status = 2 then 1 end) as jumlah_dua'),
-                DB::raw('count(case when s.status = 3 then 1 end) as jumlah_tiga'),
-                DB::raw('count(case when s.status = 4 then 1 end) as jumlah_empat'),
-                DB::raw('count(case when s.status = 5 then 1 end) as jumlah_lima'),
-                DB::raw('count(case when s.status = 6 then 1 end) as jumlah_enam')
+                DB::raw('count(case when statustables.status = 1 then 1 end) as jumlah_satu'),
+                DB::raw('count(case when statustables.status = 2 then 1 end) as jumlah_dua'),
+                DB::raw('count(case when statustables.status = 3 then 1 end) as jumlah_tiga'),
+                DB::raw('count(case when statustables.status = 4 then 1 end) as jumlah_empat'),
+                DB::raw('count(case when statustables.status = 5 then 1 end) as jumlah_lima'),
+                DB::raw('count(case when statustables.status = 6 then 1 end) as jumlah_enam')
             )
             ->whereIn('t.id_dinas', $ourDinas)
-            ->groupBy('nama_dinas')
-            ->get();
+            ->groupBy('d.nama');
+
+        $countData = $this_monitoring->get()->count();
+        $monitoring = $this_monitoring->paginate($paginated, ['*'], 'page', $currentPage);
 
         $years = Statustables::whereIn('id_tabel', $myTabels)->distinct()->orderBy('tahun', 'desc')->get(['tahun as label', 'tahun as value']);
-
+        $wilayah = MasterWilayah::getMyWilayah();
+        if ($request->paginated) {
+            return response()->json([
+                'countData' => $countData,
+                'this_monitoring' => $monitoring,
+            ]);
+        }
         return Inertia::render('Home/Monitoring', [
-            'this_monitoring' => $this_monitoring,
+            'this_monitoring' => $monitoring,
             'years' => $years,
+            'kabs' => $wilayah['kabs'],
+            'countData' => $countData
         ]);
-    }
-
-    public function getMonitoring(string $years)
-    {
-        $ourDinas = Dinas::whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->pluck('id');
-        $myTabels = Tabel::whereIn('id_dinas', $ourDinas)->pluck('id');
-        $years_all = Statustables::whereIn('id_tabel', $myTabels)->distinct()->orderBy('tahun')->pluck('tahun');
-
-        $this_monitoring = DB::table('statustables as s')
-            ->join('tabels as t', 't.id', '=', 's.id_tabel')
-            ->join('dinas as d', 'd.id', '=', 't.id_dinas')
-            ->select(
-                'd.nama as nama_dinas',
-                DB::raw('count(case when s.status = 1 then 1 end) as jumlah_satu'),
-                DB::raw('count(case when s.status = 2 then 1 end) as jumlah_dua'),
-                DB::raw('count(case when s.status = 3 then 1 end) as jumlah_tiga'),
-                DB::raw('count(case when s.status = 4 then 1 end) as jumlah_empat'),
-                DB::raw('count(case when s.status = 5 then 1 end) as jumlah_lima'),
-                DB::raw('count(case when s.status = 6 then 1 end) as jumlah_enam')
-            )
-            ->whereIn('t.id_dinas', $ourDinas)
-            ->whereIn('s.tahun', ($years == 'all') ? $years_all : [$years])
-            ->groupBy('nama_dinas')
-            ->get();
-
-        return response()->json($this_monitoring);
     }
 
     public function dashboard(Request $request)

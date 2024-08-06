@@ -3,6 +3,7 @@
 use App\Exports\BatchViewExport;
 use App\Exports\ColumnGroupExport;
 use App\Exports\DinasExport;
+use App\Exports\MonitoringExport;
 use App\Exports\RowExport;
 use App\Exports\RowGroupExport;
 use App\Exports\TabelListExport;
@@ -57,7 +58,6 @@ Route::get('/show', [HomeController::class, 'show'])->name('home.show');
 
 Route::get('/dashboard', [HomeController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('home.dashboard');
 Route::get('/monitoring', [HomeController::class, 'monitoring'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('home.monitoring');
-Route::get('getMonitoring/{years}', [HomeController::class, 'getMonitoring'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('home.getMonitoring');
 Route::get('/getDashboard/{years}/{wilayah}', [HomeController::class, 'getDashboard'])->middleware(['auth', 'verified'])->name('home.getDashboard');
 
 //users
@@ -233,6 +233,12 @@ Route::get('/export-columnIndex', function (Request $request) {
     $columnGroupsLabel = $request->columnGroupsLabel;
     return Excel::download(new RowExport($label, $columnGroupsLabel), "Kolom.xlsx");
 })->name('export-columnIndex')->middleware(['auth', 'verified', 'role:admin|kominfo']);
+Route::get('/export-monitoring', function (Request $request) {
+    $label = $request->nama_dinas;
+    $tahun = $request->years;
+    $wilayah = $request->wilayah;
+    return Excel::download(new MonitoringExport($label, $tahun, $wilayah), "Monitoring.xlsx");
+})->name('export-monitoring')->middleware(['auth', 'verified', 'role:admin|kominfo']);
 Route::get('/download-template/{name}', function (String $name) {
     $filePath = public_path('templates/' . $name . '.xlsx');
     return Response::download($filePath);
