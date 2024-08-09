@@ -194,6 +194,7 @@ class UserController extends Controller
             'user' => $user,
         ]);
     }
+
     public function default(Request $request)
     {
         $id = $request->id;
@@ -202,6 +203,39 @@ class UserController extends Controller
             'password' => Hash::make($defaults)
         ]);
         return redirect()->route('users.index')->with('message', 'Berhasil reset password akun tersebut');
+    }
+
+
+    public function resetBulk(Request $request)
+    {
+        if ($request->fileUpload) {
+            $fileData = $request->fileUpload;
+            // dd($fileData);
+            if ($fileData[0][0] != 'username' && $fileData[0][1] != 'password_generate') {
+                return redirect()->route('users.index')->with('error', 'Gagal Upload, tidak sesuai template');
+            };
+            foreach ($fileData as $key => $value) {
+                # code...
+                if ($key > 0) {
+                    if (empty($value[0])) {
+                        return redirect()->route('users.index')->with('error', 'Gagal Upload, kolom username tidak boleh kosong');
+                    }
+                    if (empty($value[1])) {
+                        return redirect()->route('users.index')->with('error', 'Gagal Upload, kolom password_generate tidak boleh kosong');
+                    }
+    
+                    //cek username
+                    $check_username = User::where('username', $value[0])->value('username');
+                    if ($check_username) {
+                        $update_user = User::where('username', $check_username)
+                            ->update([
+                                'password' =>  Hash::make($value[1]),
+                            ]);
+                    }
+                }
+            }
+            return redirect()->route('users.index')->with('message', 'Berhasil Bulk Password');
+        }
     }
 
     // /**

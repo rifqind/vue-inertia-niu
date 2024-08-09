@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('user/store', [UserController::class, 'store'])->name('users.store');
     Route::get('user/create', [UserController::class, 'create'])->name('users.create');
     Route::get('user/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::post('user/reset-bulk', [UserController::class, 'resetBulk'])->name('users.resetBulk');
 });
 Route::get('user/edit', [UserController::class, 'edit'])->middleware(['auth', 'verified'])->name('users.edit');
 Route::post('user/editProfile', [UserController::class, 'editProfile'])->middleware(['auth', 'verified'])->name('users.editProfile');

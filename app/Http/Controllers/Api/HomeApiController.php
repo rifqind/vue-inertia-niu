@@ -188,6 +188,12 @@ class HomeApiController extends Controller
             return redirect()->route('home-api.create');
         }
         $data = ApiList::get();
+        $number = 1;
+        foreach ($data as $key => $value) {
+            # code...
+            $value->number = $number;
+            $number++;
+        }
         $wilayah = MasterWilayah::getMyWilayah();
         return Inertia::render('Master/Api', [
             'api' => $data,
