@@ -6,6 +6,7 @@ use App\Models\Dinas;
 use App\Models\MasterWilayah;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
@@ -96,7 +97,7 @@ class UserController extends Controller
     {
         //
         $request->validate([
-            'username' => ['required', 'string', 'lowercase', 'unique:' . User::class],
+            'username' => ['required', 'string', 'lowercase', 'unique:' . User::class, 'regex:/^\S*$/u'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
@@ -142,7 +143,7 @@ class UserController extends Controller
         $id = $request->id;
         // $decryptedId = Crypt::decrypt($id);
         $request->validate([
-            'username' => ['required', 'string', Rule::unique('users')->ignore($id)],
+            'username' => ['required', 'string', Rule::unique('users')->ignore($id), 'regex:/^\S*$/u'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'noHp' => ['required', 'string', 'max:13'],
@@ -208,33 +209,42 @@ class UserController extends Controller
 
     public function resetBulk(Request $request)
     {
-        if ($request->fileUpload) {
-            $fileData = $request->fileUpload;
-            // dd($fileData);
-            if ($fileData[0][0] != 'username' && $fileData[0][1] != 'password_generate') {
-                return redirect()->route('users.index')->with('error', 'Gagal Upload, tidak sesuai template');
-            };
-            foreach ($fileData as $key => $value) {
-                # code...
-                if ($key > 0) {
-                    if (empty($value[0])) {
-                        return redirect()->route('users.index')->with('error', 'Gagal Upload, kolom username tidak boleh kosong');
-                    }
-                    if (empty($value[1])) {
-                        return redirect()->route('users.index')->with('error', 'Gagal Upload, kolom password_generate tidak boleh kosong');
-                    }
-    
-                    //cek username
-                    $check_username = User::where('username', $value[0])->value('username');
-                    if ($check_username) {
-                        $update_user = User::where('username', $check_username)
-                            ->update([
-                                'password' =>  Hash::make($value[1]),
-                            ]);
+        try {
+            //code...
+            DB::beginTransaction();
+            if ($request->fileUpload) {
+                $fileData = $request->fileUpload;
+                // dd($fileData);
+                if ($fileData[0][0] != 'username' && $fileData[0][1] != 'password_generate') {
+                    return redirect()->route('users.index')->with('error', 'Gagal Upload, tidak sesuai template');
+                };
+                foreach ($fileData as $key => $value) {
+                    # code...
+                    if ($key > 0) {
+                        if (empty($value[0])) {
+                            return redirect()->route('users.index')->with('error', 'Gagal Upload, kolom username tidak boleh kosong');
+                        }
+                        if (empty($value[1])) {
+                            return redirect()->route('users.index')->with('error', 'Gagal Upload, kolom password_generate tidak boleh kosong');
+                        }
+
+                        //cek username
+                        $check_username = User::where('username', $value[0])->value('username');
+                        if ($check_username) {
+                            $update_user = User::where('username', $check_username)
+                                ->update([
+                                    'password' =>  Hash::make($value[1]),
+                                ]);
+                        }
                     }
                 }
+                DB::commit();
+                return redirect()->route('users.index')->with('message', 'Berhasil Bulk Password');
             }
-            return redirect()->route('users.index')->with('message', 'Berhasil Bulk Password');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return response()->json($th->getMessage(), $key);
         }
     }
 

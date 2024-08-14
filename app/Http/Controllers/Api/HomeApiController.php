@@ -41,6 +41,42 @@ class HomeApiController extends Controller
         return $lists;
     }
 
+    private function getMasterWilayah($wilayah)
+    {
+        $kab = substr($wilayah, 2, 4);
+        if ($wilayah == "7100000000") {
+            # code...
+            $kabs = MasterWilayah::where('kec', 'like', '000')
+                ->get(['label', 'wilayah_fullcode as value']);
+            $kecs = MasterWilayah::where('kab', 'not like', '00')
+                ->where('kec', 'not like', '000')
+                ->where('desa', 'like', '000')
+                ->get(['label', 'wilayah_fullcode as value']);
+            $desa = MasterWilayah::where('kab', 'not like', '00')
+                ->where('kec', 'not like', '000')
+                ->where('desa', 'not like', '000')
+                ->get(['label', 'wilayah_fullcode as value']);
+        } else {
+            $kabs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
+                ->where('kec', 'like', '000')
+                ->get(['label', 'wilayah_fullcode as value']);
+            $kecs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
+                ->where('kec', 'not like', '000')
+                ->where('desa', 'like', '000')
+                ->get(['label', 'wilayah_fullcode as value']);
+            $desa = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
+                ->where('kec', 'not like', '000')
+                ->where('desa', 'not like', '000')
+                ->get(['label', 'wilayah_fullcode as value']);
+        }
+        $wilayah = [
+            'kabs' => $kabs,
+            'kecs' => $kecs,
+            'desa' => $desa,
+        ];
+        return $wilayah;
+    }
+
     public function index(Request $request, String $key)
     {
         $api = ApiList::where('key', $key)->first();
@@ -117,7 +153,12 @@ class HomeApiController extends Controller
         $datacontents = Datacontent::where('id_tabel', $id_tabel)
             ->where('tahun', $tahun)
             ->get([
-                'value', 'id_row', 'id_column', 'id_turtahun', 'tahun', 'wilayah_fullcode'
+                'value',
+                'id_row',
+                'id_column',
+                'id_turtahun',
+                'tahun',
+                'wilayah_fullcode'
             ]);
         $columnList = Datacontent::where('id_tabel', $id_tabel)
             ->where('tahun', $tahun)
@@ -171,7 +212,7 @@ class HomeApiController extends Controller
             return response()->json(['subjek' => $data]);
         }
         if ($request->list == 'wilayah') {
-            $data = MasterWilayah::getMyWilayah();
+            $data =  $this->getMasterWilayah($api->wilayah_fullcode);
             return response()->json(['wilayah' => $data]);
         }
     }
@@ -187,7 +228,13 @@ class HomeApiController extends Controller
 
             return redirect()->route('home-api.create');
         }
-        $data = ApiList::get();
+        if (auth()->user()->username == 'niu') {
+            $data = ApiList::get();
+        } else {
+            $wilayah_dinas = Dinas::where('id', auth()->user()->id_dinas)->value('wilayah_fullcode');
+            // dd($wilayah_dinas);
+            $data = ApiList::where('wilayah_fullcode', $wilayah_dinas)->get();
+        }
         $number = 1;
         foreach ($data as $key => $value) {
             # code...

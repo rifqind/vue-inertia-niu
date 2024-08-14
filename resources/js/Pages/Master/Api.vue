@@ -41,6 +41,9 @@ const submit = async () => {
     },
   });
 };
+const downloadRoute = () => {
+  window.location.href = "/download-api-how-to";
+};
 </script>
 <template>
   <Head title="Daftar API" />
@@ -48,7 +51,17 @@ const submit = async () => {
     <div class="container-fluid">
       <div class="mb-2 d-flex">
         <div class="h4 flex-grow-1">Daftar API terdaftar</div>
-        <a @click="createModalStatus = true" class="btn bg-info-fordone"
+        <button
+          class="btn bg-success-fordone mr-2"
+          title="Download"
+          @click="downloadRoute()"
+        >
+          <font-awesome-icon icon="fa-solid fa-circle-down" /> Panduan API
+        </button>
+        <a
+          v-if="page.props.auth.user.username == 'niu'"
+          @click="createModalStatus = true"
+          class="btn bg-info-fordone"
           ><font-awesome-icon icon="fa-solid fa-plus" /> Tambah API Baru</a
         >
       </div>
@@ -63,8 +76,10 @@ const submit = async () => {
           <th class="first-column th-order tabel-width-10">No.</th>
           <th class="text-center th-order tabel-width-30">Wilayah</th>
           <th class="text-center th-order tabel-width-30">Key</th>
-          <th class="text-center deleted tabel-width-8">Edit</th>
-          <th class="text-center deleted">Hapus</th>
+          <template v-if="page.props.auth.user.username == 'niu'">
+            <th class="text-center deleted tabel-width-8">Edit</th>
+            <th class="text-center deleted">Hapus</th>
+          </template>
         </tr>
         <tr class="">
           <td class="search-header"></td>
@@ -72,8 +87,10 @@ const submit = async () => {
             <input type="text" class="search-input form-control" />
           </td>
           <td class="search-header"></td>
-          <td class="search-header deleted"></td>
-          <td class="search-header deleted"></td>
+          <template v-if="page.props.auth.user.username == 'niu'">
+            <td class="search-header deleted"></td>
+            <td class="search-header deleted"></td>
+          </template>
         </tr>
       </thead>
       <tbody>
@@ -81,16 +98,21 @@ const submit = async () => {
           <td>{{ api.number }}</td>
           <td>{{ api.wilayah_fullcode }}</td>
           <td>{{ api.key }}</td>
-          <td class="text-center deleted">
-            <a @click.prevent="toggleUpdateModal(api.key)" class="edit-pen mx-1">
-              <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />
-            </a>
-          </td>
-          <td class="text-center deleted">
-            <a @click.prevent="toggleDeleteModal(api.key)" class="delete-trash">
-              <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
-            </a>
-          </td>
+          <template v-if="page.props.auth.user.username == 'niu'">
+            <td class="text-center deleted">
+              <a @click.prevent="toggleUpdateModal(api.key)" class="edit-pen mx-1">
+                <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />
+              </a>
+            </td>
+            <td class="text-center deleted">
+              <a @click.prevent="toggleDeleteModal(api.key)" class="delete-trash">
+                <font-awesome-icon
+                  icon="fa-solid fa-trash-can"
+                  class="icon-trash-color"
+                />
+              </a>
+            </td>
+          </template>
         </tr>
         <tr v-else>
           <td colspan="4" class="text-center">Data Tidak Ada</td>

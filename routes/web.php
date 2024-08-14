@@ -245,13 +245,18 @@ Route::get('/download-template/{name}', function (String $name) {
     return Response::download($filePath);
 })->name('downloadTemplate')->middleware(['auth', 'verified', 'role:admin']);
 
+Route::get('/download-api-how-to', function () {
+    $filePath = public_path('api-how-to/API.pdf');
+    return Response::download($filePath);
+})->name('download-api-how-to')->middleware(['auth', 'verified', 'role:admin|kominfo']);
+
 
 Route::get('/api/home/{key}', [HomeApiController::class, 'index'])->name('home-api.index');
 Route::get('/api/home/view/{key}', [HomeApiController::class, 'view'])->name('home-api.view');
 Route::get('/api/master/{key}', [HomeApiController::class, 'list'])->name('home-api.master');
 
 Route::get('/api/create', [HomeApiController::class, 'create'])
-    ->middleware(['auth', 'verified', 'role:admin'])
+    ->middleware(['auth', 'verified', 'role:admin|kominfo'])
     ->name('home-api.create');
 
 Route::post('/api/create', [HomeApiController::class, 'create'])
