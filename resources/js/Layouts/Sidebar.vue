@@ -262,12 +262,14 @@ const toggleMenuOpen = function (x) {
           >
             Daftar API
           </NavLinkSidebar>
-          <li class="nav-item">
-            <Link :href="route('/')" class="nav-link">
-              <font-awesome-icon icon="nav-icon fa-solid fa-home" />
-              <p class="text-bold">Kembali ke Beranda</p>
-            </Link>
-          </li>
+          <NavLinkSidebar
+            :role="true"
+            :navIcon="'fa-solid fa-home'"
+            :href="route('/')"
+            :currentRoute="currentRoute == '/'"
+          >
+            Kembali ke Beranda
+          </NavLinkSidebar>
         </ul>
       </nav>
       <!-- /.sidebar-menu -->

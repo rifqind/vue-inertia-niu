@@ -55,6 +55,8 @@ Route::get('/token', function () {
 Route::get('/', [HomeController::class, 'index'])->name('/');
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/show', [HomeController::class, 'show'])->name('home.show');
+Route::get('/fetch-show', [HomeController::class, 'fetch'])->name('view.fetch');
+Route::get('/chart-show', [HomeController::class, 'lineChart'])->name('view.chart');
 
 Route::get('/dashboard', [HomeController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('home.dashboard');
 Route::get('/monitoring', [HomeController::class, 'monitoring'])->middleware(['auth', 'verified', 'role:admin|kominfo'])->name('home.monitoring');
