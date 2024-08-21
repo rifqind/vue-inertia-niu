@@ -647,14 +647,19 @@ class HomeController extends Controller
         $result = [];
         foreach ($id_row as $key => $value) {
             # code...
+            // Determine the column to filter by based on the request
+            $column = $request->wilayah_fullcode ? 'wilayah_fullcode' : 'id_row';
+
+            // Fetch the data based on the determined column
             $data = Datacontent::where('id_column', $id_column)
-                ->where('id_row', $value)
+                ->where($column, $value)
                 ->where('id_tabel', $id_tabel)
                 ->whereIn('tahun', $tahun)
                 ->orderBy('tahun')
                 ->get();
 
-            $result[$key]['label'] = Row::where('id', $value)->value('label');
+            $result[$key]['label']  = ($request->wilayah_fullcode) ? MasterWilayah::where('wilayah_fullcode', $value)->value('label') :
+                Row::where('id', $value)->value('label');
             $result[$key]['backgroundColor'] =  sprintf('#%06X', mt_rand(0, 0xFFFFFF));
             $result[$key]['data'] = $data->pluck('value')->toArray();
             foreach ($result[$key]['data'] as $keyInside => $valueInside) {

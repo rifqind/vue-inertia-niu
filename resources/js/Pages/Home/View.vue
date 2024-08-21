@@ -4,7 +4,7 @@ import { usePage, useForm, Link, Head } from "@inertiajs/vue3";
 import { clickSortProperties } from "@/sortAttribute";
 import ModalBs from "@/Components/ModalBs.vue";
 import { downloadTabel } from "@/download";
-import { onMounted, ref, defineComponent } from "vue";
+import { onMounted, ref, defineComponent, computed } from "vue";
 import Multiselect from "@vueform/multiselect";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import {
@@ -72,18 +72,22 @@ const columnForChart = page.props.columns.map((data) => ({
 }));
 const rowForChart = page.props.rows.map((data) => ({
   label: data.label,
-  value: data.id,
+  value: data.id ? data.id : data.wilayah_fullcode,
 }));
 const findChart = ref(false);
 const fetchChart = async () => {
   findChart.value = false;
   try {
+    let wilayah_fullcode = false;
+    const check = computed(() => page.props.rows?.[0]).value.wilayah_fullcode;
+    if (check) wilayah_fullcode = true;
     const response = await axios.get("/chart-show", {
       params: {
         id_column: chartForm.column,
         id_row: chartForm.row,
         id_tabel: page.props.tabel.id_tabel,
         tahun: [page.props.tahun, ...page.props.tahuns],
+        wilayah_fullcode: wilayah_fullcode,
       },
     });
     chartData.value = response.data;
