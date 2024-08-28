@@ -22,6 +22,7 @@ use App\Http\Controllers\RowGroupController;
 use App\Http\Controllers\TabelController;
 use App\Http\Controllers\MetadataVariabelController;
 use App\Models\Column;
+use App\Models\Datacontent;
 use App\Models\MetadataVariabel;
 use App\Models\Row;
 use App\Models\Turtahun;
@@ -152,6 +153,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/tabel/forceDelete', [TabelController::class, 'forceDeleteStatusTables'])->name('tabel.forceDelete');
     Route::post('/tabel/deleteMaster', [TabelController::class, 'deleteMaster'])->name('tabel.deleteMaster');
     Route::post('/tabel/changeStructure', [TabelController::class, 'changeStructure'])->name('tabel.changeStructure');
+    Route::post('/tabel/lab-tabel', [TabelController::class, 'lab'])->name('tabel.lab');
 });
 
 //metadata-variabel
@@ -252,6 +254,22 @@ Route::get('/download-api-how-to', function () {
     return Response::download($filePath);
 })->name('download-api-how-to')->middleware(['auth', 'verified', 'role:admin|kominfo']);
 
+Route::get('/labFetch', function (Request $request) {
+    $tahun = $request->tahun;
+    if (in_array('all', $tahun)) $tahun = null;
+
+    $target = Datacontent::where('id_tabel', $request->id_tabel);
+
+    if ($tahun != null) $target->whereIn('tahun', $tahun);
+    $id_row = Row::whereIn('id', $target->pluck('id_row')->toArray())
+        ->get(['id as value', 'label as label']);
+    $id_column = Column::whereIn('id', $target->pluck('id_column')->toArray())
+        ->get(['id as value', 'label as label']);
+    return response()->json([
+        'row' => $id_row,
+        'column' => $id_column
+    ]);
+})->middleware(['auth', 'verified', 'role:admin']);
 
 Route::get('/api/home/{key}', [HomeApiController::class, 'index'])->name('home-api.index');
 Route::get('/api/home/view/{key}', [HomeApiController::class, 'view'])->name('home-api.view');

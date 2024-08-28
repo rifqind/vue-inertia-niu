@@ -124,7 +124,15 @@ class TabelController extends Controller
                 } else {
                     $query->orderBy($order['label'], $order['value']);
                 }
+            } else {
+                $query->orderBy('statustables.updated_at', 'desc');
+                $query->orderBy('statustables.tahun', 'desc');
+                $query->orderBy('statustables.status', 'asc');
             }
+        } else {
+            $query->orderBy('statustables.updated_at', 'desc');
+            $query->orderBy('statustables.tahun', 'desc');
+            $query->orderBy('statustables.status', 'asc');
         }
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
@@ -638,7 +646,9 @@ class TabelController extends Controller
             $new_tabel = Tabel::create($newTabel);
             $datacontents = Datacontent::where('id_tabel', $request->id)
                 ->get([
-                    'id_row', 'id_column', 'id_turtahun'
+                    'id_row',
+                    'id_column',
+                    'id_turtahun'
                 ]);
             $id_rows = [];
             $id_columns = [];
@@ -993,10 +1003,14 @@ class TabelController extends Controller
         $columnList =  Datacontent::where('id_tabel', $id)->pluck('id_column');
         $rowList =  Datacontent::where('id_tabel', $id)->pluck('id_row');
 
+        $availableYear = Statustables::where('id_tabel', $id)->get(['tahun as label', 'tahun as value'])->prepend(['value' => 'all', 'label' => 'Seluruh Tahun']);
+
         $columns = Column::join('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')
             ->whereIn('columns.id', $columnList)
             ->get([
-                'columns.id as value', 'cg.label as columnGroup', 'columns.label as label'
+                'columns.id as value',
+                'cg.label as columnGroup',
+                'columns.label as label'
             ]);
         foreach ($columns as $key => $value) {
             # code...
@@ -1004,7 +1018,9 @@ class TabelController extends Controller
         }
         $columnBase = Column::join('column_groups as cg', 'cg.id', '=', 'columns.id_column_groups')
             ->get([
-                'columns.id as value', 'cg.label as columnGroup', 'columns.label as label'
+                'columns.id as value',
+                'cg.label as columnGroup',
+                'columns.label as label'
             ]);
         foreach ($columnBase as $key => $value) {
             # code...
@@ -1047,6 +1063,7 @@ class TabelController extends Controller
             ->get();
 
         return Inertia::render('Tabel/Edit', [
+            'availableYear' => $availableYear,
             'tabel' => $tabel,
             'dinas' => $daftar_dinas,
             'subjects' => $subjects,
@@ -1175,9 +1192,59 @@ class TabelController extends Controller
             return response()->json($th->getMessage());
         }
     }
-    //     /**
-    //      * Update the specified resource in storage.
-    //      */
+
+    public function lab(Request $request)
+    {
+        $id_tabel = $request->id;
+        $lab = $request->lab;
+        if (in_array('all', $lab['tahun'])) $lab['tahun'] = null;
+        // dd($lab['tahun'], $lab);
+        try {
+            //code...
+            $columnList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_column')->unique()->toArray();
+            $rowList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_row')->unique()->toArray();
+            foreach ($lab['newCol'] as $key => $value) {
+                # code...
+                if (!in_array($value, $columnList)) array_push($columnList, $value);
+            }
+            foreach ($lab['newRow'] as $key => $value) {
+                if (!in_array($value, $rowList)) array_push($rowList, $value);
+            }
+            $newDataContent = [];
+            $tahun = $lab['tahun'] ?: Datacontent::where('id_tabel', $id_tabel)->pluck('tahun')->unique()->toArray();
+            $turtahun = Datacontent::where('id_tabel', $id_tabel)->pluck('id_turtahun')->unique()->toArray();
+            foreach ($tahun as $t) {
+                # code...
+                foreach ($rowList as $key => $value) {
+                    # code...
+                    $wilayah_fullcode = Datacontent::where('id_row', $value)->where('id_tabel', $id_tabel)
+                        ->value('wilayah_fullcode');
+                    foreach ($columnList as $columnKey => $column) {
+                        foreach ($turtahun as $id_turtahun) {
+                            $check = Datacontent::where('id_tabel', $id_tabel)
+                                ->where('id_column', $column)
+                                ->where('id_row', $value)
+                                ->first();
+                            if (!$check) {
+                                $datacontent = [
+                                    'id_tabel' => $id_tabel,
+                                    'id_row' => $value,
+                                    'id_column' => $column,
+                                    'tahun' => $t,
+                                    'id_turtahun' => $id_turtahun,
+                                    'wilayah_fullcode' => $wilayah_fullcode,
+                                ];
+                                array_push($newDataContent, $datacontent);
+                            }
+                        }
+                    }
+                }
+            }
+            // dd($lab, $columnList, $rowList);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
 
     public function update(Request $request)
     {
