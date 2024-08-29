@@ -247,7 +247,7 @@ Route::get('/export-monitoring', function (Request $request) {
 Route::get('/download-template/{name}', function (String $name) {
     $filePath = public_path('templates/' . $name . '.xlsx');
     return Response::download($filePath);
-})->name('downloadTemplate')->middleware(['auth', 'verified', 'role:admin']);
+})->name('downloadTemplate')->middleware(['auth', 'verified', 'role:admin|kominfo']);
 
 Route::get('/download-api-how-to', function () {
     $filePath = public_path('api-how-to/API.pdf');

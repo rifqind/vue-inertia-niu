@@ -78,7 +78,7 @@ class TabelController extends Controller
                 } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
                 return $rowLabel;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'tersangka' => $uuid, 'rows' => $rows));
         }
     }
@@ -507,7 +507,7 @@ class TabelController extends Controller
             Datacontent::insert($data_contents);
             DB::commit();
             return redirect()->route('tabel.index')->with('message', 'Berhasil menambahkan tabel baru');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             //throw $th;
             DB::rollBack();
 
@@ -594,7 +594,7 @@ class TabelController extends Controller
             }
             Datacontent::insert($newDataContents);
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json($e->getMessage());
         }
@@ -868,7 +868,7 @@ class TabelController extends Controller
                     $rowLabel = $text;
                 } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
         }
 
@@ -1198,9 +1198,14 @@ class TabelController extends Controller
         $id_tabel = $request->id;
         $lab = $request->lab;
         if (in_array('all', $lab['tahun'])) $lab['tahun'] = null;
-        // dd($lab['tahun'], $lab);
+
+        $check = Statustables::where(['status' => 5, 'id_tabel' => $request->id])
+            ->when($lab['tahun'], fn($query) => $query->whereIn('tahun', $lab['tahun']))
+            ->get();
+        if ($check->isNotEmpty()) return redirect()->route('tabel.edit', ['id' => $request->id])->with('error', 'Tabel tahun terpilih masih berstatus final, unfinal dulu tahun tersebut');
         try {
             //code...
+            DB::beginTransaction();
             $columnList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_column')->unique()->toArray();
             $rowList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_row')->unique()->toArray();
             foreach ($lab['newCol'] as $key => $value) {
@@ -1213,36 +1218,93 @@ class TabelController extends Controller
             $newDataContent = [];
             $tahun = $lab['tahun'] ?: Datacontent::where('id_tabel', $id_tabel)->pluck('tahun')->unique()->toArray();
             $turtahun = Datacontent::where('id_tabel', $id_tabel)->pluck('id_turtahun')->unique()->toArray();
-            foreach ($tahun as $t) {
-                # code...
-                foreach ($rowList as $key => $value) {
+            if (!empty($lab['newCol']) || !empty($lab['newRow'])) {
+                foreach ($tahun as $t) {
                     # code...
-                    $wilayah_fullcode = Datacontent::where('id_row', $value)->where('id_tabel', $id_tabel)
-                        ->value('wilayah_fullcode');
-                    foreach ($columnList as $columnKey => $column) {
-                        foreach ($turtahun as $id_turtahun) {
-                            $check = Datacontent::where('id_tabel', $id_tabel)
-                                ->where('id_column', $column)
-                                ->where('id_row', $value)
-                                ->first();
-                            if (!$check) {
-                                $datacontent = [
-                                    'id_tabel' => $id_tabel,
-                                    'id_row' => $value,
-                                    'id_column' => $column,
-                                    'tahun' => $t,
-                                    'id_turtahun' => $id_turtahun,
-                                    'wilayah_fullcode' => $wilayah_fullcode,
-                                ];
-                                array_push($newDataContent, $datacontent);
+                    foreach ($rowList as $key => $value) {
+                        # code...
+                        $wilayah_fullcode = Datacontent::where('id_row', $value)->where('id_tabel', $id_tabel)
+                            ->value('wilayah_fullcode');
+                        foreach ($columnList as $columnKey => $column) {
+                            foreach ($turtahun as $id_turtahun) {
+                                $check = Datacontent::where('id_tabel', $id_tabel)
+                                    ->where('id_column', $column)
+                                    ->where('id_row', $value)
+                                    ->where('tahun', $t)
+                                    ->where('id_turtahun', $id_turtahun)
+                                    ->first();
+                                if (!$check) {
+                                    $datacontent = [
+                                        'id_tabel' => $id_tabel,
+                                        'id_row' => $value,
+                                        'id_column' => $column,
+                                        'tahun' => $t,
+                                        'id_turtahun' => $id_turtahun,
+                                        'wilayah_fullcode' => $wilayah_fullcode,
+                                    ];
+                                    array_push($newDataContent, $datacontent);
+                                }
                             }
                         }
                     }
                 }
+                Datacontent::insert($newDataContent);
             }
-            // dd($lab, $columnList, $rowList);
+            foreach ($tahun as $key => $value) {
+                # code...
+                if (!empty($lab['delCol']))
+                    Datacontent::where('id_tabel', $id_tabel)->whereIn('id_column', $lab['delCol'])->where('tahun', $value)->delete();
+                if (!empty($lab['delRow']))
+                    Datacontent::where('id_tabel', $id_tabel)->whereIn('id_row', $lab['delRow'])->where('tahun', $value)->delete();
+            }
+            $thisStatustabel = Statustables::where('id_tabel', $id_tabel)->whereIn('tahun', $tahun)->pluck('id')->toArray();
+            if (!empty($lab['newCol'])) {
+                $columnOrder = implode(',', array_column($lab['labOrderCol'], 'value'));
+                foreach ($thisStatustabel as $id_statustabel) {
+                    $check = ColumnOrder::firstOrNew(['id_statustabel' => $id_statustabel]);
+                    $check->orders = $columnOrder;
+                    $check->save();
+                }
+            }
+            if (!empty($lab['newRow'])) {
+                $rowOrder = implode(',', array_column($lab['labOrderRow'], 'value'));
+                foreach ($thisStatustabel as $id_statustabel) {
+                    $check = RowOrder::firstOrNew(['id_statustabel' => $id_statustabel]);
+                    $check->orders = $rowOrder;
+                    $check->save();
+                }
+            }
+            foreach ($thisStatustabel as $value) {
+                // Fetch the current 'orders' value and split it into an array
+                $columnCheck = ColumnOrder::where('id_statustabel', $value)->value('orders');
+                $rowCheck = RowOrder::where('id_statustabel', $value)->value('orders');
+
+                $columnCheck = explode(',', $columnCheck);
+                $rowCheck = explode(',', $rowCheck);
+
+                // Filter out elements from columnCheck that do not exist in columnList
+                $filteredColumnCheck = array_filter($columnCheck, function ($item) use ($columnList) {
+                    return in_array($item, $columnList);
+                });
+                $filteredRowCheck = array_filter($rowCheck, function ($item) use ($rowList) {
+                    return in_array($item, $rowList);
+                });
+
+                // Implode the filtered array back into a comma-separated string
+                $updatedColumnOrder = implode(',', $filteredColumnCheck);
+                $updatedRowOrder = implode(',', $filteredRowCheck);
+
+                // Update the ColumnOrder with the new order
+                ColumnOrder::where('id_statustabel', $value)->update(['orders' => $updatedColumnOrder]);
+                RowOrder::where('id_statustabel', $value)->update(['orders' => $updatedRowOrder]);
+            }
+
+            DB::commit();
+            return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil melakukan laboratorium master');
         } catch (\Throwable $th) {
             //throw $th;
+            DB::rollBack();
+            return redirect()->route('tabel.edit', ['id' => $request->id])->with('error', $th->getMessage());
         }
     }
 
@@ -1266,9 +1328,9 @@ class TabelController extends Controller
             $tabel = Tabel::findOrFail($request->id);
             $tabel->update($dataUpdate);
 
-            return redirect()->route('tabel.master')->with('message', 'Berhasil menyimpan perubahan !');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil menyimpan perubahan!');
+        } catch (Exception $e) {
+            return redirect()->route('tabel.edit', ['id' => $request->id])->with('error', $e->getMessage());
         }
     }
 

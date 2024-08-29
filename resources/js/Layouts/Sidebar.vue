@@ -1,6 +1,6 @@
 <script setup>
 import { Link, usePage } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import NavLinkSidebar from "@/Components/NavLinkSidebar.vue";
 import NavLinkParentSidebar from "@/Components/NavLinkParentSidebar.vue";
 
@@ -21,6 +21,27 @@ const toggleMenuOpen = function (x) {
   if (x === "master") menuOpenMaster.value = !menuOpenMaster.value;
   // menuOpen.value = !menuOpen.value;
 };
+const isMobile = ref(false);
+const isTablet = ref(false);
+const updateDeviceType = () => {
+  isMobile.value = window.matchMedia("(max-width: 767px)").matches;
+  isTablet.value = window.matchMedia(
+    "(min-width: 768px) and (max-width: 1024px)"
+  ).matches;
+};
+onMounted(() => {
+  updateDeviceType();
+  window.addEventListener("resize", updateDeviceType);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updateDeviceType);
+});
+const deviceType = computed(() => {
+  if (isMobile.value) return "Mobile";
+  if (isTablet.value) return "Tablet";
+  return "Desktop";
+});
 </script>
 
 <template>
@@ -270,6 +291,15 @@ const toggleMenuOpen = function (x) {
           >
             Kembali ke Beranda
           </NavLinkSidebar>
+          <template v-if="deviceType == 'Mobile'">
+            <br />
+            <hr />
+            <font-awesome-icon
+              data-widget="pushmenu"
+              icon="fa-solid fa-circle-chevron-left"
+              class="edit-pen back-pen"
+            />
+          </template>
         </ul>
       </nav>
       <!-- /.sidebar-menu -->
@@ -282,7 +312,9 @@ const toggleMenuOpen = function (x) {
 div.nav-link {
   cursor: pointer;
 }
-
+.back-pen {
+  color: #3d3b8e;
+}
 .sidebar-dark-success .nav-sidebar > .nav-item > .nav-link.active,
 .sidebar-light-success .nav-sidebar > .nav-item > .nav-link.active {
   background-color: #3d3b8e;

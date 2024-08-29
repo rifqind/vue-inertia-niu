@@ -3,7 +3,7 @@ import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import Multiselect from "@vueform/multiselect";
 import draggable from "vuedraggable";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
-
+import FlashMessage from "@/Components/FlashMessage.vue";
 import { ref, defineComponent, computed, watch } from "vue";
 import { Head, usePage, useForm, Link } from "@inertiajs/vue3";
 
@@ -51,6 +51,21 @@ const rowTemp = ref([]);
 const thisRow = ref(page.props.rows);
 
 const columnDelete = ref([]);
+const flashObject = ref(page.props.flash);
+watch(
+  () => page.props.flash,
+  (value) => {
+    flashObject.value = value;
+  }
+);
+const flashHandle = () => {
+  toggleFlash.value = false;
+  flashObject.value = {
+    message: null,
+    error: null,
+  };
+};
+const toggleFlash = ref(false);
 const form = useForm({
   id: page.props.tabel.id,
   tabel: {
@@ -170,7 +185,6 @@ const addTransferColumn = () => {
       label: arrayLabel,
     });
     columnTransfer.value.value.push(arrayValue);
-    // columnTemp.value.push(columnLeft.value);
     columnLeft.value = null;
     columnRight.value = null;
   }
@@ -187,7 +201,6 @@ const addTransferRow = () => {
       label: arrayLabel,
     });
     rowTransfer.value.value.push(arrayValue);
-    // columnTemp.value.push(columnLeft.value);
     columnLeft.value = null;
     columnRight.value = null;
   }
@@ -296,48 +309,56 @@ const labFetch = async (value) => {
 };
 const confirmation = ref(false);
 const dataLayer = ref({
-  column: null,
-  row: null,
+  column: [],
+  row: [],
 });
+
 const buildOrder = async (value) => {
-  if (value.length > 0) {
-    confirmation.value = !confirmation.value;
-    try {
-      const response = await axios.get("/labFetch", {
-        params: {
-          id_tabel: page.props.tabel.id,
-          tahun: form.lab.tahun,
-        },
-      });
-      form.lab.labOrderCol = response.data.column;
-      form.lab.labOrderRow = response.data.row;
-      if (form.lab.newCol.length > 0) {
-        dataLayer.value.column = page.props.columnBase.filter((x) =>
-          form.lab.newCol.includes(x.value)
-        );
-      }
-      if (form.lab.newRow.length > 0) {
-        dataLayer.value.row = page.props.rowBase.filter((x) =>
-          form.lab.newRow.includes(x.value)
-        );
-      }
-      if (form.lab.delCol.length > 0) {
-        form.lab.labOrderCol = form.lab.labOrderCol.filter(
-          (x) => !form.lab.delCol.includes(x.value)
-        );
-      }
-      if (form.lab.delRow.length > 0) {
-        form.lab.labOrderRow = form.lab.labOrderRow.filter(
-          (x) => !form.lab.delRow.includes(x.value)
-        );
-      }
-      form.lab.labOrderCol = [...form.lab.labOrderCol, ...dataLayer.value.column];
-      form.lab.labOrderRow = [...form.lab.labOrderRow, ...dataLayer.value.row];
-    } catch (error) {
-      console.error(error.message);
+  if (value.length === 0) return;
+  confirmation.value = !confirmation.value;
+  try {
+    const response = await axios.get("/labFetch", {
+      params: {
+        id_tabel: page.props.tabel.id,
+        tahun: form.lab.tahun,
+      },
+    });
+    const { column: fetchedColumns, row: fetchedRows } = response.data;
+    // Update the labOrder arrays
+    form.lab.labOrderCol = fetchedColumns;
+    form.lab.labOrderRow = fetchedRows;
+    // Filter and update dataLayer
+    if (form.lab.newCol.length > 0) {
+      dataLayer.value.column = page.props.columnBase.filter((x) =>
+        form.lab.newCol.includes(x.value)
+      );
     }
+    if (form.lab.newRow.length > 0) {
+      dataLayer.value.row = page.props.rowBase.filter((x) =>
+        form.lab.newRow.includes(x.value)
+      );
+    }
+    // Remove deleted columns/rows
+    if (form.lab.delCol.length > 0) {
+      form.lab.labOrderCol = form.lab.labOrderCol.filter(
+        (x) => !form.lab.delCol.includes(x.value)
+      );
+    }
+    if (form.lab.delRow.length > 0) {
+      form.lab.labOrderRow = form.lab.labOrderRow.filter(
+        (x) => !form.lab.delRow.includes(x.value)
+      );
+    }
+    // Merge new columns/rows with fetched ones
+    form.lab.labOrderCol = [...form.lab.labOrderCol, ...dataLayer.value.column];
+    form.lab.labOrderRow = [...form.lab.labOrderRow, ...dataLayer.value.row];
+    dataLayer.value.column = [];
+    dataLayer.value.row = [];
+  } catch (error) {
+    console.error("Error fetching lab data:", error.message);
   }
 };
+
 const confirmOrder = ref({
   column: null,
   row: null,
@@ -347,16 +368,21 @@ const labSubmit = async () => {
   form._token = response.data;
   if (form.processing) return;
   form.post(route("tabel.lab"), {
-    // onBefore: function () {
-    //   triggerSpinner.value = true;
-    // },
-    // onFinish: function () {
-    //   triggerSpinner.value = false;
-    //   form.reset();
-    // },
-    // onError: function () {
-    //   triggerSpinner.value = false;
-    // },
+    onBefore: function () {
+      triggerSpinner.value = true;
+    },
+    onFinish: function () {
+      triggerSpinner.value = false;
+    },
+    onSuccess: function () {
+      if (flashObject) toggleFlash.value = true;
+      form.reset();
+      confirmation.value = false;
+      labDelete.value = false;
+    },
+    onError: function () {
+      triggerSpinner.value = false;
+    },
   });
 };
 </script>
@@ -370,6 +396,11 @@ const labSubmit = async () => {
           <h2>Edit Tabel</h2>
         </div>
       </div>
+      <FlashMessage
+        :toggleFlash="toggleFlash"
+        @close="flashHandle"
+        :flashObject="flashObject"
+      />
       <form @submit.prevent="submit" id="form-create-tabel">
         <div class="form-group">
           <div class="card mb-3">

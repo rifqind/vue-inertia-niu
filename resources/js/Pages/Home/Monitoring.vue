@@ -128,30 +128,38 @@ const downloadRoute = () => {
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <div class="container-fluid">
-      <div class="mb-2 d-flex">
-        <div class="h4 flex-grow-1">Monitoring Pengisian Tabel</div>
+      <div class="mb-2 d-flex flex-wrap align-items-center">
+        <!-- Title -->
+        <div class="h4 flex-grow-1 mb-2 mb-md-0">Monitoring Pengisian Tabel</div>
 
-        <div class="mr-2 wilayah">
+        <!-- Kabupaten/Kota Dropdown -->
+        <div class="mr-2 wilayah mb-2 mb-md-0">
           <Multiselect
             :options="kabsDrop.options"
             v-model="kabsDrop.value"
             placeholder="-- Pilih Kabupaten/Kota --"
           />
         </div>
-        <div class="mr-2 year">
+
+        <!-- Year Dropdown -->
+        <div class="mr-2 year mb-2 mb-md-0">
           <Multiselect
             :options="yearDrop.options"
             v-model="yearDrop.value"
             placeholder="-- Pilih Tahun --"
           />
         </div>
+
+        <!-- Search Button -->
         <button
           @click.prevent="fetchData()"
           type="submit"
-          class="btn mr-2 bg-info-fordone"
+          class="btn mr-2 bg-info-fordone mb-2 mb-md-0"
         >
           <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
         </button>
+
+        <!-- Download Button -->
         <button
           class="btn bg-success-fordone mr-2"
           title="Download"
@@ -161,88 +169,90 @@ const downloadRoute = () => {
         </button>
       </div>
     </div>
-    <table
-      class="table table-hover table-bordered"
-      id="tabel-monitoring"
-      ref="tabelMonitoring"
-    >
-      <thead>
-        <tr>
-          <th class="align-middle text-center tabel-width-5">#</th>
-          <th
-            class="align-middle text-center th-order tabel-width-35"
-            @click="clickToOrder('d.nama')"
+    <div class="table-responsive-mobile">
+      <table
+        class="table table-hover table-bordered"
+        id="tabel-monitoring"
+        ref="tabelMonitoring"
+      >
+        <thead>
+          <tr>
+            <th class="align-middle text-center tabel-width-5">#</th>
+            <th
+              class="align-middle text-center th-order tabel-width-35"
+              @click="clickToOrder('d.nama')"
+            >
+              Produsen Data
+            </th>
+            <th
+              class="align-middle text-center th-order tabel-width-8"
+              @click="clickToOrder('jumlah_satu')"
+            >
+              Status Tabel Baru
+            </th>
+            <th
+              class="align-middle text-center th-order tabel-width-8"
+              @click="clickToOrder('jumlah_dua')"
+            >
+              Status Proses Entri
+            </th>
+            <th
+              class="align-middle text-center th-order tabel-width-8"
+              @click="clickToOrder('jumlah_tiga')"
+            >
+              Status Diperiksa
+            </th>
+            <th
+              class="align-middle text-center th-order tabel-width-8"
+              @click="clickToOrder('jumlah_empat')"
+            >
+              Status Perbaikan
+            </th>
+            <th
+              class="align-middle text-center th-order tabel-width-8"
+              @click="clickToOrder('jumlah_lima')"
+            >
+              Status Final
+            </th>
+            <th
+              class="align-middle text-center th-order tabel-width-8"
+              @click="clickToOrder('jumlah_enam')"
+            >
+              Tabel Dihapus
+            </th>
+          </tr>
+          <tr>
+            <td></td>
+            <td><input type="text" class="form-control" v-model="searchLabel" /></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-if="monitoring.length > 0"
+            v-for="(node, index) in paginatedData"
+            :key="index"
           >
-            Produsen Data
-          </th>
-          <th
-            class="align-middle text-center th-order tabel-width-8"
-            @click="clickToOrder('jumlah_satu')"
-          >
-            Status Tabel Baru
-          </th>
-          <th
-            class="align-middle text-center th-order tabel-width-8"
-            @click="clickToOrder('jumlah_dua')"
-          >
-            Status Proses Entri
-          </th>
-          <th
-            class="align-middle text-center th-order tabel-width-8"
-            @click="clickToOrder('jumlah_tiga')"
-          >
-            Status Diperiksa
-          </th>
-          <th
-            class="align-middle text-center th-order tabel-width-8"
-            @click="clickToOrder('jumlah_empat')"
-          >
-            Status Perbaikan
-          </th>
-          <th
-            class="align-middle text-center th-order tabel-width-8"
-            @click="clickToOrder('jumlah_lima')"
-          >
-            Status Final
-          </th>
-          <th
-            class="align-middle text-center th-order tabel-width-8"
-            @click="clickToOrder('jumlah_enam')"
-          >
-            Tabel Dihapus
-          </th>
-        </tr>
-        <tr>
-          <td></td>
-          <td><input type="text" class="form-control" v-model="searchLabel" /></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-if="monitoring.length > 0"
-          v-for="(node, index) in paginatedData"
-          :key="index"
-        >
-          <td>{{ index + 1 }}</td>
-          <td>{{ node.nama_dinas }}</td>
-          <td>{{ node.jumlah_satu }}</td>
-          <td>{{ node.jumlah_dua }}</td>
-          <td>{{ node.jumlah_tiga }}</td>
-          <td>{{ node.jumlah_empat }}</td>
-          <td>{{ node.jumlah_lima }}</td>
-          <td>{{ node.jumlah_enam }}</td>
-        </tr>
-        <tr v-else>
-          <td colspan="8" class="text-center">Tidak ada data</td>
-        </tr>
-      </tbody>
-    </table>
+            <td>{{ index + 1 }}</td>
+            <td>{{ node.nama_dinas }}</td>
+            <td>{{ node.jumlah_satu }}</td>
+            <td>{{ node.jumlah_dua }}</td>
+            <td>{{ node.jumlah_tiga }}</td>
+            <td>{{ node.jumlah_empat }}</td>
+            <td>{{ node.jumlah_lima }}</td>
+            <td>{{ node.jumlah_enam }}</td>
+          </tr>
+          <tr v-else>
+            <td colspan="8" class="text-center">Tidak ada data</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <Pagination
       @update:currentPage="updateCurrentPage"
       @update:showItems="updateShowItems"
@@ -283,5 +293,22 @@ const downloadRoute = () => {
 }
 .th-order {
   cursor: pointer;
+}
+.table-responsive-mobile {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .table-responsive-mobile {
+    overflow-x: visible;
+  }
+  .year {
+    width: 100%;
+  }
+
+  .wilayah {
+    width: 100%;
+  }
 }
 </style>

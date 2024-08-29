@@ -165,8 +165,10 @@ const getDashboard = async function () {
         </div>
       </div>
     </div>
-    <div class="row d-flex justify-content-start">
-      <div class="card col-xl-4 col-l-4 col-md-12 col-sm-12" id="box-dua">
+    <div
+      class="row d-flex justify-content-start row-cols-1 row-cols-sm-1 row-cols-md-1 row-cols-lg-3"
+    >
+      <div class="card col" id="box-dua">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
@@ -179,7 +181,7 @@ const getDashboard = async function () {
           </div>
         </div>
       </div>
-      <div class="card col-xl-4 col-l-4 col-md-12 col-sm-12" id="box-tiga">
+      <div class="card col" id="box-tiga">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
@@ -196,7 +198,7 @@ const getDashboard = async function () {
           </div>
         </div>
       </div>
-      <div class="card col-xl-4 col-l-4 col-md-12 col-sm-12" id="box-empat">
+      <div class="card col" id="box-empat">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
@@ -215,7 +217,7 @@ const getDashboard = async function () {
       </div>
     </div>
     <div class="row">
-      <div class="p-0" id="p-progress">
+      <div class="p-0 col-12 col-sm-12 col-md-12 col-lg-3 col-xl-3" id="p-progress">
         <div class="card" id="pie-charts" ref="pieCharts">
           <div class="card-header text-bold text-center">PROGRES PENGERJAAN DATA</div>
           <div class="card-body">
@@ -254,19 +256,19 @@ const getDashboard = async function () {
           </div>
         </div>
       </div>
-      <div class="p-0 ml-1 col-9">
+      <div class="p-0 col-12 col-sm-12 col-md-12 col-lg-9 col-xl-9">
         <div class="card mr-3" id="percentage-progress" ref="percentProgress">
           <div class="card-header text-center text-bold">PROGRES PENGERJAAN</div>
           <div class="card-body" id="card-notifikasi">
             <div v-for="(node, index) in displayedData" :key="index" class="row">
-              <div class="col-2 mb-3">
+              <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2 mb-3">
                 <div class="">
                   <span class="badge" :class="defineBadges(node.status)">
                     <div>{{ node.timestamp }}</div>
                   </span>
                 </div>
               </div>
-              <div class="col-10 mb-3">
+              <div class="col-12 col-sm-12 col-md-12 col-lg-10 col-xl-10 mb-3">
                 {{ node.komentar }}
                 <span class="text-bold">{{ node.judul_tabel }}</span
                 >, Tahun {{ node.tahundata }}
@@ -290,6 +292,27 @@ const getDashboard = async function () {
 
 .wilayah {
   width: 25%;
+}
+/* Tablet Styles */
+@media (max-width: 1024px) {
+  .year {
+    width: 20%;
+  }
+
+  .wilayah {
+    width: 30%;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  .year {
+    width: 100%;
+  }
+
+  .wilayah {
+    width: 100%;
+  }
 }
 
 #box-satu {
@@ -337,6 +360,7 @@ const getDashboard = async function () {
 
 #percentage-progress {
   width: 100%;
+  border-left: 4px solid #03254e;
 }
 
 #card-notifikasi {
