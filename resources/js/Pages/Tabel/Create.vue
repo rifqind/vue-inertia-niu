@@ -413,6 +413,24 @@ watch(
     // colGroupsDrop.value.value = null;
   }
 );
+const searchRow = (input) => {
+  let value = input.target.value.toLowerCase().trim();
+  let tbody = input.target.closest("tbody");
+
+  Array.from(tbody.querySelectorAll("tr"))
+    .slice(1)
+    .forEach((tr) => {
+      let rowText = Array.from(tr.querySelectorAll("td"))
+        .map((td) => td.textContent.toLowerCase().trim())
+        .join(" ");
+
+      if (rowText.includes(value)) {
+        tr.classList.remove("d-none");
+      } else {
+        tr.classList.add("d-none");
+      }
+    });
+};
 </script>
 <template>
   <Head title="Tambah Tabel Baru" />
@@ -575,11 +593,23 @@ watch(
                         >
                           <font-awesome-icon icon="fa fa-check" />
                         </div>
-                        Pilih Semua
+                        <span class="hidden-mobile">Pilih Semua</span>
                       </th>
                     </tr>
                   </thead>
                   <tbody v-if="form.rows.tipe">
+                    <tr>
+                      <td></td>
+                      <td></td>
+                      <td>
+                        <input
+                          class="form-control"
+                          placeholder="Cari Baris"
+                          @input="searchRow"
+                        />
+                      </td>
+                      <td></td>
+                    </tr>
                     <tr
                       v-if="rowListFetched.length > 0"
                       v-for="(node, index) in rowListFetched"
@@ -683,35 +713,50 @@ watch(
                         >
                           <font-awesome-icon icon="fa fa-check" />
                         </div>
-                        Pilih Semua
+                        <span class="hidden-mobile">Pilih Semua</span>
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr
-                      v-if="columnListFetched.length > 0"
-                      v-for="(node, index) in columnListFetched"
-                      :key="index"
-                      @click="toggleCheck(index, columnsCheckBox)"
-                    >
-                      <td>{{ index + 1 }}</td>
-                      <td>{{ node.tipe }}</td>
-                      <td>{{ node.label }}</td>
-                      <td class="text-center">
-                        <input
-                          class="row-select"
-                          type="checkbox"
-                          v-model="columnsCheckBox[index]"
-                          :value="node.id"
-                          ref="checkbox"
-                        />
-                      </td>
-                    </tr>
-                    <tr v-else>
-                      <td colspan="4" class="text-center">
-                        Belum ada daftar kolom yang tersedia
-                      </td>
-                    </tr>
+                    <template v-if="columnListFetched.length > 0">
+                      <tr>
+                        <td></td>
+                        <td></td>
+                        <td>
+                          <input
+                            class="form-control"
+                            placeholder="Cari Kolom"
+                            @input="searchRow"
+                          />
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr
+                        v-for="(node, index) in columnListFetched"
+                        :key="index"
+                        @click="toggleCheck(index, columnsCheckBox)"
+                      >
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ node.tipe }}</td>
+                        <td>{{ node.label }}</td>
+                        <td class="text-center">
+                          <input
+                            class="row-select"
+                            type="checkbox"
+                            v-model="columnsCheckBox[index]"
+                            :value="node.id"
+                            ref="checkbox"
+                          />
+                        </td>
+                      </tr>
+                    </template>
+                    <template v-else>
+                      <tr>
+                        <td colspan="4" class="text-center">
+                          Belum ada daftar kolom yang tersedia
+                        </td>
+                      </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>

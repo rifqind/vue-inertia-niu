@@ -66,6 +66,51 @@ const props = defineProps({
 </template>
 <style src="@vueform/multiselect/themes/default.css"></style>
 <style>
+@media (max-width: 768px) {
+  .table-responsive-mobile {
+    overflow-x: auto;
+  }
+  .year {
+    width: 100%;
+  }
+
+  .wilayah {
+    width: 100%;
+  }
+  .form-control::placeholder,
+  .multiselect-placeholder {
+    /* display: none; */
+    font-size: smaller;
+  }
+  .hidden-mobile {
+    display: none;
+  }
+}
+.table-responsive-mobile {
+  overflow-x: visible;
+}
+@media (max-width: 1024px) {
+  .table-responsive-mobile {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .year {
+    width: 100%;
+  }
+
+  .wilayah {
+    width: 100%;
+  }
+  .form-control::placeholder,
+  .multiselect-placeholder {
+    /* display: none; */
+    font-size: smaller;
+  }
+
+  .hidden-mobile {
+    display: none;
+  }
+}
 .table-sorted th {
   cursor: pointer;
 }

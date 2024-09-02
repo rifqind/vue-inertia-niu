@@ -741,21 +741,4 @@ table {
 .th-order {
   cursor: pointer;
 }
-
-.table-responsive-mobile {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-@media (min-width: 768px) {
-  .table-responsive-mobile {
-    overflow-x: visible;
-  }
-  .year {
-    width: 100%;
-  }
-  .wilayah {
-    width: 100%;
-  }
-}
 </style>

@@ -6,7 +6,6 @@ import FlashMessage from "@/Components/FlashMessage.vue";
 import Pagination from "@/Components/Pagination.vue";
 import { Head, usePage, Link, useForm } from "@inertiajs/vue3";
 import { onMounted, ref, watch } from "vue";
-import { clickSortProperties } from "@/sortAttribute";
 import { GoDownload } from "@/download";
 import { computed } from "vue";
 import axios from "axios";
@@ -157,17 +156,9 @@ const changeNumber = (number) => {
   return number.replace(/^0/, "+62");
 };
 //new Pagination
-// const showItemsValue = ref(10)
-// const showItems = computed(() => {
-//     if (filteredColumns.value.length < 10) return filteredColumns.value.length
-//     return showItemsValue.value
-// })
 const showItems = ref(10);
 const currentPage = ref(1);
 const updateShowItems = (value) => {
-  // if (value > filteredColumns.value.length) showItemsValue.value = filteredColumns.value.length
-  // else showItemsValue.value = value
-  // currentPage.value = 1
   showItems.value = value;
   fetchData();
 };
@@ -183,9 +174,6 @@ watch(
   }
 );
 const paginatedData = computed(() => {
-  // const start = (currentPage.value - 1) * showItems.value
-  // const end = start + showItems.value
-  // return filteredColumns.value.slice(start, end)
   return users.value;
 });
 watch(
@@ -299,19 +287,19 @@ const submit = async () => {
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <div class="container-fluid">
-      <div class="mb-2 d-flex">
-        <div class="h4 flex-grow-1">Daftar Pengguna</div>
-        <button class="btn bg-info mr-1" @click="uploadModal = !uploadModal">
+      <div class="mb-2 d-flex flex-wrap align-items-center">
+        <div class="h4 flex-grow-1 mb-2 mb-md-0">Daftar Pengguna</div>
+        <button class="btn bg-info mr-1 mb-2 mb-md-0" @click="uploadModal = !uploadModal">
           <font-awesome-icon icon="fa-solid fa-file" />
         </button>
         <button
-          class="btn bg-success-fordone mr-2"
+          class="btn bg-success-fordone mr-2 mb-2 mb-md-0"
           title="Download"
           @click="downloadRoute()"
         >
           <font-awesome-icon icon="fa-solid fa-circle-down" />
         </button>
-        <Link :href="route('users.create')" class="btn bg-info-fordone"
+        <Link :href="route('users.create')" class="btn bg-info-fordone mb-2 mb-md-0"
           ><font-awesome-icon icon="fa-solid fa-plus" /> Tambah Pengguna Baru</Link
         >
       </div>
@@ -321,115 +309,122 @@ const submit = async () => {
       @close="flashHandle"
       :flashObject="flashObject"
     />
-    <table
-      class="table table-hover table-bordered table-search"
-      ref="tabelUser"
-      id="tabel-user"
-    >
-      <thead>
-        <tr class="bg-info-fordone">
-          <th class="first-column">No.</th>
-          <th class="text-center th-order" @click="clickToOrder('username')">Username</th>
-          <th class="text-center th-order tabel-width-15" @click="clickToOrder('name')">
-            Nama
-          </th>
-          <th
-            class="text-center th-order tabel-width-20"
-            @click="clickToOrder('dinas.nama')"
-          >
-            Nama Instansi
-          </th>
-          <th
-            class="text-center th-order tabel-width-20"
-            @click="clickToOrder('w.label')"
-          >
-            Wilayah Kerja
-          </th>
-          <th class="text-center th-order" @click="clickToOrder('noHp')">No. HP</th>
-          <th class="text-center th-order" @click="clickToOrder('role')">Peran</th>
-          <th class="text-center th-order deleted tabel-width-8">Edit</th>
-          <th class="text-center th-order deleted">Hapus</th>
-        </tr>
-        <tr class="">
-          <td class="search-header"></td>
-          <td class="search-header">
-            <input
-              v-model.trim="searchUsername"
-              type="text"
-              class="search-input form-control"
-            />
-          </td>
-          <td class="search-header">
-            <input
-              v-model.trim="searchNama"
-              type="text"
-              class="search-input form-control"
-            />
-          </td>
-          <td class="search-header">
-            <input
-              v-model.trim="searchInstansi"
-              type="text"
-              class="search-input form-control"
-            />
-          </td>
-          <td class="search-header">
-            <input
-              v-model.trim="searchWilayah"
-              type="text"
-              class="search-input form-control"
-            />
-          </td>
-          <td class="search-header">
-            <input
-              v-model.trim="searchNoHp"
-              type="text"
-              class="search-input form-control"
-              placeholder="cari dengan 08..."
-            />
-          </td>
-          <td class="search-header">
-            <input
-              v-model.trim="searchRole"
-              type="text"
-              class="search-input form-control"
-            />
-          </td>
-          <td class="search-header deleted"></td>
-          <td class="search-header deleted"></td>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="users.length > 0" v-for="user in paginatedData" :key="user.id">
-          <td>{{ user.number }}</td>
-          <td>{{ user.username }}</td>
-          <td>{{ user.name }}</td>
-          <td>{{ user.nama_dinas }}</td>
-          <td>{{ user.wilayah_label }}</td>
-          <td>{{ changeNumber(user.noHp) }}</td>
-          <td>{{ user.role }}</td>
-          <td class="text-center deleted">
-            <a @click.prevent="resetPasswordLink(user.id)" class="update-pen mx-1">
-              <font-awesome-icon icon="fa-solid fa-lock" title="Reset Password" />
-            </a>
-            <a @click.prevent="changeRolesLink(user.id)" class="mx-1 role-update"
-              ><font-awesome-icon :icon="changeRoles(user.role)" title="Ubah Role"
-            /></a>
-            <a @click.prevent="editUser(user.id)" class="edit-pen mx-1">
-              <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />
-            </a>
-          </td>
-          <td class="text-center deleted">
-            <a @click.prevent="toggleDeleteModal(user.id)" class="delete-trash">
-              <font-awesome-icon icon="fa-solid fa-trash-can" class="icon-trash-color" />
-            </a>
-          </td>
-        </tr>
-        <tr v-else>
-          <td colspan="9" class="text-center">Tidak ada data</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive-mobile">
+      <table
+        class="table table-hover table-bordered table-search"
+        ref="tabelUser"
+        id="tabel-user"
+      >
+        <thead>
+          <tr class="bg-info-fordone">
+            <th class="first-column">No.</th>
+            <th class="text-center th-order" @click="clickToOrder('username')">
+              Username
+            </th>
+            <th class="text-center th-order tabel-width-15" @click="clickToOrder('name')">
+              Nama
+            </th>
+            <th
+              class="text-center th-order tabel-width-20"
+              @click="clickToOrder('dinas.nama')"
+            >
+              Nama Instansi
+            </th>
+            <th
+              class="text-center th-order tabel-width-20"
+              @click="clickToOrder('w.label')"
+            >
+              Wilayah Kerja
+            </th>
+            <th class="text-center th-order" @click="clickToOrder('noHp')">No. HP</th>
+            <th class="text-center th-order" @click="clickToOrder('role')">Peran</th>
+            <th class="text-center th-order deleted tabel-width-8">Edit</th>
+            <th class="text-center th-order deleted">Hapus</th>
+          </tr>
+          <tr class="">
+            <td class="search-header"></td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchUsername"
+                type="text"
+                class="search-input form-control"
+              />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchNama"
+                type="text"
+                class="search-input form-control"
+              />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchInstansi"
+                type="text"
+                class="search-input form-control"
+              />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchWilayah"
+                type="text"
+                class="search-input form-control"
+              />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchNoHp"
+                type="text"
+                class="search-input form-control"
+                placeholder="cari dengan 08..."
+              />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchRole"
+                type="text"
+                class="search-input form-control"
+              />
+            </td>
+            <td class="search-header deleted"></td>
+            <td class="search-header deleted"></td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="users.length > 0" v-for="user in paginatedData" :key="user.id">
+            <td>{{ user.number }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.nama_dinas }}</td>
+            <td>{{ user.wilayah_label }}</td>
+            <td>{{ changeNumber(user.noHp) }}</td>
+            <td>{{ user.role }}</td>
+            <td class="text-center deleted">
+              <a @click.prevent="resetPasswordLink(user.id)" class="update-pen mx-1">
+                <font-awesome-icon icon="fa-solid fa-lock" title="Reset Password" />
+              </a>
+              <a @click.prevent="changeRolesLink(user.id)" class="mx-1 role-update"
+                ><font-awesome-icon :icon="changeRoles(user.role)" title="Ubah Role"
+              /></a>
+              <a @click.prevent="editUser(user.id)" class="edit-pen mx-1">
+                <font-awesome-icon icon="fa-solid fa-pencil" title="Edit Pengguna" />
+              </a>
+            </td>
+            <td class="text-center deleted">
+              <a @click.prevent="toggleDeleteModal(user.id)" class="delete-trash">
+                <font-awesome-icon
+                  icon="fa-solid fa-trash-can"
+                  class="icon-trash-color"
+                />
+              </a>
+            </td>
+          </tr>
+          <tr v-else>
+            <td colspan="9" class="text-center">Tidak ada data</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <Teleport to="body">
       <ModalBs
         :ModalStatus="deleteModalStatus"
