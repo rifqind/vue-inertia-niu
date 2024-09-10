@@ -217,6 +217,7 @@ const deviceType = computed(() => {
               currentRoute == 'columns.index' ||
               currentRoute == 'row_group.index' ||
               currentRoute == 'rows.index' ||
+              currentRoute == 'tabel.kategori' ||
               menuOpenMaster
             "
           >
@@ -229,6 +230,13 @@ const deviceType = computed(() => {
                 :navIcon="'fas fa-table'"
               >
                 Tabel</NavLinkSidebar
+              >
+              <NavLinkSidebar
+                :href="route('tabel.kategori')"
+                :currentRoute="currentRoute == 'tabel.kategori'"
+                :navIcon="'fas fa-table'"
+              >
+                Kategori Tabel</NavLinkSidebar
               >
               <NavLinkSidebar
                 :role="role == 'admin'"

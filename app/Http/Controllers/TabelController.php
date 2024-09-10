@@ -6,6 +6,7 @@ use App\Models\Catatan;
 use App\Models\Column;
 use App\Models\ColumnGroup;
 use App\Models\ColumnOrder;
+use App\Models\DataCategory;
 use App\Models\Datacontent;
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
@@ -103,6 +104,7 @@ class TabelController extends Controller
         $dataToCounted = $query->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
             ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
+            ->leftJoin('klasifikasi_tabel', 'tabels.id', '=', 'klasifikasi_tabel.id_tabel')
             ->select(
                 [
                     'tabels.*',
@@ -113,6 +115,7 @@ class TabelController extends Controller
                     'statustables.id as id_statustables',
                     'statustables.updated_at as status_updated',
                     'statustables.edited_by as edited_by',
+                    'klasifikasi_tabel.id_category as kategori'
                 ]
             );
         if ($request->orderAttribute) {
@@ -206,7 +209,7 @@ class TabelController extends Controller
             // array_push($listOfUser, $rowLabel);
             $when_updated = $table->status_updated;
             $NumberAndLabel = $table->nomor . ' - ' . $table->label;
-
+            $labelkategori = DataCategory::where('id', $table->kategori)->value('label');
             array_push($table_objects, [
                 'number' => $number++,
                 'label' => $NumberAndLabel,
@@ -220,6 +223,8 @@ class TabelController extends Controller
                 'status_updated' => $when_updated,
                 'who_updated' => $who_updated,
                 'rowInputs' => $rowInputs,
+                'kategori' => $table->kategori,
+                'label_kategori' => $labelkategori
             ]);
         }
         if ($request->routeName) {
@@ -248,12 +253,14 @@ class TabelController extends Controller
         else $currentPage = 1;
         $query = Tabel::query();
         $dataToCounted = $query->join('dinas', 'dinas.id', '=', 'tabels.id_dinas')
+            ->leftJoin('klasifikasi_tabel', 'tabels.id', '=', 'klasifikasi_tabel.id_tabel')
             ->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
             ->select([
                 'tabels.*',
                 'tabels.id as tabelUuid',
                 'tabels.edited_by as edited_by',
-                'tabels.updated_at as status_updated'
+                'tabels.updated_at as status_updated',
+                'klasifikasi_tabel.id_category as kategori'
             ]);
         if ($request->orderAttribute) {
             $order = $request->orderAttribute;
@@ -264,7 +271,14 @@ class TabelController extends Controller
                 } else {
                     $query->orderBy($order['label'], $order['value']);
                 }
+            } else {
+                $query->orderBy('klasifikasi_tabel.id_category', 'desc');
+                $query->orderBy('tabels.updated_at', 'desc');
             }
+        } else {
+            $query->orderBy('klasifikasi_tabel.id_category', 'desc');
+            // $query->orderBy('tabels.updated_at', 'desc');
+            $query->orderBy('tabels.updated_at', 'desc');
         }
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
@@ -349,6 +363,7 @@ class TabelController extends Controller
             $who_updated = User::where('id', $table->edited_by)->value('username');
             $when_updated = $table->status_updated;
             $NumberAndLabel = $table->nomor . ' - ' . $table->label;
+            $labelkategori = DataCategory::where('id', $table->kategori)->value('label');
             array_push($table_objects, [
                 'number' => $number++,
                 'label' => $NumberAndLabel,
@@ -363,6 +378,8 @@ class TabelController extends Controller
                 'status_updated' => $when_updated,
                 'who_updated' => $who_updated,
                 'rowInputs' => $rowInputs,
+                'kategori' => $table->kategori,
+                'label_kategori' => $labelkategori
             ]);
         }
         if ($request->routeName) {
@@ -1445,6 +1462,79 @@ class TabelController extends Controller
         }
 
         return redirect()->route('tabel.entri', ['id' => $status->id])->with('message', 'Berhasil');
+    }
+
+    public function kategori(Request $request)
+    {
+        if ($request->isMethod('delete')) {
+            try {
+                //code...
+                DB::beginTransaction();
+                DataCategory::where('id', $request->id)->delete();
+                DB::commit();
+                return redirect()->route('tabel.kategori')->with('message', 'Berhasil menghapus data');
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                return redirect()->route('tabel.kategori')->with('error', $th->getMessage());
+            }
+        }
+        if ($request->isMethod('post')) {
+            try {
+                //code...
+                DB::beginTransaction();
+                $data = $request->validate(['label' => 'required|string|max:30']);
+                if ($request->id) DataCategory::where('id', $request->id)->update($data);
+                else
+                    DataCategory::create($data);
+                DB::commit();
+                return redirect()->route('tabel.kategori')->with('message', 'Berhasil menambahkan kategori baru');
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                return redirect()->route('tabel.kategori')->with('error', $th->getMessage());
+            }
+        }
+        if ($request->isFetch) {
+            $data = DataCategory::where('id', $request->id)->first();
+            return response()->json($data);
+        }
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = DataCategory::query();
+
+        $number = 1;
+        $dataToCounted = $query;
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('label');
+        } else $query->orderBy('label');
+
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label'])) $query->where('label', 'like', '%' . $filter['label'] . '%');
+        }
+        $countData = $dataToCounted->count();
+        $data = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        foreach ($data as $key => $value) {
+            # code...
+            $value->number = $number;
+            $number++;
+        }
+        if ($request->paginated) {
+            return response()->json([
+                'data' => $data,
+                'countData' => $countData
+            ]);
+        }
+        return Inertia::render('Master/Kategori', [
+            'data' => $data,
+            'countData' => $countData
+        ]);
     }
 
     public function statusDestroy(Request $request)

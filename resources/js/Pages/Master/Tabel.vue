@@ -17,6 +17,7 @@ defineComponent({
 const page = usePage();
 var tGroup = page.props.tables;
 var tables = ref(tGroup);
+const kategoriModal = ref(false);
 const form = useForm({
   id: null,
   tahun: null,
@@ -73,6 +74,7 @@ const searchStatus = ref(null);
 const searchUpdated = ref(null);
 const searchRowLabel = ref(null);
 const closeModal = (Object) => {
+  console.log(Object);
   Object.value = false;
   form.reset();
 };
@@ -501,7 +503,12 @@ const downloadRoute = () => {
             :key="index"
           >
             <td class="align-middle">{{ table.number }}</td>
-            <td class="align-middle">{{ table.label }}</td>
+            <td class="align-middle">
+              {{ table.label }}
+              <span class="badge badge-info kategori" :title="table.label_kategori">{{
+                table.kategori
+              }}</span>
+            </td>
             <td class="align-middle">{{ table.nama_dinas }}</td>
             <td class="align-middle">
               <template v-for="(col, colIndex) in table.columns" :key="colIndex">
@@ -623,6 +630,21 @@ const downloadRoute = () => {
                 />
               </a>
               <a
+                @click.prevent="
+                  () => {
+                    kategoriModal = true;
+                    form.id = table.kategori;
+                  }
+                "
+                class="edit-pen mx-1"
+              >
+                <font-awesome-icon
+                  icon="fa-solid fa-star"
+                  class="mx-1 th-order"
+                  title="Tambah Kategori"
+                />
+              </a>
+              <a
                 v-if="page.props.auth.user.role == 'admin'"
                 @click.prevent="
                   () => {
@@ -668,7 +690,12 @@ const downloadRoute = () => {
       </ModalBs>
       <ModalBs
         :ModalStatus="addYearModalStatus"
-        @close="closeModal(addYearModalStatus)"
+        @close="
+          () => {
+            addYearModalStatus = false;
+            form.reset();
+          }
+        "
         :title="'Tambah Tahun'"
       >
         <template #modalBody>
@@ -817,7 +844,12 @@ const downloadRoute = () => {
       </ModalBs>
       <ModalBs
         :ModalStatus="deleteModalStatus"
-        @close="closeModal(deleteModalStatus)"
+        @close="
+          () => {
+            deleteModalStatus = false;
+            form.reset();
+          }
+        "
         :title="'Hapus Tabel'"
       >
         <template v-slot:modalBody>
@@ -834,6 +866,41 @@ const downloadRoute = () => {
           </button>
         </template>
       </ModalBs>
+      <ModalBs
+        :-modal-status="kategoriModal"
+        @close="
+          () => {
+            kategoriModal = false;
+            form.reset();
+          }
+        "
+        :title="'Kategori Tabel'"
+      >
+        <template #modalBody>
+          <form>
+            <div class="form-group">
+              <label for="label">Nama Kategori</label>
+              <input
+                type="text"
+                class="form-control"
+                id="label"
+                placeholder="Isi Nama Kategori"
+              />
+            </div>
+          </form>
+        </template>
+        <template #modalFunction>
+          <button
+            id=""
+            type="button"
+            class="btn btn-sm bg-success-fordone"
+            :disabled="form.processing"
+            @click.prevent="kategori"
+          >
+            Simpan
+          </button>
+        </template></ModalBs
+      >
     </Teleport>
     <Pagination
       @update:currentPage="updateCurrentPage"
@@ -852,5 +919,8 @@ table {
 
 .th-order {
   cursor: pointer;
+}
+.kategori {
+  cursor: default;
 }
 </style>

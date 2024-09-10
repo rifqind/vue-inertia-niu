@@ -432,7 +432,12 @@ const forceDelete = async () => {
             :key="index"
           >
             <td class="align-middle">{{ table.number }}</td>
-            <td class="align-middle">{{ table.label }}</td>
+            <td class="align-middle">
+              {{ table.label }}
+              <span class="badge badge-info kategori" :title="table.label_kategori">{{
+                table.kategori
+              }}</span>
+            </td>
             <td class="align-middle">{{ table.nama_dinas }}</td>
             <td class="align-middle">
               <template v-for="(col, colIndex) in table.columns" :key="colIndex">
@@ -739,6 +744,10 @@ table {
 }
 
 .th-order {
-  cursor: pointer;
+  cursor: none;
+}
+
+.kategori {
+  cursor: default;
 }
 </style>

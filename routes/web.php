@@ -145,6 +145,9 @@ Route::middleware(['auth', 'verified', 'role:admin|kominfo'])->group(function ()
     Route::get('/tabel/master/copy/{id}', [TabelController::class, 'copy'])->name('tabel.copy');
     Route::post('/tabel/copy', [TabelController::class, 'storeCopy'])->name('tabel.storeCopy');
     Route::get('/tabel/deletedList', [TabelController::class, 'index'])->name('tabel.deletedList');
+    Route::get('/tabel/kategori' , [TabelController::class, 'kategori'])->name('tabel.kategori');
+    Route::post('/tabel/kategori' , [TabelController::class, 'kategori']);
+    Route::delete('/tabel/kategori' , [TabelController::class, 'kategori']);
 });
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
