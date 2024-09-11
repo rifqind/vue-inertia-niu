@@ -20,8 +20,6 @@ const searchLabel = ref(null);
 const triggerSpinner = ref(false);
 const dataFetched = ref(null);
 const modalTitle = ref("Tambah Kelompok Kolom Baru");
-const downloadModalStatus = ref(false);
-const downloadTitle = ref(null);
 const uploadModal = ref(false);
 const flashObject = ref(page.props.flash);
 watch(

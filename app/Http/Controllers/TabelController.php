@@ -1483,6 +1483,27 @@ class TabelController extends Controller
             try {
                 //code...
                 DB::beginTransaction();
+                if ($request->has('klasifikasi')) {
+                    // Check if id_category is 0, which implies deletion
+                    if ($request->id_category == 0) {
+                        // dd($request->id_tabel);
+                        // Find the record by id_tabel and delete it if it exists
+                        DB::table('klasifikasi_tabel')
+                            ->where('id_tabel', $request->id_tabel)
+                            ->delete();
+                        DB::commit();
+                        return redirect()->route('tabel.master')->with('message', 'Berhasil ganti kategori');
+                    }
+
+                    // Otherwise, insert or update the classification
+                    DB::table('klasifikasi_tabel')->updateOrInsert(
+                        ['id_tabel' => $request->id_tabel], // Condition for upsert
+                        ['id_category' => $request->id_category] // Data to insert/update
+                    );
+                    DB::commit();
+                    return redirect()->route('tabel.master')->with('message', 'Berhasil ganti kategori');
+                }
+
                 $data = $request->validate(['label' => 'required|string|max:30']);
                 if ($request->id) DataCategory::where('id', $request->id)->update($data);
                 else
@@ -1494,6 +1515,10 @@ class TabelController extends Controller
                 DB::rollBack();
                 return redirect()->route('tabel.kategori')->with('error', $th->getMessage());
             }
+        }
+        if ($request->tabelFetch) {
+            $data = DataCategory::get(['id as value', 'label as label']);
+            return response()->json($data);
         }
         if ($request->isFetch) {
             $data = DataCategory::where('id', $request->id)->first();

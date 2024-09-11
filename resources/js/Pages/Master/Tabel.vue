@@ -94,7 +94,26 @@ const desaDrop = ref({
 });
 const rowListFetched = ref([]);
 const rowsCheckBox = ref([]);
-
+const kategoriOptions = ref({
+  value: null,
+  options: null,
+});
+const toggleKategoriModal = async (value, id) => {
+  kategoriModal.value = true;
+  form.id = id;
+  try {
+    const response = await axios.get(route("tabel.kategori"), {
+      params: {
+        tabelFetch: true,
+      },
+    });
+    kategoriOptions.value.options = [
+      { label: "Tidak terkategori", value: 0 },
+      ...response.data,
+    ];
+    kategoriOptions.value.value = value;
+  } catch (error) {}
+};
 const ArrayBigObjects = [
   { key: "label", valueFilter: searchLabel },
   { key: "nama_dinas", valueFilter: searchLabelDinas },
@@ -256,6 +275,26 @@ const submit = async function () {
       addYearModalStatus.value = true;
     },
   });
+};
+const kategori = async () => {
+  const token = await axios.get(route("token"));
+  triggerSpinner.value = true;
+  kategoriModal.value = false;
+  try {
+    const response = await axios.post("/tabel/kategori", {
+      _token: token.data,
+      id_tabel: form.id,
+      id_category: kategoriOptions.value.value,
+      klasifikasi: true,
+    });
+    if (flashObject) toggleFlash.value = true;
+    form.reset();
+    fetchData();
+  } catch (error) {
+    kategoriModal.value = true;
+  } finally {
+    triggerSpinner.value = false;
+  }
 };
 const duplicate = async () => {
   duplicateForm.rows.selected = rowListFetched.value.filter((_, index) => {
@@ -630,12 +669,7 @@ const downloadRoute = () => {
                 />
               </a>
               <a
-                @click.prevent="
-                  () => {
-                    kategoriModal = true;
-                    form.id = table.kategori;
-                  }
-                "
+                @click.prevent="toggleKategoriModal(table.kategori, table.id)"
                 class="edit-pen mx-1"
               >
                 <font-awesome-icon
@@ -880,11 +914,11 @@ const downloadRoute = () => {
           <form>
             <div class="form-group">
               <label for="label">Nama Kategori</label>
-              <input
-                type="text"
-                class="form-control"
-                id="label"
-                placeholder="Isi Nama Kategori"
+              <Multiselect
+                v-model="kategoriOptions.value"
+                :options="kategoriOptions.options"
+                placeholder="-- Pilih Kategori Data --"
+                :searchable="true"
               />
             </div>
           </form>
