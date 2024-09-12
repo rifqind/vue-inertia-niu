@@ -311,6 +311,10 @@ const form = useForm({
     id_subjek: null,
     edited_by: page.props.auth.user.id,
   },
+  optional: {
+    kategori: null,
+    rowlabel: null,
+  },
   rows: {
     tipe: null,
     selected: [],
@@ -455,7 +459,7 @@ const searchRow = (input) => {
             </div>
             <div class="card-body">
               <div class="mb-3">
-                <label for="dinas">Produsen Data</label>
+                <label for="dinas">Produsen Data<span class="text-danger">*</span></label>
                 <Multiselect
                   v-model="form.tabel.id_dinas"
                   :options="dinasDrop.options"
@@ -465,7 +469,7 @@ const searchRow = (input) => {
                 <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
               </div>
               <div class="mb-3">
-                <label for="nomor">Nomor Tabel</label>
+                <label for="nomor">Nomor Tabel<span class="text-danger">*</span></label>
                 <input
                   v-model="form.tabel.nomor"
                   type="text"
@@ -476,7 +480,7 @@ const searchRow = (input) => {
                 <div class="text-danger text-left" v-if="true" id="error-nomor"></div>
               </div>
               <div class="mb-3">
-                <label for="judul">Judul Tabel</label>
+                <label for="judul">Judul Tabel<span class="text-danger">*</span></label>
                 <input
                   v-model="form.tabel.label"
                   type="text"
@@ -487,7 +491,7 @@ const searchRow = (input) => {
                 <div class="text-danger text-left" v-if="true" id="error-judul"></div>
               </div>
               <div class="mb-3">
-                <label for="subjek">Subjek Tabel</label>
+                <label for="subjek">Subjek Tabel<span class="text-danger">*</span></label>
                 <Multiselect
                   v-model="form.tabel.id_subjek"
                   :options="subjectDrop.options"
@@ -497,7 +501,9 @@ const searchRow = (input) => {
                 <div class="text-danger text-left" v-if="true" id="error-subjek"></div>
               </div>
               <div class="mb-3">
-                <label for="unit">Satuan/Unit Data</label>
+                <label for="unit"
+                  >Satuan/Unit Data<span class="text-danger">*</span></label
+                >
                 <input
                   v-model="form.tabel.unit"
                   type="text"
@@ -515,7 +521,7 @@ const searchRow = (input) => {
             </div>
             <div class="card-body">
               <div class="mb-3">
-                <label for="rowType">Tipe Baris</label>
+                <label for="rowType">Tipe Baris<span class="text-danger">*</span></label>
                 <Multiselect
                   v-model="form.rows.tipe"
                   :options="rowTypeDrop.options"
@@ -675,7 +681,9 @@ const searchRow = (input) => {
             </div>
             <div class="card-body">
               <div class="mb-3">
-                <label for="column-groups">Kelompok Kolom</label>
+                <label for="column-groups"
+                  >Kelompok Kolom<span class="text-danger">*</span></label
+                >
                 <Multiselect
                   v-model="colGroupsDrop.value"
                   :options="colGroupsDrop.options"
@@ -795,13 +803,48 @@ const searchRow = (input) => {
               </div>
             </div>
           </div>
+          <div class="card mb-3">
+            <div class="card-header">
+              <label class="h5 mb-0">Detail Tambahan</label>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="kategori"
+                  >Kategori Data<span class="text-danger">*</span>
+                </label>
+                <Multiselect
+                  v-model="form.optional.kategori"
+                  :options="[
+                    { label: 'Tidak dikategorikan', value: '0' },
+                    ...page.props.category,
+                  ]"
+                  placeholder="-- Pilih Kategori Data --"
+                  :searchable="true"
+                />
+                <div class="text-danger text-left" v-if="true" id="error-kategori"></div>
+              </div>
+              <div class="mb-3">
+                <label for="rowlabel">Judul Baris (Optional)</label>
+                <input
+                  v-model="form.optional.rowlabel"
+                  type="text"
+                  id="rowlabel"
+                  class="form-control"
+                  placeholder="Optional, jika tidak diisi, maka sesuai dengan kelompok baris"
+                />
+                <div class="text-danger text-left" v-if="true" id="error-rowlabel"></div>
+              </div>
+            </div>
+          </div>
           <div class="card">
             <div class="card-header">
               <label class="h5 mb-0">Detail Waktu</label>
             </div>
             <div class="card-body">
               <div class="mb-3">
-                <label for="column-groups">Pilih Tahun</label>
+                <label for="column-groups"
+                  >Pilih Tahun<span class="text-danger">*</span></label
+                >
                 <Multiselect
                   v-model="form.tahun"
                   :options="yearDrop.options"
@@ -810,7 +853,9 @@ const searchRow = (input) => {
                 />
               </div>
               <div class="mb-3">
-                <label for="column-groups">Pilih Periode/Turunan Tahun</label>
+                <label for="column-groups"
+                  >Pilih Periode/Turunan Tahun<span class="text-danger">*</span></label
+                >
                 <Multiselect
                   v-model="form.id_turtahun"
                   :options="yearDownDrop.options"
@@ -865,6 +910,7 @@ const searchRow = (input) => {
                   :rows="rowPreview"
                   :columns="columnPreview"
                   :turtahun="turtahunListFetched"
+                  :rowlabel="form.optional.rowlabel"
                 />
               </div>
               <div class="text-center">

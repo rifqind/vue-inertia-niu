@@ -100,7 +100,6 @@ class TabelController extends Controller
         if ($routeName != 'tabel.deletedList') $query->where('statustables.status', '<', 6);
         else $query->where('statustables.status', '=', 6);
 
-
         $dataToCounted = $query->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
             ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
@@ -409,6 +408,7 @@ class TabelController extends Controller
         $subjects = Subject::get(['subjects.id as value', 'subjects.label as label']);
         $turtahun_groups = TurTahunGroup::get(['turtahun_groups.id as value', 'turtahun_groups.label as label']);
         $kabupatens = MasterWilayah::where('desa', 'like', '000')->where('kec', 'like', '000')->where('kab', 'not like', '00')->select(['wilayah_fullcode', 'label'])->get();
+        $category = DataCategory::get(['id as value', 'label as label']);
         return Inertia::render('Tabel/Create', [
             'tabels' => $tabel,
             'row_groups' => $rowLabel,
@@ -417,7 +417,8 @@ class TabelController extends Controller
             'turtahun_groups' => $turtahun_groups,
             'column_groups' => $kolom_grup,
             'subjects' => $subjects,
-            'kabupatens' => $kabupatens
+            'kabupatens' => $kabupatens,
+            'category' => $category,
         ]);
     }
 
@@ -440,7 +441,10 @@ class TabelController extends Controller
             'columns' => ['required'],
             'tahun' => ['required'],
             'id_turtahun' => ['required'],
+            'optional.kategori' => ['required'],
+            'optional.rowlabel' => ['sometimes', 'nullable', 'string', 'max:30']
         ]);
+        $optional = $request->optional;
         $exists = Tabel::where('nomor', $request->tabel['nomor'])
             ->whereRaw('LOWER(label) = ?', [$request->tabel['label']])->exists();
         if ($exists) {
@@ -453,8 +457,15 @@ class TabelController extends Controller
 
             //tabel create
             // dd($request->orderRow, $request->orderColumn);
-
             $new_tabel = Tabel::create($request->tabel);
+            if ($optional['kategori'] != 0) DB::table('klasifikasi_tabel')->insert([
+                'id_tabel' => $new_tabel->id,
+                'id_category' => $optional['kategori']
+            ]);
+            if ($optional['rowlabel']) DB::table('rowlabel')->insert([
+                'id_tabel' => $new_tabel->id,
+                'row_label' => $optional['rowlabel']
+            ]);
             $id_dinas = $request->tabel["id_dinas"];
             // //debatable
             $wilayah_fullcode_produsen = Dinas::where('id', $id_dinas)->value("wilayah_fullcode");
@@ -786,8 +797,10 @@ class TabelController extends Controller
         $tahun = $statusTabel->tahun;
         $sdesc = $statusTabel->status_desc;
 
+        $used_rowlabel = DB::table('rowlabel')->where('id_tabel', $id_tabel)->first();
+        if ($used_rowlabel) $used_rowlabel = $used_rowlabel->row_label;
         $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
-        $id_rows = [];
+        // $id_rows = [];
         $wilayah_fullcodes = [];
         $id_columns = [];
         $tahuns = [];
@@ -822,7 +835,7 @@ class TabelController extends Controller
         // Sort the collection by 'wilayah_fullcode', placing null or empty values at the end
         $id_rows = $id_rows->sortBy(function ($item) {
             $wilayah_fullcode = $item->wilayah_fullcode;
-
+            if (!$wilayah_fullcode) return [5, ''];
             // Break down wilayah_fullcode into different levels: provinsi, kabupaten, kecamatan, desa
             $prov = substr($wilayah_fullcode, 0, 2);   // First 2 digits (provinsi level)
             $kab = substr($wilayah_fullcode, 2, 2);    // Next 2 digits (kabupaten level)
@@ -845,8 +858,8 @@ class TabelController extends Controller
             // Then sort by the actual wilayah_fullcode
             return [$level, $wilayah_fullcode];
         });
-        dd($id_rows);
-        $rows = Row::whereIn('id', $id_rows)->get();
+        $rows = $id_rows->values();
+        // $rows = Row::whereIn('id', $id_rows)->get();
         $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->get();
 
         $RowOrders = RowOrder::where('id_statustabel', $id)->value('orders');
@@ -856,11 +869,6 @@ class TabelController extends Controller
             if ($rows[0]->id == 0) {
                 $wilayah_parent_code = '';
                 $jenis = "DAFTAR ";
-                $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                    ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
-                    ->orderBy('desa')
-                    ->get();
-                $rows = $temp;
                 $desa = substr($wilayah_fullcodes[0], 7, 3);
                 $kec = substr($wilayah_fullcodes[0], 4, 3);
                 $kab = substr($wilayah_fullcodes[0], 2, 2);
@@ -871,35 +879,9 @@ class TabelController extends Controller
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
                     $jenis = $jenis . "KECAMATAN DI ";
                     //server dont know why act like this
-                    $elementToMove = null;
-                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                        ->get();
-                    foreach ($temp as $key => $value) {
-                        # code...
-                        if ($value->kec == '000') {
-                            $elementToMove = $value;
-                            $temp->forget($key);
-                            break;
-                        }
-                    }
-                    if ($elementToMove) {
-                        $temp->push($elementToMove);
-                    }
-                    $temp = $temp->values();
-
-                    // $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                    //     ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
-                    //     ->orderBy('desa')
-                    //     ->get();
-                    $rows = $temp;
                 } else if ($kab != '00') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
                     $jenis = $jenis . "KABUPATEN DI ";
-                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                        ->orderByRaw("CASE WHEN kab = '00' THEN 1 ELSE 0 END")
-                        ->orderBy('desa')
-                        ->get();
-                    $rows = $temp;
                 }
                 if ($RowOrders) $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
                     ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
@@ -946,9 +928,10 @@ class TabelController extends Controller
 
         return Inertia::render('Tabel/Entri', [
             'datacontents' => $datacontents,
+            // 'used_rowlabel' => $used_rowlabel,
             'years' => $tahuns[0],
             'rows' => $rows,
-            'row_label' => $rowLabel,
+            'row_label' => ($used_rowlabel) ? $used_rowlabel : $rowLabel,
             'columns' => $columns,
             'turtahuns' => $turtahuns,
             'judul_tabel' => $statusTabel->judul_tabel,
@@ -1121,6 +1104,8 @@ class TabelController extends Controller
             ->distinct()
             ->get();
 
+        $used_rowlabel = DB::table('rowlabel')->where('id_tabel', $id)->first();
+        if ($used_rowlabel) $used_rowlabel = $used_rowlabel->row_label;
         return Inertia::render('Tabel/Edit', [
             'availableYear' => $availableYear,
             'tabel' => $tabel,
@@ -1130,6 +1115,7 @@ class TabelController extends Controller
             'columnBase' => $columnBase,
             'rowBase' => $rowBase,
             'rows' => $rows,
+            'rowlabel' => $used_rowlabel,
             'tabelList' => $tabelList,
             'transferStatus' => $transferStatus,
             'transporseRow' => $transporseRow,

@@ -461,6 +461,17 @@ const labSubmit = async () => {
                 />
                 <div class="text-danger text-left" v-if="true" id="error-unit"></div>
               </div>
+              <div class="mb-3">
+                <label for="rowlabel">Judul Baris (Optional)</label>
+                <input
+                  v-model="page.props.rowlabel"
+                  type="text"
+                  id="rowlabel"
+                  class="form-control"
+                  placeholder="Optional, jika tidak diisi, maka sesuai dengan kelompok baris"
+                />
+                <div class="text-danger text-left" v-if="true" id="error-rowlabel"></div>
+              </div>
             </div>
           </div>
           <div class="card mb-3">
