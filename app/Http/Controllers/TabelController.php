@@ -926,6 +926,7 @@ class TabelController extends Controller
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
 
+        // dd($datacontents);
         return Inertia::render('Tabel/Entri', [
             'datacontents' => $datacontents,
             // 'used_rowlabel' => $used_rowlabel,
@@ -1251,37 +1252,68 @@ class TabelController extends Controller
         try {
             //code...
             DB::beginTransaction();
-            $columnList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_column')->unique()->toArray();
-            $rowList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_row')->unique()->toArray();
-            foreach ($lab['newCol'] as $key => $value) {
-                # code...
-                if (!in_array($value, $columnList)) array_push($columnList, $value);
-            }
-            foreach ($lab['newRow'] as $key => $value) {
-                if (!in_array($value, $rowList)) array_push($rowList, $value);
-            }
+
             $newDataContent = [];
             $tahun = $lab['tahun'] ?: Datacontent::where('id_tabel', $id_tabel)->pluck('tahun')->unique()->toArray();
             $turtahun = Datacontent::where('id_tabel', $id_tabel)->pluck('id_turtahun')->unique()->toArray();
+            $findDefaultWfc = Tabel::where('tabels.id', $id_tabel)->join('dinas', 'dinas.id', '=', 'tabels.id_dinas')->value('wilayah_fullcode');
             if (!empty($lab['newCol']) || !empty($lab['newRow'])) {
                 foreach ($tahun as $t) {
                     # code...
+                    $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $t)->get(['id_row', 'wilayah_fullcode']);
+                    $rowList = collect([]);
+                    foreach ($datacontents as $data) {
+                        $alreadyExists = $rowList->contains(function ($item) use ($data) {
+                            if ($data->id_row == 0) return $item->wilayah_fullcode == $data->wilayah_fullcode;
+                            if ($data->id_row != 0) return $item->id_row == $data->id_row;
+                        });
+                        if (!$alreadyExists) {
+                            $rowList->push($data);
+                        }
+                    }
+                    $columnList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_column')->unique()->toArray();
+                    // $rowList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_row')->unique()->toArray();
+                    // $rowList = Datacontent::where('id_tabel', $id_tabel)->get(['id_row', 'wilayah_fullcode']);
+                    foreach ($lab['newCol'] as $key => $value) {
+                        # code...
+                        if (!in_array($value, $columnList)) array_push($columnList, $value);
+                    }
+                    foreach ($lab['newRow'] as $key => $value) {
+                        // if (!in_array($value, $rowList)) array_push($rowList, $value);
+                        if (!$rowList->contains('id_row', $value)) {
+                            $rowList->push(['id_row' => $value, 'wilayah_fullcode' => null]);
+                        }
+                    }
                     foreach ($rowList as $key => $value) {
                         # code...
-                        $wilayah_fullcode = Datacontent::where('id_row', $value)->where('id_tabel', $id_tabel)
-                            ->value('wilayah_fullcode');
+                        // $wilayah_fullcode = Datacontent::where('id_row', $value)->where('id_tabel', $id_tabel)
+                        //     ->value('wilayah_fullcode');
+                        if ($value->id_row == 0) {
+                            $wilayah_fullcode = Datacontent::where('id_row', $value->id_row)
+                                ->where('wilayah_fullcode', $value->wilayah_fullcode)
+                                ->where('id_tabel', $id_tabel)
+                                ->first();
+                        } else {
+                            $wilayah_fullcode = Datacontent::where('id_row', $value->id_row)
+                                // ->where('wilayah_fullcode', $value->wilayah_fullcode)
+                                ->where('id_tabel', $id_tabel)
+                                ->first();
+                        }
+                        if (!$wilayah_fullcode) $wilayah_fullcode = $findDefaultWfc;
+                        else $wilayah_fullcode = $wilayah_fullcode->wilayah_fullcode;
+
                         foreach ($columnList as $columnKey => $column) {
                             foreach ($turtahun as $id_turtahun) {
                                 $check = Datacontent::where('id_tabel', $id_tabel)
                                     ->where('id_column', $column)
-                                    ->where('id_row', $value)
+                                    ->where('id_row', $value->id_row)
                                     ->where('tahun', $t)
                                     ->where('id_turtahun', $id_turtahun)
                                     ->first();
                                 if (!$check) {
                                     $datacontent = [
                                         'id_tabel' => $id_tabel,
-                                        'id_row' => $value,
+                                        'id_row' => $value->id_row,
                                         'id_column' => $column,
                                         'tahun' => $t,
                                         'id_turtahun' => $id_turtahun,
@@ -1332,7 +1364,8 @@ class TabelController extends Controller
                     return in_array($item, $columnList);
                 });
                 $filteredRowCheck = array_filter($rowCheck, function ($item) use ($rowList) {
-                    return in_array($item, $rowList);
+                    // return in_array($item, $rowList);
+                    return $rowList->contains('id_row', $item);
                 });
 
                 // Implode the filtered array back into a comma-separated string
