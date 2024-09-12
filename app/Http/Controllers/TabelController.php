@@ -883,8 +883,8 @@ class TabelController extends Controller
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
                     $jenis = $jenis . "KABUPATEN DI ";
                 }
-                if ($RowOrders) $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                    ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
+                // if ($RowOrders) $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                //     ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
                 if ($wilayah_parent_code == '') {
                     $rowLabel = 'PROVINSI SULAWESI UTARA';
                 } else {
@@ -921,7 +921,7 @@ class TabelController extends Controller
             $columns = Column::whereIn('id', $id_columns)->get();
         }
         // dd($id_columns, $columns, $orders);
-        if (!$rows[0]->id == 0 && $RowOrders)  $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+        if (!$rows[0]->id == 0 && $RowOrders)  $rows = Row::whereIn('id', $rows->pluck('id'))->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
@@ -1281,9 +1281,10 @@ class TabelController extends Controller
                     foreach ($lab['newRow'] as $key => $value) {
                         // if (!in_array($value, $rowList)) array_push($rowList, $value);
                         if (!$rowList->contains('id_row', $value)) {
-                            $rowList->push(['id_row' => $value, 'wilayah_fullcode' => null]);
+                            $rowList->push((object) ['id_row' => $value, 'wilayah_fullcode' => null]);
                         }
                     }
+                    // dd($rowList);
                     foreach ($rowList as $key => $value) {
                         # code...
                         // $wilayah_fullcode = Datacontent::where('id_row', $value)->where('id_tabel', $id_tabel)
@@ -1352,29 +1353,55 @@ class TabelController extends Controller
                 }
             }
             foreach ($thisStatustabel as $value) {
+                // dd($value);
+                $getyear = Statustables::where('id', $value)->value('tahun');
+                $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $getyear)->get(['id_row', 'wilayah_fullcode']);
+                    $rowList = collect([]);
+                    foreach ($datacontents as $data) {
+                        $alreadyExists = $rowList->contains(function ($item) use ($data) {
+                            if ($data->id_row == 0) return $item->wilayah_fullcode == $data->wilayah_fullcode;
+                            if ($data->id_row != 0) return $item->id_row == $data->id_row;
+                        });
+                        if (!$alreadyExists) {
+                            $rowList->push($data);
+                        }
+                    }
+                    $columnList = Datacontent::where('id_tabel', $id_tabel)->pluck('id_column')->unique()->toArray();
+                    foreach ($lab['newCol'] as $key => $value) {
+                        # code...
+                        if (!in_array($value, $columnList)) array_push($columnList, $value);
+                    }
+                    foreach ($lab['newRow'] as $key => $value) {
+                        if (!$rowList->contains('id_row', $value)) {
+                            $rowList->push((object) ['id_row' => $value, 'wilayah_fullcode' => null]);
+                        }
+                    }
                 // Fetch the current 'orders' value and split it into an array
                 $columnCheck = ColumnOrder::where('id_statustabel', $value)->value('orders');
+                if ($columnCheck) {
+                    $columnCheck = explode(',', $columnCheck);
+                    
+                    // Filter out elements from columnCheck that do not exist in columnList
+                    $filteredColumnCheck = array_filter($columnCheck, function ($item) use ($columnList) {
+                        return in_array($item, $columnList);
+                    });
+                    $updatedColumnOrder = implode(',', $filteredColumnCheck);
+                    // Update the ColumnOrder with the new order
+                    ColumnOrder::where('id_statustabel', $value)->update(['orders' => $updatedColumnOrder]);
+                }
+                
                 $rowCheck = RowOrder::where('id_statustabel', $value)->value('orders');
+                if ($rowCheck) {
+                    $rowCheck = explode(',', $rowCheck);
+                    $filteredRowCheck = array_filter($rowCheck, function ($item) use ($rowList) {
+                        // return in_array($item, $rowList);
+                        return $rowList->contains('id_row', $item);
+                    });
+                    // Implode the filtered array back into a comma-separated string
+                    $updatedRowOrder = implode(',', $filteredRowCheck);
+                    RowOrder::where('id_statustabel', $value)->update(['orders' => $updatedRowOrder]);
+                }
 
-                $columnCheck = explode(',', $columnCheck);
-                $rowCheck = explode(',', $rowCheck);
-
-                // Filter out elements from columnCheck that do not exist in columnList
-                $filteredColumnCheck = array_filter($columnCheck, function ($item) use ($columnList) {
-                    return in_array($item, $columnList);
-                });
-                $filteredRowCheck = array_filter($rowCheck, function ($item) use ($rowList) {
-                    // return in_array($item, $rowList);
-                    return $rowList->contains('id_row', $item);
-                });
-
-                // Implode the filtered array back into a comma-separated string
-                $updatedColumnOrder = implode(',', $filteredColumnCheck);
-                $updatedRowOrder = implode(',', $filteredRowCheck);
-
-                // Update the ColumnOrder with the new order
-                ColumnOrder::where('id_statustabel', $value)->update(['orders' => $updatedColumnOrder]);
-                RowOrder::where('id_statustabel', $value)->update(['orders' => $updatedRowOrder]);
             }
 
             DB::commit();
@@ -1382,7 +1409,8 @@ class TabelController extends Controller
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
-            return redirect()->route('tabel.edit', ['id' => $request->id])->with('error', $th->getMessage());
+            // return redirect()->route('tabel.edit', ['id' => $request->id])->with('error', $th->getMessage());
+            return response()->json($th->getMessage());
         }
     }
 

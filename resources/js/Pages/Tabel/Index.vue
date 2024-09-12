@@ -594,7 +594,12 @@ const forceDelete = async () => {
       </ModalBs>
       <ModalBs
         :ModalStatus="deleteModalStatus"
-        @close="closeModal(deleteModalStatus)"
+        @close="
+          () => {
+            deleteModalStatus = false;
+            form.reset();
+          }
+        "
         :title="'Hapus Tabel'"
       >
         <template v-slot:modalBody>
@@ -612,7 +617,12 @@ const forceDelete = async () => {
       </ModalBs>
       <ModalBs
         :ModalStatus="forceModalStatus"
-        @close="closeModal(forceModalStatus)"
+        @close="
+          () => {
+            forceModalStatus = false;
+            form.reset();
+          }
+        "
         :title="'Hapus Tabel'"
       >
         <template v-slot:modalBody>
