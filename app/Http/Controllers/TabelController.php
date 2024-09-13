@@ -1439,6 +1439,10 @@ class TabelController extends Controller
 
             if ($check) {
                 // Update the existing record if it exists
+                if(!$data['tabel']['rowlabel'] || $data['tabel']['rowlabel'] == '') {
+                    DB::table('rowlabel')->where('id_tabel', $request->id)->delete();
+                }
+                elseif ($data['tabel']['rowlabel'] && $data['tabel']['rowlabel'] != '') 
                 DB::table('rowlabel')->where('id_tabel', $request->id)->update([
                     'row_label' => $data['tabel']['rowlabel']
                 ]);
