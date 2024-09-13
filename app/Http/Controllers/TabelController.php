@@ -1417,12 +1417,14 @@ class TabelController extends Controller
     public function update(Request $request)
     {
         try {
+            DB::beginTransaction();
             $data = $request->validate([
                 'tabel.nomor' => ['required', 'string'],
                 'tabel.label' => ['required'],
                 'tabel.unit' => ['required'],
                 'tabel.id_dinas' => ['required', 'integer'],
                 'tabel.id_subjek' => ['required', 'integer'],
+                'tabel.rowlabel' => ['sometimes', 'nullable', 'string', 'max:30']
             ]);
             $dataUpdate = [
                 'nomor' => $data['tabel']['nomor'],
@@ -1433,9 +1435,27 @@ class TabelController extends Controller
             ];
             $tabel = Tabel::findOrFail($request->id);
             $tabel->update($dataUpdate);
+            $check = DB::table('rowlabel')->where('id_tabel', $request->id)->first();
 
+            if ($check) {
+                // Update the existing record if it exists
+                DB::table('rowlabel')->where('id_tabel', $request->id)->update([
+                    'row_label' => $data['tabel']['rowlabel']
+                ]);
+            } else {
+                // Insert a new record if it doesn't exist
+                if ($data['tabel']['rowlabel'] && $data['tabel']['rowlabel'] != '') {
+                    // dd($data['tabel']['rowlabel']);
+                    $inserted =  DB::table('rowlabel')->insert([
+                        'id_tabel' => $request->id, // Use 'id_tabel' instead of 'id'
+                        'row_label' => $data['tabel']['rowlabel'],
+                    ]);
+                }
+            }
+            DB::commit();
             return redirect()->route('tabel.edit', ['id' => $request->id])->with('message', 'Berhasil menyimpan perubahan!');
         } catch (Exception $e) {
+            DB::rollBack();
             return redirect()->route('tabel.edit', ['id' => $request->id])->with('error', $e->getMessage());
         }
     }

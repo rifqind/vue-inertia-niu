@@ -74,6 +74,7 @@ const form = useForm({
     unit: page.props.tabel.unit,
     id_dinas: page.props.tabel.id_dinas,
     id_subjek: page.props.tabel.id_subjek,
+    rowlabel: page.props.rowlabel,
   },
   destroyer: {
     rows: [],
@@ -464,7 +465,7 @@ const labSubmit = async () => {
               <div class="mb-3">
                 <label for="rowlabel">Judul Baris (Optional)</label>
                 <input
-                  v-model="page.props.rowlabel"
+                  v-model="form.tabel.rowlabel"
                   type="text"
                   id="rowlabel"
                   class="form-control"
@@ -472,6 +473,9 @@ const labSubmit = async () => {
                 />
                 <div class="text-danger text-left" v-if="true" id="error-rowlabel"></div>
               </div>
+              <a @click.prevent="submit" class="btn bg-success-fordone"
+                ><font-awesome-icon icon="fa-solid fa-save" /> Simpan</a
+              >
             </div>
           </div>
           <div class="card mb-3">
@@ -512,7 +516,7 @@ const labSubmit = async () => {
               <div class="mb-3">
                 <button
                   type="button"
-                  class="btn btn-sm bg-success-fordone mr-2"
+                  class="btn btn-sm badge-status-empat mr-2"
                   @click="labFetch(form.lab.tahun)"
                 >
                   Hapus Baris/Kolom?
@@ -543,7 +547,7 @@ const labSubmit = async () => {
               <div class="mb-3">
                 <button
                   type="button"
-                  class="btn btn-sm bg-success-fordone"
+                  class="btn btn-sm badge-status-dua"
                   @click="buildOrder(form.lab.tahun)"
                 >
                   Lanjut >>>
@@ -625,8 +629,9 @@ const labSubmit = async () => {
                     v-if="confirmOrder.column == 1 || confirmOrder.row == 1"
                     @click.prevent="labSubmit"
                     type="button"
-                    class="btn btn-sm bg-success-fordone"
+                    class="btn bg-success-fordone"
                   >
+                    <font-awesome-icon icon="fa-solid fa-save" />
                     Simpan
                   </button>
                 </div>
@@ -1007,9 +1012,6 @@ const labSubmit = async () => {
             Kembali
           </Link>
         </div>
-        <a @click.prevent="submit" class="btn bg-success-fordone"
-          ><font-awesome-icon icon="fa-solid fa-save" /> Simpan</a
-        >
       </div>
     </div>
   </GeneralLayout>

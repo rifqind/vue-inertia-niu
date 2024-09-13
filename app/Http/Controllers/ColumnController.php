@@ -15,10 +15,14 @@ class ColumnController extends Controller
     public function index(Request $request)
     {
         // get the resource
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
         $query = Column::query();
 
         $number = 1;
@@ -29,12 +33,15 @@ class ColumnController extends Controller
             ]);
         if ($request->orderAttribute) {
             $order = $request->orderAttribute;
-            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            if (sizeof($order) > 2)
+                $query->orderBy($order['label'], $order['value']);
         }
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
-            if (!empty($filter['label'])) $query->where('columns.label', 'like', '%' . $filter['label'] . '%');
-            if (!empty($filter['columnGroupsLabel'])) $query->where('cg.label', 'like', '%' . $filter['columnGroupsLabel'] . '%');
+            if (!empty($filter['label']))
+                $query->where('columns.label', 'like', '%' . $filter['label'] . '%');
+            if (!empty($filter['columnGroupsLabel']))
+                $query->where('cg.label', 'like', '%' . $filter['columnGroupsLabel'] . '%');
         }
 
         $countData = $dataToCounted->count();
@@ -73,7 +80,8 @@ class ColumnController extends Controller
             $fileData = $request->fileUpload;
             if ($fileData[0][0] != 'label' && $fileData[0][1] != 'column_groups') {
                 return redirect()->route('columns.index')->with('error', 'Gagal Upload, tidak sesuai template');
-            };
+            }
+            ;
             foreach ($fileData as $key => $value) {
                 # code...
                 if ($key > 0) {
@@ -88,7 +96,8 @@ class ColumnController extends Controller
                     // Check for uniqueness in a case-insensitive manner
                     $thisCG = ColumnGroup::where('label', $value[1])->value('id');
 
-                    if (!$thisCG) return redirect()->route('columns.index')->with('error', 'Kelompok Kolom ' . $value[1] . ' belum ada');
+                    if (!$thisCG)
+                        return redirect()->route('columns.index')->with('error', 'Kelompok Kolom ' . $value[1] . ' belum ada');
                     //cek
                     $countCG = ColumnGroup::where('label', $value[1])->count();
 
@@ -98,9 +107,10 @@ class ColumnController extends Controller
                         return redirect()->route('columns.index')->with('error', 'Gagal Upload, label ' . $value[0] . ' sudah ada');
                     }
 
-                    if (str_starts_with($value[0], '19') || str_starts_with($value[0], '20')) {
+                    if (preg_match('/^20\d{2}$/', $value[0]) && strlen($value[0]) == 4) {
                         return redirect()->route('columns.index')->with('error', 'Gagal Upload, tidak boleh upload label tahun');
                     }
+
 
                     $insertedRow = Column::create([
                         'label' => $value[0],
