@@ -1726,6 +1726,8 @@ class TabelController extends Controller
             DB::beginTransaction();
             $thisTable = Tabel::where('id', $request->id);
             $thisTable->delete();
+            DB::table('klasifikasi_tabel')->where('id_tabel', $request->id)->delete();
+            DB::table('rowlabel')->where('id_tabel', $request->id)->delete();
 
             DB::commit();
             return redirect()->route('tabel.master')->with('message', 'Berhasil hapus master tabel');

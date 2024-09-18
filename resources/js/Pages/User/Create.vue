@@ -143,7 +143,7 @@ const submit = async function () {
                   type="tel"
                   id="noHp"
                   v-model="form.noHp"
-                  pattern="[0-9]{12,13}"
+                  pattern="[0-9]{11,13}"
                   placeholder="081234567809"
                   class="form-control"
                 />
