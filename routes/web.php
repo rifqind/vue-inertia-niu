@@ -275,7 +275,9 @@ Route::get('/labFetch', function (Request $request) {
 })->middleware(['auth', 'verified', 'role:admin']);
 
 Route::get('/api/home/{key}', [HomeApiController::class, 'index'])->name('home-api.index');
+Route::get('/api/mobile-home/{key}', [HomeApiController::class, 'mobileIndex'])->name('mobile-home.index');
 Route::get('/api/home/view/{key}', [HomeApiController::class, 'view'])->name('home-api.view');
+Route::get('/api/home/mobile-view/{key}', [HomeApiController::class, 'mobileView'])->name('mobile-home.view');
 Route::get('/api/master/{key}', [HomeApiController::class, 'list'])->name('home-api.master');
 
 Route::get('/api/create', [HomeApiController::class, 'create'])

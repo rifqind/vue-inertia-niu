@@ -5,12 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ApiList;
 use App\Models\Column;
+use App\Models\ColumnOrder;
 use App\Models\Datacontent;
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
+use App\Models\MetadataVariabel;
 use App\Models\Row;
+use App\Models\RowGroup;
+use App\Models\RowOrder;
 use App\Models\Statustables;
 use App\Models\Subject;
+use App\Models\Tabel;
 use App\Models\Turtahun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -77,14 +82,19 @@ class HomeApiController extends Controller
         return $wilayah;
     }
 
-    public function index(Request $request, String $key)
+    public function index(Request $request, string $key)
     {
         $api = ApiList::where('key', $key)->first();
-        if (!$api) return response()->json(['message' => 'API not found'], 404);
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if (!$api)
+            return response()->json(['message' => 'API not found'], 404);
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
         $query = Statustables::query();
         $wilayah = $this->getWilayah($api->wilayah_fullcode);
         $query->whereIn('dinas.wilayah_fullcode', $wilayah);
@@ -114,16 +124,20 @@ class HomeApiController extends Controller
                 $filter['tahun'] = array_values(array_filter($filter['tahun'], function ($value) {
                     return $value !== 'all';
                 }));
-                if (!empty($filter['tahun'])) $query->whereIn('statustables.tahun', $filter['tahun']);
+                if (!empty($filter['tahun']))
+                    $query->whereIn('statustables.tahun', $filter['tahun']);
             }
-            if (!empty($filter['kode'])) $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
+            if (!empty($filter['kode']))
+                $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
             if (!empty($filter['dinas'])) {
                 $filter['dinas'] = array_values(array_filter($filter['dinas'], function ($value) {
                     return $value !== 'all';
                 }));
-                if (!empty($filter['dinas'])) $query->whereIn('dinas.id', $filter['dinas']);
+                if (!empty($filter['dinas']))
+                    $query->whereIn('dinas.id', $filter['dinas']);
             }
-            if (!empty($filter['subjek'])) $query->whereIn('subjects.id', $filter['subjek']);
+            if (!empty($filter['subjek']))
+                $query->whereIn('subjects.id', $filter['subjek']);
             if (!empty($filter['label'])) {
                 $query
                     ->where('master_wilayah.label', 'like', '%' . $filter['label'] . '%')
@@ -143,10 +157,169 @@ class HomeApiController extends Controller
         ]);
     }
 
+    public function mobileIndex(Request $request, String $key) {
+        $api = ApiList::where('key', $key)->first();
+        if (!$api) return response()->json(['message' => 'API not found'], 404);
+         if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Statustables::query();
+        $dataToCounted = $query
+            ->where('status', 5)
+            ->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
+            ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
+            ->join('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
+            ->join('subjects', 'tabels.id_subjek', '=', 'subjects.id')
+            ->orderBy('statustables.tahun', 'desc')
+            ->orderBy('statustables.updated_at', 'desc')
+            ->select([
+                'statustables.id as id_statustables',
+                'statustables.tahun',
+                'tabels.*',
+                'dinas.id as id_dinas',
+                'dinas.nama as nama_dinas',
+                'master_wilayah.wilayah_fullcode as kode_wilayah',
+                'master_wilayah.label as nama_regions',
+                'subjects.id as id_subjects',
+                'subjects.label as nama_subjects',
+                'statustables.updated_at as status_updated',
+            ]);
+
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['tahun'])) {
+                $filter['tahun'] = array_values(array_filter($filter['tahun'], function ($value) {
+                    return $value !== 'all';
+                }));
+                if (!empty($filter['tahun'])) $query->whereIn('statustables.tahun', $filter['tahun']);
+            }
+            if (!empty($filter['kode'])) $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
+            if (!empty($filter['dinas'])) {
+                $filter['dinas'] = array_values(array_filter($filter['dinas'], function ($value) {
+                    return $value !== 'all';
+                }));
+                if (!empty($filter['dinas'])) $query->whereIn('dinas.id', $filter['dinas']);
+            }
+            if (!empty($filter['subjek'])) $query->whereIn('subjects.id', $filter['subjek']);
+            if (!empty($filter['label'])) {
+                $query
+                    // ->where('master_wilayah.label', 'like', '%' . $filter['label'] . '%')
+                    // ->orWhere('statustables.tahun', 'like', '%' . $filter['label'] . '%')
+                    // ->orWhere('dinas.nama', 'like', '%' . $filter['label'] . '%')
+                    // ->orWhere('subjects.label', 'like', '%' . $filter['label'] . '%')
+                    ->where('tabels.label', 'like', '%' . $filter['label'] . '%')
+                    // ->orWhere('statustables.updated_at', 'like', '%' . $filter['label'] . '%')
+                ;
+            }
+        }
+        $countData = $dataToCounted->count();
+        $tabels = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        $dinas = [];
+        $tempt_dinas = [];
+        $provs = [];
+        $kabs = [];
+        $kecs = [];
+        $desa = [];
+        $subjects = [];
+
+        $getIDtabel = Statustables::where('status', 5)->distinct()->pluck('id_tabel');
+        $getIDDinas = Tabel::whereIn('id', $getIDtabel)->distinct()->pluck('id_dinas');
+        $dinasUsed = Dinas::whereIn('id', $getIDDinas)
+            ->join('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+            ->select(['dinas.*', 'mw.label as label_region'])->get();
+        $getIDSubject = Tabel::whereIn('id', $getIDtabel)->distinct()->pluck('id_subjek');
+        $subjects = Subject::whereIn('id', $getIDSubject)->get();
+        foreach ($dinasUsed as $key => $value) {
+            # code...
+            if (!isset($tempt_dinas[$value->id])) {
+                $tempt_dinas[$value->id] = [
+                    'value' => $value->id,
+                    'label' => $value->nama,
+                ];
+            }
+            $text = $value->label_region;
+            $partOfText = explode(' ', $text);
+            array_shift($partOfText);
+            $modifiedText = implode(' ', $partOfText);
+
+            $kode = $value->wilayah_fullcode;
+            $kabupaten_kode = substr($kode, 2, 2);
+            $kecamatan_kode = substr($kode, 4, 3);
+            $desa_kode = substr($kode, 7, 3);
+            if ($kabupaten_kode != '00') {
+                $kab_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                    ->where('kec', 'like', '000')->value('label');
+                $partOfText = explode(' ', $kab_label);
+                array_shift($partOfText);
+                $modifiedKabLabel = implode(' ', $partOfText);
+                $kabs[] = [
+                    'label' => $modifiedKabLabel,
+                    'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                        ->where('kec', 'like', '000')->value('wilayah_fullcode')
+                ];
+
+                if ($kecamatan_kode != '000') {
+                    $kec_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                        ->where('kec', 'like', $kecamatan_kode)->value('label');
+                    $partOfText = explode(' ', $kec_label);
+                    array_shift($partOfText);
+                    $modifiedKecLabel = implode(' ', $partOfText);
+                    $kecs[] = [
+                        'label' => $modifiedKecLabel,
+                        'parent_code' => $kabupaten_kode,
+                        'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                            ->where('kec', 'like', $kecamatan_kode)->value('wilayah_fullcode'),
+                    ];
+
+                    if ($desa_kode != '000') {
+                        $desa[] = [
+                            'label' => $modifiedText,
+                            'parent_code' => $kabupaten_kode . $kecamatan_kode,
+                            'wilayah_fullcode' => $kode,
+                        ];
+                    }
+                }
+            }
+        }
+        $provs[] = [
+            'label' => 'SULAWESI UTARA',
+            'wilayah_fullcode' => '7100000000'
+        ];
+        $kabs = array_values(array_unique($kabs, SORT_REGULAR));
+        $kecs = array_values(array_unique($kecs, SORT_REGULAR));
+        $desa = array_values(array_unique($desa, SORT_REGULAR));
+        $wilayahs = (sizeof($dataToCounted->get()) > 0) ? array_merge($provs, $kabs) : [];
+        $tahuns = Statustables::where('status', 5)
+            ->distinct()
+            ->orderBy('tahun', 'desc')
+            ->get(['tahun as value', 'tahun as label']);
+        $countfinals = Statustables::where('status', 5)->count();
+        $dinas = array_values($tempt_dinas);
+
+        if ($request->paginated) {
+            return response()->json([
+                'countTabels' => $countData,
+                'tabels' => $tabels,
+            ]);
+        }
+        return response()->json([
+            'kecs' => $this->sortHome($kecs),
+            'desa' => $this->sortHome($desa),
+            'kabs' => $this->sortHome($wilayahs),
+            'dinas' => $dinas,
+            'tabels' => $tabels,
+            'subjects' => $subjects,
+            'counttabels' => $countData,
+            'tahuns' => $tahuns,
+        ]);
+    }
+
     public function view(Request $request, $key)
     {
         $api = ApiList::where('key', $key)->first();
-        if (!$api) return response()->json(['message' => 'API not found'], 404);
+        if (!$api)
+            return response()->json(['message' => 'API not found'], 404);
         $id_tabel = $request->id;
         $tahun = $request->tahun;
 
@@ -194,10 +367,160 @@ class HomeApiController extends Controller
         ]);
     }
 
+    public function mobileView(Request $request, string $key)
+    {
+        $statusTabel = Statustables::join('tabels as t', 'statustables.id_tabel', 't.id')
+            ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
+            ->select(
+                't.id as id_tabel',
+                't.label as judul_tabel',
+                'statustables.tahun',
+                'sdesc.label as status',
+                'statustables.id as id_statustables',
+                'statustables.updated_at as status_updated'
+            )
+            ->where('statustables.id', $request->id)->first();
+
+        if ($statusTabel->status != 'Final') {
+            return response()->json([
+                'message' => 'Data status tabel ini belum dalam status Final',
+            ], 403);
+        }
+        $id_tabel = $statusTabel->id_tabel;
+        $tahun = $statusTabel->tahun;
+
+        $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
+        $id_rows = [];
+        $wilayah_fullcodes = [];
+        $id_columns = [];
+        $tahuns = Statustables::where('id_tabel', $id_tabel)
+            ->where('status', 5)
+            ->where('tahun', '!=', $tahun)
+            ->pluck('tahun')->toArray();
+        $turTahunKeys = [];
+
+        foreach ($datacontents as $datacontent) {
+            array_push($id_rows, $datacontent->id_row);
+            array_push($id_columns, $datacontent->id_column);
+            // array_push($tahuns, $datacontent->tahun);
+            array_push($turTahunKeys, $datacontent->id_turtahun);
+
+            array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+        }
+        $tabels = Tabel::where('tabels.id', $id_tabel)
+            ->leftJoin('subjects as sb', 'sb.id', '=', 'tabels.id_subjek')
+            ->leftJoin('dinas as d', 'd.id', '=', 'tabels.id_dinas')
+            ->leftJoin('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'd.wilayah_fullcode')
+            ->first(['tabels.*', 'sb.label as subject_label', 'd.nama as dinas_label', 'mw.label as wilayah_label']);
+
+        $rows = Row::whereIn('id', $id_rows)->get();
+        $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->get();
+        $RowOrders = RowOrder::where('id_statustabel', $request->id)->value('orders');
+        try {
+            //code...
+            if ($rows[0]->id == 0) {
+                $wilayah_parent_code = '';
+                $jenis = "DAFTAR ";
+                $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                    ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
+                    ->orderBy('desa')
+                    ->get();
+                $rows = $temp;
+                $desa = substr($wilayah_fullcodes[0], 7, 3);
+                $kec = substr($wilayah_fullcodes[0], 4, 3);
+                $kab = substr($wilayah_fullcodes[0], 2, 2);
+                if ($desa != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
+                    $jenis = $jenis . "DESA DI ";
+                } else if ($kec != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
+                    $jenis = $jenis . "KECAMATAN DI ";
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
+                } else if ($kab != '00') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
+                    $jenis = $jenis . "KABUPATEN DI ";
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kab = '00' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
+                }
+                if ($RowOrders)
+                    $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
+                if ($wilayah_parent_code == '') {
+                    $rowLabel = 'PROVINSI SULAWESI UTARA';
+                } else {
+                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                    $rowLabel = strtolower($rowLabel);
+                    $rowLabel = ucwords($rowLabel);
+                }
+            } else {
+                $listRowGroups = [];
+                foreach ($rows as $key => $value) {
+                    # code...
+                    array_push($listRowGroups, $value->id_row_groups);
+                }
+                $isUnique = count(array_unique($listRowGroups));
+                if ($isUnique > 1) {
+                    $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                    $text = 'Gabungan Kelompok Baris dari : ';
+                    foreach ($tempt as $key => $value) {
+                        # code...
+                        if ($key == sizeof($tempt) - 1)
+                            $text .= $value;
+                        else
+                            $text .= $value . ' - ';
+                    }
+                    $rowLabel = $text;
+                } else
+                    $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+            }
+        } catch (\Exception $e) {
+            return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
+        }
+        //call the orders
+        $ColumnOrders = ColumnOrder::where('id_statustabel', $request->id)->value('orders');
+        if ($ColumnOrders) {
+            $columns = Column::whereIn('id', $id_columns)->orderByRaw("FIELD(id," . $ColumnOrders . ")")->get();
+        } else {
+            $columns = Column::whereIn('id', $id_columns)->get();
+        }
+        if (!$rows[0]->id == 0 && $RowOrders)
+            $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+
+        $tahuns = array_unique($tahuns);
+        sort($tahuns);
+        $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
+        $this_metavar = MetadataVariabel::where('id_tabel', $id_tabel)->get();
+        foreach ($this_metavar as $key => $value) {
+            # code...
+            $value->number = $key + 1;
+            $value->satuan = $tabels->unit;
+        }
+        return response()->json([
+            'datacontents' => $datacontents,
+            'tabels' => $tabels,
+            'tahuns' => $tahuns,
+            'tahun' => $tahun,
+            'rows' => $rows,
+            'row_label' => $rowLabel,
+            'columns' => $columns,
+            'turtahuns' => $turtahuns,
+            'tabel' => $statusTabel,
+            'metavars' => $this_metavar,
+        ]);
+    }
+
     public function list(Request $request, $key)
     {
         $api = ApiList::where('key', $key)->first();
-        if (!$api) return response()->json(['message' => 'API not found'], 404);
+        if (!$api)
+            return response()->json(['message' => 'API not found'], 404);
         $wilayah = $this->getWilayah($api->wilayah_fullcode);
 
         if ($request->list == 'dinas') {
@@ -212,7 +535,7 @@ class HomeApiController extends Controller
             return response()->json(['subjek' => $data]);
         }
         if ($request->list == 'wilayah') {
-            $data =  $this->getMasterWilayah($api->wilayah_fullcode);
+            $data = $this->getMasterWilayah($api->wilayah_fullcode);
             return response()->json(['wilayah' => $data]);
         }
     }
