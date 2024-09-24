@@ -157,13 +157,19 @@ class HomeApiController extends Controller
         ]);
     }
 
-    public function mobileIndex(Request $request, String $key) {
+    public function mobileIndex(Request $request, string $key)
+    {
         $api = ApiList::where('key', $key)->first();
-        if (!$api) return response()->json(['message' => 'API not found'], 404);
-         if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if (!$api)
+            return response()->json(['message' => 'API not found'], 404);
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
         $query = Statustables::query();
         $dataToCounted = $query
             ->where('status', 5)
@@ -192,16 +198,20 @@ class HomeApiController extends Controller
                 $filter['tahun'] = array_values(array_filter($filter['tahun'], function ($value) {
                     return $value !== 'all';
                 }));
-                if (!empty($filter['tahun'])) $query->whereIn('statustables.tahun', $filter['tahun']);
+                if (!empty($filter['tahun']))
+                    $query->whereIn('statustables.tahun', $filter['tahun']);
             }
-            if (!empty($filter['kode'])) $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
+            if (!empty($filter['kode']))
+                $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
             if (!empty($filter['dinas'])) {
                 $filter['dinas'] = array_values(array_filter($filter['dinas'], function ($value) {
                     return $value !== 'all';
                 }));
-                if (!empty($filter['dinas'])) $query->whereIn('dinas.id', $filter['dinas']);
+                if (!empty($filter['dinas']))
+                    $query->whereIn('dinas.id', $filter['dinas']);
             }
-            if (!empty($filter['subjek'])) $query->whereIn('subjects.id', $filter['subjek']);
+            if (!empty($filter['subjek']))
+                $query->whereIn('subjects.id', $filter['subjek']);
             if (!empty($filter['label'])) {
                 $query
                     // ->where('master_wilayah.label', 'like', '%' . $filter['label'] . '%')
@@ -514,6 +524,126 @@ class HomeApiController extends Controller
             'tabel' => $statusTabel,
             'metavars' => $this_metavar,
         ]);
+    }
+
+    public function fetch(Request $request)
+    {
+        $id_tabel = $request->id_tabel;
+        $tahun = $request->tahun;
+        $id_statustabel = $request->id_statustabel;
+        $current = $request->current;
+        // dd($tahun);
+        $bigData = [];
+        foreach ($tahun as $key => $value) {
+            # code...
+            $turTahunKeys = [];
+            $id_rows = [];
+            $wilayah_fullcodes = [];
+            $id_columns = [];
+            $bigData[$value]['data'] = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $value)->get();
+            foreach ($bigData[$value]['data'] as $datacontent) {
+                array_push($id_rows, $datacontent->id_row);
+                array_push($id_columns, $datacontent->id_column);
+                array_push($turTahunKeys, $datacontent->id_turtahun);
+                array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+            }
+            // dd($turTahunKeys);
+            $rows = Row::whereIn('id', $id_rows)->get();
+            $RowOrders = RowOrder::where('id_statustabel', $id_statustabel)->value('orders');
+
+            if ($rows[0]->id == 0) {
+                $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                    ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
+                    ->orderBy('desa')
+                    ->get();
+                $rows = $temp;
+                $kec = substr($wilayah_fullcodes[0], 4, 3);
+                $kab = substr($wilayah_fullcodes[0], 2, 2);
+                if ($kec != '000') {
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
+                } else if ($kab != '00') {
+                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("CASE WHEN kab = '00' THEN 1 ELSE 0 END")
+                        ->orderBy('desa')
+                        ->get();
+                    $rows = $temp;
+                }
+                if ($RowOrders)
+                    $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
+            }
+
+            //call the orders
+            $ColumnOrders = ColumnOrder::where('id_statustabel', $id_statustabel)->value('orders');
+            if ($ColumnOrders) {
+                $columns = Column::whereIn('id', $id_columns)->orderByRaw("FIELD(id," . $ColumnOrders . ")")->get();
+            } else {
+                $columns = Column::whereIn('id', $id_columns)->get();
+            }
+            if (!$rows[0]->id == 0 && $RowOrders)
+                $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+
+            $bigData[$value]['turtahun'] = Turtahun::whereIn('id', $turTahunKeys)->get();
+            $bigData[$value]['tahun'] = $value;
+            $bigData[$value]['rows'] = $rows;
+            $bigData[$value]['columns'] = $columns;
+        }
+        // dd($bigData);
+        return response()->json($bigData);
+    }
+
+    public function lineChart(Request $request)
+    {
+        $id_column = $request->id_column;
+        $id_row = $request->id_row;
+        $tahun = $request->tahun;
+        $id_tabel = $request->id_tabel;
+
+        $result = [];
+        foreach ($id_row as $key => $value) {
+            # code...
+            $split_value = explode('-', $value);
+            // dd($split_value);
+
+            // Determine the column to filter by based on the request
+            if ($split_value[0] == '0')
+                $column = 'wilayah_fullcode';
+            else
+                $column = 'id_row';
+            // $column = $request->wilayah_fullcode ? 'wilayah_fullcode' : 'id_row';
+
+            // Fetch the data based on the determined column
+            $data = Datacontent::where('id_column', $id_column)
+                ->where($column, $split_value[1])
+                ->where('id_tabel', $id_tabel)
+                ->whereIn('tahun', $tahun)
+                ->orderBy('tahun')
+                ->get();
+
+            $result[$key]['label'] = ($split_value[0] == '0') ? MasterWilayah::where('wilayah_fullcode', $split_value[1])->value('label') :
+                Row::where('id', $split_value[1])->value('label');
+            $result[$key]['backgroundColor'] = sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+            $result[$key]['data'] = $data->pluck('value')->toArray();
+            foreach ($result[$key]['data'] as $keyInside => $valueInside) {
+                # code...
+                $splitdata = explode(',', $valueInside);
+                // dd($splitdata);
+                //left-side
+                $removePoint = str_replace('.', '', $splitdata[0]);
+                // If there is a decimal part (right side of the comma), rejoin the parts
+                if (isset($splitdata[1])) {
+                    $result[$key]['data'][$keyInside] = implode('.', [$removePoint, $splitdata[1]]);
+                } else {
+                    // If there's no decimal part, just assign the integer part
+                    $result[$key]['data'][$keyInside] = $removePoint;
+                }
+            }
+        }
+        return response()->json($result);
     }
 
     public function list(Request $request, $key)

@@ -25,10 +25,14 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         //
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
         $query = Statustables::query();
         $dataToCounted = $query
             ->where('status', 5)
@@ -57,16 +61,20 @@ class HomeController extends Controller
                 $filter['tahun'] = array_values(array_filter($filter['tahun'], function ($value) {
                     return $value !== 'all';
                 }));
-                if (!empty($filter['tahun'])) $query->whereIn('statustables.tahun', $filter['tahun']);
+                if (!empty($filter['tahun']))
+                    $query->whereIn('statustables.tahun', $filter['tahun']);
             }
-            if (!empty($filter['kode'])) $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
+            if (!empty($filter['kode']))
+                $query->whereIn('master_wilayah.wilayah_fullcode', $filter['kode']);
             if (!empty($filter['dinas'])) {
                 $filter['dinas'] = array_values(array_filter($filter['dinas'], function ($value) {
                     return $value !== 'all';
                 }));
-                if (!empty($filter['dinas'])) $query->whereIn('dinas.id', $filter['dinas']);
+                if (!empty($filter['dinas']))
+                    $query->whereIn('dinas.id', $filter['dinas']);
             }
-            if (!empty($filter['subjek'])) $query->whereIn('subjects.id', $filter['subjek']);
+            if (!empty($filter['subjek']))
+                $query->whereIn('subjects.id', $filter['subjek']);
             if (!empty($filter['label'])) {
                 $query
                     // ->where('master_wilayah.label', 'like', '%' . $filter['label'] . '%')
@@ -207,10 +215,14 @@ class HomeController extends Controller
     {
         $ourDinas = Dinas::whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->pluck('id');
         $myTabels = Tabel::whereIn('id_dinas', $ourDinas)->pluck('id');
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
 
         $query = Statustables::query();
         if ($request->orderAttribute) {
@@ -267,10 +279,14 @@ class HomeController extends Controller
     public function dashboard(Request $request)
     {
         //check role
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
         $query = Notifikasi::query();
         if (auth()->user()->role != 'produsen') {
             $ourDinas = Dinas::whereIn('wilayah_fullcode', MasterWilayah::getDinasWilayah())->pluck('id');
@@ -507,8 +523,9 @@ class HomeController extends Controller
                         ->get();
                     $rows = $temp;
                 }
-                if ($RowOrders) $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                    ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
+                if ($RowOrders)
+                    $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
                 if ($wilayah_parent_code == '') {
                     $rowLabel = 'PROVINSI SULAWESI UTARA';
                 } else {
@@ -528,11 +545,14 @@ class HomeController extends Controller
                     $text = 'Gabungan Kelompok Baris dari : ';
                     foreach ($tempt as $key => $value) {
                         # code...
-                        if ($key == sizeof($tempt) - 1) $text .= $value;
-                        else $text .= $value . ' - ';
+                        if ($key == sizeof($tempt) - 1)
+                            $text .= $value;
+                        else
+                            $text .= $value . ' - ';
                     }
                     $rowLabel = $text;
-                } else $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+                } else
+                    $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
             }
         } catch (\Exception $e) {
             return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
@@ -544,7 +564,8 @@ class HomeController extends Controller
         } else {
             $columns = Column::whereIn('id', $id_columns)->get();
         }
-        if (!$rows[0]->id == 0 && $RowOrders) $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+        if (!$rows[0]->id == 0 && $RowOrders)
+            $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
 
         $tahuns = array_unique($tahuns);
         sort($tahuns);
@@ -615,8 +636,9 @@ class HomeController extends Controller
                         ->get();
                     $rows = $temp;
                 }
-                if ($RowOrders) $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                    ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
+                if ($RowOrders)
+                    $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                        ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
             }
 
             //call the orders
@@ -626,7 +648,8 @@ class HomeController extends Controller
             } else {
                 $columns = Column::whereIn('id', $id_columns)->get();
             }
-            if (!$rows[0]->id == 0 && $RowOrders) $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+            if (!$rows[0]->id == 0 && $RowOrders)
+                $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
 
             $bigData[$value]['turtahun'] = Turtahun::whereIn('id', $turTahunKeys)->get();
             $bigData[$value]['tahun'] = $value;
@@ -647,20 +670,27 @@ class HomeController extends Controller
         $result = [];
         foreach ($id_row as $key => $value) {
             # code...
+            $split_value = explode('-', $value);
+            // dd($split_value);
+
             // Determine the column to filter by based on the request
-            $column = $request->wilayah_fullcode ? 'wilayah_fullcode' : 'id_row';
+            if ($split_value[0] == '0')
+                $column = 'wilayah_fullcode';
+            else
+                $column = 'id_row';
+            // $column = $request->wilayah_fullcode ? 'wilayah_fullcode' : 'id_row';
 
             // Fetch the data based on the determined column
             $data = Datacontent::where('id_column', $id_column)
-                ->where($column, $value)
+                ->where($column, $split_value[1])
                 ->where('id_tabel', $id_tabel)
                 ->whereIn('tahun', $tahun)
                 ->orderBy('tahun')
                 ->get();
 
-            $result[$key]['label']  = ($request->wilayah_fullcode) ? MasterWilayah::where('wilayah_fullcode', $value)->value('label') :
-                Row::where('id', $value)->value('label');
-            $result[$key]['backgroundColor'] =  sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+            $result[$key]['label'] = ($split_value[0] == '0') ? MasterWilayah::where('wilayah_fullcode', $split_value[1])->value('label') :
+                Row::where('id', $split_value[1])->value('label');
+            $result[$key]['backgroundColor'] = sprintf('#%06X', mt_rand(0, 0xFFFFFF));
             $result[$key]['data'] = $data->pluck('value')->toArray();
             foreach ($result[$key]['data'] as $keyInside => $valueInside) {
                 # code...

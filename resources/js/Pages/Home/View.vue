@@ -72,7 +72,7 @@ const columnForChart = page.props.columns.map((data) => ({
 }));
 const rowForChart = page.props.rows.map((data) => ({
   label: data.label,
-  value: data.id ? data.id : data.wilayah_fullcode,
+  value: data.id ? data.id + "-" + data.id : "0-" + data.wilayah_fullcode,
 }));
 const findChart = ref(false);
 const fetchChart = async () => {
@@ -104,6 +104,7 @@ const lineData = ref({
 });
 const lineOptions = {
   responsive: true,
+  locale: "de-DE",
   maintainAspectRatio: true,
 };
 const yearDrop = ref({

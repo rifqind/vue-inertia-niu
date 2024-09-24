@@ -278,6 +278,8 @@ Route::get('/api/home/{key}', [HomeApiController::class, 'index'])->name('home-a
 Route::get('/api/mobile-home/{key}', [HomeApiController::class, 'mobileIndex'])->name('mobile-home.index');
 Route::get('/api/home/view/{key}', [HomeApiController::class, 'view'])->name('home-api.view');
 Route::get('/api/home/mobile-view/{key}', [HomeApiController::class, 'mobileView'])->name('mobile-home.view');
+Route::get('/api/home/mobile-view/fetch/{key}', [HomeApiController::class, 'fetch'])->name('mobile-home.fetch');
+Route::get('/api/home/mobile-view/chart-show/{key}', [HomeApiController::class, 'lineChart'])->name('mobile-home.lineChart');
 Route::get('/api/master/{key}', [HomeApiController::class, 'list'])->name('home-api.master');
 
 Route::get('/api/create', [HomeApiController::class, 'create'])
