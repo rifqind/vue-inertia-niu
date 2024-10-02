@@ -232,6 +232,7 @@ const reset = () => {
       <div class="card">
         <div class="card-body">
           <h3 class="text-bold">
+            <span id="nomor" class="badge">{{ page.props.tabels.nomor }}</span>
             {{ page.props.tabel.judul_tabel }}, Tahun {{ page.props.tahun }}
           </h3>
           <h4 class="my-0 d-flex">
@@ -839,5 +840,12 @@ const reset = () => {
 
 tbody {
   background-color: whitesmoke;
+}
+
+#nomor {
+  background-color: #3d3b8e;
+  color: whitesmoke;
+  border-radius: 1rem;
+  cursor: auto;
 }
 </style>

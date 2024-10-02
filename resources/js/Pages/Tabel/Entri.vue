@@ -326,7 +326,9 @@ const triggerConfirmation = (value) => {
       <div class="card">
         <div class="card-body">
           <h3 class="text-bold">
-            {{ page.props.judul_tabel }}, Tahun {{ page.props.years }}
+            <span id="nomor" class="badge">{{ page.props.nomor_tabel }}</span>
+            {{ page.props.judul_tabel }}, Tahun
+            {{ page.props.years }}
           </h3>
           <h4 class="my-0 d-flex">
             <span class="badge" :class="badges" id="badges-status"> {{ status[1] }}</span>
@@ -700,5 +702,11 @@ const triggerConfirmation = (value) => {
 
 tbody {
   background-color: whitesmoke;
+}
+#nomor {
+  background-color: #3d3b8e;
+  color: whitesmoke;
+  border-radius: 1rem;
+  cursor: auto;
 }
 </style>

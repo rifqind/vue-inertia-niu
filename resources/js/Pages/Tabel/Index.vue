@@ -40,6 +40,7 @@ const searchRowLabel = ref(null);
 const searchTahun = ref(null);
 const searchStatus = ref(null);
 const searchUpdated = ref(null);
+const searchCategory = ref([]);
 const closeModal = (Object) => {
   Object.value = false;
   form.reset();
@@ -69,6 +70,7 @@ const ArrayBigObjects = [
   { key: "tahun", valueFilter: searchTahun },
   { key: "status", valueFilter: searchStatus },
   { key: "updated", valueFilter: searchUpdated },
+  { key: "category", valueFilter: searchCategory },
 ];
 const delayedFetchData = debounce(() => {
   fetchData();
@@ -222,6 +224,7 @@ const fetchData = async () => {
           tahun: searchTahun.value,
           status: searchStatus.value,
           updated: searchUpdated.value,
+          category: searchCategory.value,
         },
         orderAttribute: orderAttribute.value,
         routeName: page.props.route,
@@ -307,15 +310,24 @@ const forceDelete = async () => {
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <div class="container-fluid">
-      <div class="mb-2 d-flex">
-        <div class="h4 flex-grow-1">Daftar Tabel</div>
+      <div class="mb-2 d-flex flex-wrap align-items-center">
+        <div class="h4 flex-grow-1 mb-2 mb-md-0">Daftar Tabel</div>
         <button
-          class="btn bg-success-fordone mr-2"
+          class="btn bg-success-fordone mr-2 mb-2 mb-md-0"
           title="Download"
           @click="downloadRoute()"
         >
           <font-awesome-icon icon="fa-solid fa-circle-down" /> Download
         </button>
+        <div v-if="page.props.cat" class="mr-2 category mb-2 mb-md-0">
+          <Multiselect
+            v-model="searchCategory"
+            :options="page.props.catList"
+            @change="fetchData"
+            mode="tags"
+            placeholder="-- Pilih Kategori Data --"
+          />
+        </div>
       </div>
     </div>
     <FlashMessage
@@ -759,5 +771,9 @@ table {
 
 .kategori {
   cursor: default;
+}
+
+.category {
+  width: 300px;
 }
 </style>

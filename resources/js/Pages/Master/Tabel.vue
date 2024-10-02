@@ -73,6 +73,7 @@ const searchTahun = ref(null);
 const searchStatus = ref(null);
 const searchUpdated = ref(null);
 const searchRowLabel = ref(null);
+const searchCategory = ref([]);
 const closeModal = (Object) => {
   console.log(Object);
   Object.value = false;
@@ -122,6 +123,7 @@ const ArrayBigObjects = [
   { key: "tahun", valueFilter: searchTahun },
   { key: "status", valueFilter: searchStatus },
   { key: "updated", valueFilter: searchUpdated },
+  { key: "category", valueFilter: searchCategory },
 ];
 
 const delayedFetchData = debounce(() => {
@@ -378,6 +380,7 @@ const fetchData = async () => {
           tahun: searchTahun.value,
           status: searchStatus.value,
           updated: searchUpdated.value,
+          category: searchCategory.value,
         },
         orderAttribute: orderAttribute.value,
         routeName: page.props.route,
@@ -441,6 +444,15 @@ const downloadRoute = () => {
         >
           <font-awesome-icon icon="fa-solid fa-circle-down" />
         </button>
+        <div v-if="page.props.cat" class="mr-2 category mb-2 mb-md-0">
+          <Multiselect
+            v-model="searchCategory"
+            :options="page.props.catList"
+            @change="fetchData"
+            mode="tags"
+            placeholder="-- Pilih Kategori Data --"
+          />
+        </div>
         <Link :href="route('tabel.create')" class="btn mb-2 mb-md-0 bg-info-fordone"
           ><font-awesome-icon icon="fa-solid fa-plus" /> Tambah Master Tabel Baru</Link
         >
@@ -950,7 +962,9 @@ const downloadRoute = () => {
 table {
   font-size: smaller;
 }
-
+.category {
+  width: 300px;
+}
 .th-order {
   cursor: pointer;
 }

@@ -380,9 +380,13 @@ const orderDropRow = ref(2);
 const setupOrderRow = (value) => {
   if (value == 1) {
     orderDropRow.value = 1;
-    form.orderRow = rowListFetched.value.filter((_, index) => {
-      return rowsCheckBox.value[index];
-    });
+    if (rowGroupsDrop.value.value == -1) {
+      form.orderRow = allRowFinal.value;
+    } else {
+      form.orderRow = rowListFetched.value.filter((_, index) => {
+        return rowsCheckBox.value[index];
+      });
+    }
   } else {
     orderDropRow.value = 2;
     form.orderRow = null;
@@ -392,9 +396,13 @@ const orderDropColumn = ref(2);
 const setupOrderColumn = (value) => {
   if (value == 1) {
     orderDropColumn.value = 1;
-    form.orderColumn = columnListFetched.value.filter((_, index) => {
-      return columnsCheckBox.value[index];
-    });
+    if (colGroupsDrop.value.value == -1) {
+      form.orderColumn = allColumnFinal.value;
+    } else {
+      form.orderColumn = columnListFetched.value.filter((_, index) => {
+        return columnsCheckBox.value[index];
+      });
+    }
   } else {
     orderDropColumn.value = 2;
     form.orderColumn = null;
@@ -643,7 +651,7 @@ const searchRow = (input) => {
                   </tbody>
                 </table>
               </div>
-              <div class="mb-3" v-if="rowGroupsDrop.value != -1">
+              <div class="mb-3">
                 <label class="mb-0" for="column-groups">Urutan Baris</label>
                 <div>
                   <small>(Abaikan Jika tidak ada perubahan urutan baris)</small>
@@ -768,7 +776,7 @@ const searchRow = (input) => {
                   </tbody>
                 </table>
               </div>
-              <div class="mb-3" v-if="colGroupsDrop.value != -1">
+              <div class="mb-3">
                 <label class="mb-0" for="column-groups">Urutan Kolom</label>
                 <div>
                   <small>(Abaikan Jika tidak ada perubahan urutan kolom)</small>

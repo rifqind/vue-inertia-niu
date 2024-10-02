@@ -447,6 +447,7 @@ class HomeController extends Controller
             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
             ->select(
                 't.id as id_tabel',
+                't.nomor as nomor',
                 't.label as judul_tabel',
                 'statustables.tahun',
                 'sdesc.label as status',

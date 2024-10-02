@@ -167,8 +167,30 @@ class TabelController extends Controller
                 $query->where(DB::raw("CONCAT(users.username, ' - ', statustables.updated_at)"), 'like', '%' . $filter['updated'] . '%');
                 // dd($query->toSql());
             }
+            if (!empty($filter['category'])) {
+                if (!in_array(0, $filter['category'], true)) {
+                    $query->whereIn('klasifikasi_tabel.id_category', $filter['category']);
+                }
+            }
         }
         $countData = $dataToCounted->count();
+        $cloneQuery = clone $query;
+        $checkCat = $cloneQuery->whereNot('id_category', null)->select([
+            'tabels.*',
+            'tabels.id as tabelUuid',
+            'dinas.nama as nama_dinas',
+            'statustables.*',
+            'statustables.tahun',
+            'sdesc.label as status',
+            'statustables.id as id_statustables',
+            'statustables.updated_at as status_updated',
+            'statustables.edited_by as edited_by',
+            'klasifikasi_tabel.id_category'
+        ])->distinct()->pluck('id_category')->unique()->toArray();
+        $catList = DB::table('data_category')->whereIn('id', $checkCat)->get(['id as value', 'label as label']);
+        // dd($checkCat);
+        if (sizeof($checkCat) > 0) $cat = true;
+        else $cat = false;
         $tables = $query->paginate($paginated, ['*'], 'page', $currentPage);
         $table_objects = [];
 
@@ -239,6 +261,8 @@ class TabelController extends Controller
         return Inertia::render('Tabel/Index', [
             'tables' => $table_objects,
             'countData' => $countData,
+            'cat' => $cat,
+            'catList' => $catList,
             // 'data' => $tables,
         ]);
     }
@@ -271,11 +295,11 @@ class TabelController extends Controller
                     $query->orderBy($order['label'], $order['value']);
                 }
             } else {
-                $query->orderBy('klasifikasi_tabel.id_category', 'desc');
+                // $query->orderBy('klasifikasi_tabel.id_category', 'desc');
                 $query->orderBy('tabels.updated_at', 'desc');
             }
         } else {
-            $query->orderBy('klasifikasi_tabel.id_category', 'desc');
+            // $query->orderBy('klasifikasi_tabel.id_category', 'desc');
             // $query->orderBy('tabels.updated_at', 'desc');
             $query->orderBy('tabels.updated_at', 'desc');
         }
@@ -320,8 +344,27 @@ class TabelController extends Controller
                 $query->where(DB::raw("CONCAT(users.username, ' - ', tabels.updated_at)"), 'like', '%' . $filter['updated'] . '%');
                 // dd($query->toSql());
             }
+            if (!empty($filter['category'])) {
+                if (!in_array(0, $filter['category'], true)) {
+                    $query->whereIn('klasifikasi_tabel.id_category', $filter['category']);
+                }
+            }
         }
         $countData = $dataToCounted->count();
+        $cloneQuery = clone $query;
+        $checkCat = $cloneQuery->whereNot('id_category', null)
+            ->select([
+                'tabels.*',
+                'tabels.id as tabelUuid',
+                'tabels.edited_by as edited_by',
+                'tabels.updated_at as status_updated',
+                'klasifikasi_tabel.id_category as kategori'
+            ])
+            ->distinct()->pluck('id_category')->unique()->toArray();
+        $catList = DB::table('data_category')->whereIn('id', $checkCat)->get(['id as value', 'label as label']);
+        // dd($checkCat);
+        if (sizeof($checkCat) > 0) $cat = true;
+        else $cat = false;
         $tables = $query->paginate($paginated, ['*'], 'page', $currentPage);
         $table_objects = [];
         $number = 1;
@@ -393,6 +436,8 @@ class TabelController extends Controller
         return Inertia::render('Master/Tabel', [
             'tables' => $table_objects,
             'countData' => $countData,
+            'cat' => $cat,
+            'catList' => $catList,
         ]);
     }
 
@@ -783,6 +828,7 @@ class TabelController extends Controller
             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
             ->select(
                 't.id as id_tabel',
+                't.nomor as nomor',
                 't.label as judul_tabel',
                 'statustables.tahun',
                 'statustables.status as status',
@@ -935,6 +981,7 @@ class TabelController extends Controller
             'row_label' => ($used_rowlabel) ? $used_rowlabel : $rowLabel,
             'columns' => $columns,
             'turtahuns' => $turtahuns,
+            'nomor_tabel' => $statusTabel->nomor,
             'judul_tabel' => $statusTabel->judul_tabel,
             'status_updated' => $statusTabel->status_updated,
             'status_desc' => [$statusTabel->status, $sdesc],
