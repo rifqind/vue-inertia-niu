@@ -127,6 +127,7 @@ class ColumnController extends Controller
             ]);
             if ($request->id) {
                 $exists = Column::where('id_column_groups', $validatedData['id_column_groups'])
+                    ->whereNot('id', $request->id)
                     ->whereRaw('LOWER(label) = ?', [$validatedData['label'][0]])->exists();
                 if ($exists) {
                     return redirect()->route('columns.index')->with('error', 'Kolom ' . $validatedData['label'][0] . ' sudah ada');

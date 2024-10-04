@@ -156,6 +156,9 @@ const patchTabel = async (id_tabel) => {
       { label: "Desa/Kelurahan", value: 3 },
     ],
   };
+  let kabkot = [{ label: "Kabupaten/Kota", value: 1 }];
+  if (page.props.auth.user.dinas.wilayah_fullcode == "7100000000")
+    tingkatanDrop.value.options = [...kabkot, ...tingkatanDrop.value.options];
 };
 const loadKecamatans = async (valueKabs) => {
   if (valueKabs) {
@@ -201,9 +204,21 @@ const toggleAll = function (object) {
     object[index] = !object[index];
   });
 };
+const triggerTingkatan = (value) => {
+  if (value == 1) {
+    assignRowListWilayah(value, null);
+  }
+};
 const assignRowListWilayah = function (options, parents) {
   rowListFetched.value = [];
   switch (options) {
+    case 1:
+      rowListFetched.value = kabsDrop.value.options;
+      rowListFetched.value.push({
+        label: "PROVINSI SULAWESI UTARA",
+        value: "7100000000",
+      });
+      break;
     case 2:
       let kecLists = kecsDrop.value.options;
       kecLists.push(parents);
@@ -798,11 +813,12 @@ const downloadRoute = () => {
                 <Multiselect
                   v-model="tingkatanDrop.value"
                   :options="tingkatanDrop.options"
+                  @change="triggerTingkatan"
                   :searchable="true"
                   placeholder="-- Pilih Tingkatan --"
                 />
               </div>
-              <div class="mb-3">
+              <div class="mb-3" v-if="tingkatanDrop.value > 1">
                 <label for="tingkat-label">Kabupaten/Kota</label>
                 <Multiselect
                   v-model="kabsDrop.value"

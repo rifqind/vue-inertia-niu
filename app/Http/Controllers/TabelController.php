@@ -358,7 +358,7 @@ class TabelController extends Controller
                 'tabels.id as tabelUuid',
                 'tabels.edited_by as edited_by',
                 'tabels.updated_at as status_updated',
-                'klasifikasi_tabel.id_category as kategori'
+                'klasifikasi_tabel.id_category'
             ])
             ->distinct()->pluck('id_category')->unique()->toArray();
         $catList = DB::table('data_category')->whereIn('id', $checkCat)->get(['id as value', 'label as label']);
