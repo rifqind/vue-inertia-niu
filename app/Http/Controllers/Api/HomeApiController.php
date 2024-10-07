@@ -82,6 +82,132 @@ class HomeApiController extends Controller
         return $wilayah;
     }
 
+    private function getDinas($wilayah)
+    {
+        $dinas = [];
+        $getIDtabel = Statustables::where('status', 5)
+            ->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
+            ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
+            ->whereIn('dinas.wilayah_fullcode', $wilayah)
+            ->distinct()
+            ->pluck('id_tabel');
+        $getIDDinas = Tabel::whereIn('id', $getIDtabel)->distinct()->pluck('id_dinas');
+        $dinasUsed = Dinas::whereIn('id', $getIDDinas)
+            ->join('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+            ->select(['dinas.*', 'mw.label as label_region'])->get();
+        foreach ($dinasUsed as $key => $value) {
+            # code...
+            if (!isset($tempt_dinas[$value->id])) {
+                $tempt_dinas[$value->id] = [
+                    'value' => $value->id,
+                    'label' => $value->nama,
+                    'wilayah_fullcode' => $value->wilayah_fullcode
+                ];
+            }
+        }
+        $dinas = array_values($tempt_dinas);
+        return $dinas;
+    }
+
+    private function getWilayahTest($wilayah)
+    {
+        $getIDtabel = Statustables::where('status', 5)
+            ->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
+            ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
+            ->where('dinas.wilayah_fullcode', $wilayah)
+            ->distinct()->pluck('id_tabel');
+        $getIDDinas = Tabel::whereIn('id', $getIDtabel)->distinct()->pluck('id_dinas');
+        $dinasUsed = Dinas::whereIn('id', $getIDDinas)
+            ->join('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+            ->select(['dinas.*', 'mw.label as label_region'])->get();
+        foreach ($dinasUsed as $key => $value) {
+            # code...
+            if (!isset($tempt_dinas[$value->id])) {
+                $tempt_dinas[$value->id] = [
+                    'value' => $value->id,
+                    'label' => $value->nama,
+                ];
+            }
+            $text = $value->label_region;
+            $partOfText = explode(' ', $text);
+            array_shift($partOfText);
+            $modifiedText = implode(' ', $partOfText);
+
+            $kode = $value->wilayah_fullcode;
+            $kabupaten_kode = substr($kode, 2, 2);
+            $kecamatan_kode = substr($kode, 4, 3);
+            $desa_kode = substr($kode, 7, 3);
+            if ($kabupaten_kode != '00') {
+                $kab_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                    ->where('kec', 'like', '000')->value('label');
+                $partOfText = explode(' ', $kab_label);
+                array_shift($partOfText);
+                $modifiedKabLabel = implode(' ', $partOfText);
+                $kabs[] = [
+                    'label' => $modifiedKabLabel,
+                    'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                        ->where('kec', 'like', '000')->value('wilayah_fullcode')
+                ];
+
+                if ($kecamatan_kode != '000') {
+                    $kec_label = MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                        ->where('kec', 'like', $kecamatan_kode)->value('label');
+                    $partOfText = explode(' ', $kec_label);
+                    array_shift($partOfText);
+                    $modifiedKecLabel = implode(' ', $partOfText);
+                    $kecs[] = [
+                        'label' => $modifiedKecLabel,
+                        'parent_code' => $kabupaten_kode,
+                        'wilayah_fullcode' => MasterWilayah::where('kab', 'like', $kabupaten_kode)
+                            ->where('kec', 'like', $kecamatan_kode)->value('wilayah_fullcode'),
+                    ];
+
+                    if ($desa_kode != '000') {
+                        $desa[] = [
+                            'label' => $modifiedText,
+                            'parent_code' => $kabupaten_kode . $kecamatan_kode,
+                            'wilayah_fullcode' => $kode,
+                        ];
+                    }
+                }
+            }
+        }
+        $provs[] = [
+            'label' => 'SULAWESI UTARA',
+            'wilayah_fullcode' => '7100000000'
+        ];
+        $kabs = array_values(array_unique($kabs, SORT_REGULAR));
+        $kecs = array_values(array_unique($kecs, SORT_REGULAR));
+        $desa = array_values(array_unique($desa, SORT_REGULAR));
+        $wilayahs = array_merge($provs, $kabs);
+        return [
+            'wilayah' => $this->sortHome($wilayahs),
+            'kecamatan' => $this->sortHome($kecs),
+            'desa' => $this->sortHome($desa),
+        ];
+    }
+
+    private function sortHome($array)
+    {
+        usort($array, function ($a, $b) {
+            if ($a['wilayah_fullcode'] === $b['wilayah_fullcode']) {
+                return 0;
+            }
+
+            // Handle null values: move them to the end of the array
+            if ($a['wilayah_fullcode'] === null) {
+                return 1;
+            }
+            if ($b['wilayah_fullcode'] === null) {
+                return -1;
+            }
+
+            // Compare the wilayah_fullcode values
+            return $a['wilayah_fullcode'] <=> $b['wilayah_fullcode'];
+        });
+        return $array;
+    }
+
     public function index(Request $request, string $key)
     {
         $api = ApiList::where('key', $key)->first();
@@ -654,10 +780,11 @@ class HomeApiController extends Controller
         $wilayah = $this->getWilayah($api->wilayah_fullcode);
 
         if ($request->list == 'dinas') {
-            $data = Dinas::join('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
-                ->whereIn('dinas.wilayah_fullcode', $wilayah)
-                ->select(['dinas.*', 'mw.label as wilayah_label'])
-                ->get();
+            // $data = Dinas::join('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'dinas.wilayah_fullcode')
+            //     ->whereIn('dinas.wilayah_fullcode', $wilayah)
+            //     ->select(['dinas.*', 'mw.label as wilayah_label'])
+            //     ->get();
+            $data = $this->getDinas($wilayah);
             return response()->json(['dinas' => $data]);
         }
         if ($request->list == 'subjek') {
@@ -665,7 +792,8 @@ class HomeApiController extends Controller
             return response()->json(['subjek' => $data]);
         }
         if ($request->list == 'wilayah') {
-            $data = $this->getMasterWilayah($api->wilayah_fullcode);
+            // $data = $this->getMasterWilayah($api->wilayah_fullcode);
+            $data = $this->getWilayahTest($wilayah);
             return response()->json(['wilayah' => $data]);
         }
     }

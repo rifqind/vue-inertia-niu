@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Column;
 use App\Models\ColumnOrder;
+use App\Models\DataCategory;
 use App\Models\Datacontent;
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
@@ -40,6 +41,7 @@ class HomeController extends Controller
             ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
             ->join('master_wilayah', 'dinas.wilayah_fullcode', '=', 'master_wilayah.wilayah_fullcode')
             ->join('subjects', 'tabels.id_subjek', '=', 'subjects.id')
+            ->leftJoin('klasifikasi_tabel', 'tabels.id', '=', 'klasifikasi_tabel.id_tabel')
             ->orderBy('statustables.tahun', 'desc')
             ->orderBy('statustables.updated_at', 'desc')
             ->select([
@@ -53,6 +55,7 @@ class HomeController extends Controller
                 'subjects.id as id_subjects',
                 'subjects.label as nama_subjects',
                 'statustables.updated_at as status_updated',
+                'klasifikasi_tabel.id_category as kategori'
             ]);
 
         if ($request->ArrayFilter) {
@@ -84,6 +87,11 @@ class HomeController extends Controller
                     ->where('tabels.label', 'like', '%' . $filter['label'] . '%')
                     // ->orWhere('statustables.updated_at', 'like', '%' . $filter['label'] . '%')
                 ;
+            }
+            if (!empty($filter['category'])) {
+                if (!in_array(0, $filter['category'], true)) {
+                    $query->whereIn('klasifikasi_tabel.id_category', $filter['category']);
+                }
             }
         }
         $countData = $dataToCounted->count();
@@ -169,6 +177,7 @@ class HomeController extends Controller
             ->get(['tahun as value', 'tahun as label']);
         $countfinals = Statustables::where('status', 5)->count();
         $dinas = array_values($tempt_dinas);
+        $category = DataCategory::get(['id as value', 'label as label']);
 
         if ($request->paginated) {
             return response()->json([
@@ -183,6 +192,7 @@ class HomeController extends Controller
             'dinas' => $dinas,
             'tabels' => $tabels,
             'subjects' => $subjects,
+            'category' => $category,
             // 'counttabels' => $counttabels,
             'counttabels' => $countData,
             'countfinals' => $countfinals,
