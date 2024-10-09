@@ -473,32 +473,79 @@ class HomeController extends Controller
         }
         $id_tabel = $statusTabel->id_tabel;
         $tahun = $statusTabel->tahun;
+        $used_rowlabel = DB::table('rowlabel')->where('id_tabel', $id_tabel)->first();
+        if ($used_rowlabel)
+            $used_rowlabel = $used_rowlabel->row_label;
 
         $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)->get();
-        $id_rows = [];
+        // $id_rows = [];
         $wilayah_fullcodes = [];
         $id_columns = [];
         $tahuns = Statustables::where('id_tabel', $id_tabel)
             ->where('status', 5)
             ->where('tahun', '!=', $tahun)
             ->pluck('tahun')->toArray();
+
         $turTahunKeys = [];
-
+        $id_rows = collect([]);
         foreach ($datacontents as $datacontent) {
-            array_push($id_rows, $datacontent->id_row);
+            // array_push($id_rows, $datacontent->id_row);
             array_push($id_columns, $datacontent->id_column);
-            // array_push($tahuns, $datacontent->tahun);
             array_push($turTahunKeys, $datacontent->id_turtahun);
-
             array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+            if ($datacontent->id_row == 0) {
+                $temp = MasterWilayah::where('wilayah_fullcode', $datacontent->wilayah_fullcode)
+                    ->first();
+            } else
+                $temp = Row::where('id', $datacontent->id_row)->first();
+            if ($temp) {
+                // Check if the collection already contains an item with the same 'wilayah_fullcode' or 'id'
+                $alreadyExists = $id_rows->contains(function ($item) use ($temp) {
+                    return ($temp->wilayah_fullcode && $item->wilayah_fullcode == $temp->wilayah_fullcode) ||
+                        ($temp->id && $item->id == $temp->id);
+                });
+
+                // Push $temp only if it doesn't already exist in the collection
+                if (!$alreadyExists) {
+                    $id_rows->push($temp);
+                }
+            }
         }
+        // Sort the collection by 'wilayah_fullcode', placing null or empty values at the end
+        $id_rows = $id_rows->sortBy(function ($item) {
+            $wilayah_fullcode = $item->wilayah_fullcode;
+            if (!$wilayah_fullcode)
+                return [5, ''];
+            // Break down wilayah_fullcode into different levels: provinsi, kabupaten, kecamatan, desa
+            $prov = substr($wilayah_fullcode, 0, 2);   // First 2 digits (provinsi level)
+            $kab = substr($wilayah_fullcode, 2, 2);    // Next 2 digits (kabupaten level)
+            $kec = substr($wilayah_fullcode, 4, 3);    // Next 3 digits (kecamatan level)
+            $desa = substr($wilayah_fullcode, 7, 3);   // Last 3 digits (desa level)
+
+            // Determine the level: more trailing zeros = higher level
+            $level = 0;
+            if ($kab == '00' && $kec == '000' && $desa == '000') {
+                $level = 4;   // Provinsi level (Highest, ordered last)
+            } elseif ($kec == '000' && $desa == '000') {
+                $level = 3;   // Kabupaten level
+            } elseif ($desa == '000') {
+                $level = 2;   // Kecamatan level
+            } else {
+                $level = 1;   // Desa level (Lowest, ordered first)
+            }
+
+            // Sort by level first, lower levels should come first, higher levels (with zeros) last
+            // Then sort by the actual wilayah_fullcode
+            return [$level, $wilayah_fullcode];
+        });
+
         $tabels = Tabel::where('tabels.id', $id_tabel)
             ->leftJoin('subjects as sb', 'sb.id', '=', 'tabels.id_subjek')
             ->leftJoin('dinas as d', 'd.id', '=', 'tabels.id_dinas')
             ->leftJoin('master_wilayah as mw', 'mw.wilayah_fullcode', '=', 'd.wilayah_fullcode')
             ->first(['tabels.*', 'sb.label as subject_label', 'd.nama as dinas_label', 'mw.label as wilayah_label']);
 
-        $rows = Row::whereIn('id', $id_rows)->get();
+        $rows = $id_rows->values();
         $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->get();
         $RowOrders = RowOrder::where('id_statustabel', $request->id)->value('orders');
         try {
@@ -506,11 +553,6 @@ class HomeController extends Controller
             if ($rows[0]->id == 0) {
                 $wilayah_parent_code = '';
                 $jenis = "DAFTAR ";
-                $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                    ->orderByRaw("CASE WHEN desa = '000' THEN 1 ELSE 0 END")
-                    ->orderBy('desa')
-                    ->get();
-                $rows = $temp;
                 $desa = substr($wilayah_fullcodes[0], 7, 3);
                 $kec = substr($wilayah_fullcodes[0], 4, 3);
                 $kab = substr($wilayah_fullcodes[0], 2, 2);
@@ -520,23 +562,13 @@ class HomeController extends Controller
                 } else if ($kec != '000') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
                     $jenis = $jenis . "KECAMATAN DI ";
-                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                        ->orderByRaw("CASE WHEN kec = '000' THEN 1 ELSE 0 END")
-                        ->orderBy('desa')
-                        ->get();
-                    $rows = $temp;
                 } else if ($kab != '00') {
                     $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
                     $jenis = $jenis . "KABUPATEN DI ";
-                    $temp = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                        ->orderByRaw("CASE WHEN kab = '00' THEN 1 ELSE 0 END")
-                        ->orderBy('desa')
-                        ->get();
-                    $rows = $temp;
                 }
-                if ($RowOrders)
-                    $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
-                        ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
+                // if ($RowOrders)
+                //     $rows = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_fullcodes)
+                //         ->orderByRaw("FIELD(wilayah_fullcode," . $RowOrders . ")")->get();
                 if ($wilayah_parent_code == '') {
                     $rowLabel = 'PROVINSI SULAWESI UTARA';
                 } else {
@@ -576,11 +608,18 @@ class HomeController extends Controller
             $columns = Column::whereIn('id', $id_columns)->get();
         }
         if (!$rows[0]->id == 0 && $RowOrders)
-            $rows = Row::whereIn('id', $id_rows)->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+            $rows = Row::whereIn('id', $rows->pluck('id'))->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
 
         $tahuns = array_unique($tahuns);
         sort($tahuns);
         $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
+        if ($turtahuns->contains('id', 3)) {
+            // id 3 is present in the collection
+            $available = true;
+        } else {
+            // id 3 is not present in the collection
+            $available = false;
+        }
         $this_metavar = MetadataVariabel::where('id_tabel', $id_tabel)->get();
         foreach ($this_metavar as $key => $value) {
             # code...
@@ -589,6 +628,7 @@ class HomeController extends Controller
         }
         return Inertia::render('Home/View', [
             'datacontents' => $datacontents,
+            'graphAvailability' => $available,
             'tabels' => $tabels,
             'tahuns' => $tahuns,
             'tahun' => $tahun,

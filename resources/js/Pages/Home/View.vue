@@ -44,7 +44,7 @@ const check = ref(false);
 const downloadTitle = ref(null);
 const Rowee = ref(null);
 const Columnee = ref(null);
-var columnComponents, rowComponents;
+var columnComponents, rowComponents, turtahunComponents;
 const form = useForm({
   id: "",
   id_tabel: "",
@@ -77,6 +77,7 @@ const rowForChart = page.props.rows.map((data) => ({
 const findChart = ref(false);
 const fetchChart = async () => {
   findChart.value = false;
+  if (!chartForm.column || !chartForm.row) return;
   try {
     let wilayah_fullcode = false;
     const check = computed(() => page.props.rows?.[0]).value.wilayah_fullcode;
@@ -120,8 +121,9 @@ onMounted(() => {
     Rowee.value.style.height = `${DatasTheadHeight}px`;
   }
 });
-const getData = function (row, column, fetchdata) {
+const getData = function (row, column, turtahun, fetchdata) {
   columnComponents = column.id;
+  turtahunComponents = turtahun.id;
   if (row.id) {
     rowComponents = row.id;
   } else rowComponents = row.wilayah_fullcode;
@@ -130,7 +132,8 @@ const getData = function (row, column, fetchdata) {
     const probablyTheData = fetchdata.find((x) => {
       return (
         (x.id_row === rowComponents || x.wilayah_fullcode === rowComponents) &&
-        x.id_column === columnComponents
+        x.id_column === columnComponents &&
+        x.id_turtahun === turtahunComponents
       );
     });
     return probablyTheData.value;
@@ -138,7 +141,8 @@ const getData = function (row, column, fetchdata) {
   const probablyTheData = page.props.datacontents.find((x) => {
     return (
       (x.id_row === rowComponents || x.wilayah_fullcode === rowComponents) &&
-      x.id_column === columnComponents
+      x.id_column === columnComponents &&
+      x.id_turtahun === turtahunComponents
     );
   });
   return probablyTheData.value;
@@ -351,7 +355,7 @@ const reset = () => {
                     :key="index"
                   >
                     <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                      {{ getData(nodeRow, nodeColumn) }}
+                      {{ getData(nodeRow, nodeColumn, nodeTurtahun) }}
                     </td>
                   </template>
                   <template v-if="statusFetch">
@@ -364,7 +368,7 @@ const reset = () => {
                           v-for="(column, columnIndex) in fetchNode.columns"
                           :key="columnIndex"
                         >
-                          {{ getData(nodeRow, column, fetchNode.data) }}
+                          {{ getData(nodeRow, column, turtahun, fetchNode.data) }}
                         </td>
                       </template>
                     </template>
@@ -578,10 +582,28 @@ const reset = () => {
       </div>
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0 text-bold">Grafik</h5>
+          <div class="row">
+            <h5 class="mb-0 col text-bold">Grafik</h5>
+            <button
+              v-if="page.props.graphAvailability"
+              @click.prevent="fetchChart"
+              type="submit"
+              class="btn ml-auto mr-1 chartBtn bg-info-fordone"
+            >
+              <font-awesome-icon icon="fa-solid fa-square-pen" />
+            </button>
+            <button
+              v-if="page.props.graphAvailability"
+              @click.prevent="findChart = false"
+              type="submit"
+              class="btn chartBtn bg-info-fordone"
+            >
+              <font-awesome-icon icon="fa-solid fa-rotate-right" />
+            </button>
+          </div>
         </div>
         <div class="card-body">
-          <div class="row mb-4">
+          <div class="row mb-4 justify-content-start" v-if="page.props.graphAvailability">
             <Multiselect
               class="col-lg-3 col-md-3 col-sm-12 mr-2 ml-0"
               :options="columnForChart"
@@ -597,23 +619,8 @@ const reset = () => {
               mode="tags"
               :searchable="true"
             />
-            <div class="col-lg-1 col-md-1 col-sm-1 mx-0 align-items-center">
-              <button
-                @click.prevent="fetchChart"
-                type="submit"
-                class="btn mr-2 chartBtn bg-info-fordone"
-              >
-                <font-awesome-icon icon="fa-solid fa-square-pen" />
-              </button>
-              <button
-                @click.prevent="findChart = false"
-                type="submit"
-                class="btn mr-2 chartBtn bg-info-fordone"
-              >
-                <font-awesome-icon icon="fa-solid fa-rotate-right" />
-              </button>
-            </div>
           </div>
+          <div v-else class="text-center">Grafik tidak tersedia untuk tabel ini</div>
           <div class="chart-container text-center">
             <Line v-if="findChart" :data="lineData" :options="lineOptions" />
           </div>

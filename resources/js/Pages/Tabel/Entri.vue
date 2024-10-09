@@ -44,18 +44,20 @@ const flashHandle = () => {
   };
 };
 
-var columnComponents, rowComponents;
+var columnComponents, rowComponents, turtahunComponents;
 var status = page.props.status_desc;
 
-const getData = function (row, column) {
+const getData = function (row, column, turtahun) {
   columnComponents = column.id;
+  turtahunComponents = turtahun.id;
   if (row.id) {
     rowComponents = row.id;
   } else rowComponents = row.wilayah_fullcode;
   const probablyTheData = form.dataContents.find((x) => {
     return (
       (x.id_row === rowComponents || x.wilayah_fullcode === rowComponents) &&
-      x.id_column === columnComponents
+      x.id_column === columnComponents &&
+      x.id_turtahun === turtahunComponents
     );
   });
   //   console.log(probablyTheData);
@@ -98,8 +100,9 @@ const defineInputDisable = function (status, role) {
   if (status > 4) inputDisabled.value = true;
   if (!buttonMapping[role]) inputDisabled.value = true;
 };
-const handleInput = function (event, row, column) {
+const handleInput = function (event, row, column, turtahun) {
   // console.log(event, row, column);
+  turtahunComponents = turtahun.id;
   columnComponents = column.id;
   if (row.id) {
     rowComponents = row.id;
@@ -107,7 +110,8 @@ const handleInput = function (event, row, column) {
   const theIndex = form.dataContents.findIndex((x) => {
     return (
       (x.id_row === rowComponents || x.wilayah_fullcode === rowComponents) &&
-      x.id_column === columnComponents
+      x.id_column === columnComponents &&
+      x.id_turtahun === turtahunComponents
     );
   });
   // ??how to edit form.dataContents.value??
@@ -178,7 +182,7 @@ const submit = async function (decision) {
     });
   }
 };
-const handlePaste = (event, row, column) => {
+const handlePaste = (event, row, column, turtahun) => {
   const items = event.clipboardData.items;
   for (let i = 0; i < items.length; i++) {
     if (items[i].type === "text/plain") {
@@ -200,12 +204,14 @@ const handlePaste = (event, row, column) => {
                 if (input) {
                   const rowComponents = input.id.split("-")[1];
                   const columnComponents = input.id.split("-")[2];
+                  const turtahunComponents = input.id.split("-")[3];
                   input.value = cell;
                   const theIndex = form.dataContents.findIndex((x) => {
                     let founded =
                       (x.id_row == rowComponents ||
                         x.wilayah_fullcode == rowComponents) &&
-                      x.id_column == columnComponents;
+                      x.id_column == columnComponents &&
+                      x.id_turtahun == turtahunComponents;
                     return founded;
                   });
                   if (theIndex !== -1) {
@@ -221,12 +227,13 @@ const handlePaste = (event, row, column) => {
   }
 };
 
-const setId = (row, column) => {
+const setId = (row, column, turtahun) => {
   columnComponents = column.id;
+  turtahunComponents = turtahun.id;
   if (row.id) {
     rowComponents = row.id;
   } else rowComponents = row.wilayah_fullcode;
-  return "cell-" + rowComponents + "-" + columnComponents;
+  return "cell-" + rowComponents + "-" + columnComponents + "-" + turtahunComponents;
 };
 const hiddenLabel = (value, index) => {
   if (value.length > 30) {
@@ -432,17 +439,17 @@ const triggerConfirmation = (value) => {
                       <input
                         type="text"
                         class="w-100 text-center"
-                        :id="setId(nodeRow, nodeColumn)"
-                        :value="getData(nodeRow, nodeColumn)"
+                        :id="setId(nodeRow, nodeColumn, nodeTurtahun)"
+                        :value="getData(nodeRow, nodeColumn, nodeTurtahun)"
                         :disabled="inputDisabled"
                         @paste="
                           (event) => {
-                            handlePaste(event, nodeRow, nodeColumn);
+                            handlePaste(event, nodeRow, nodeColumn, nodeTurtahun);
                           }
                         "
                         @input="
                           (event) => {
-                            handleInput(event, nodeRow, nodeColumn);
+                            handleInput(event, nodeRow, nodeColumn, nodeTurtahun);
                           }
                         "
                       />
