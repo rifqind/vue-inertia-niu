@@ -376,7 +376,8 @@ const triggerConfirmation = (value) => {
         @close="flashHandle"
         :flashObject="flashObject"
       />
-      <div class="table-container">
+      <!-- format two table  -->
+      <!-- <div class="table-container">
         <div class="row mb-3">
           <div class="overflow-x-scroll p-0" id="imaginer">
             <table class="table table-bordered" id="RowTabel" ref="RowTabel">
@@ -460,36 +461,71 @@ const triggerConfirmation = (value) => {
             </table>
           </div>
         </div>
-      </div>
+      </div> -->
       <!-- format single table -->
-      <!-- <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th class="text-center align-middle" rowspan="2">#</th>
-                        <th class="text-center align-middle" rowspan="2">{{ page.props.row_label }}</th>
-                        <th class="text-center" :colspan="page.props.columns.length"
-                            v-for="(node, index) in page.props.turtahuns" :key="index">{{ node.label }}</th>
-                    </tr>
-                    <tr>
-                        <template v-for="(node, index) in page.props.turtahuns" :key="index">
-                            <th class="text-center" v-for="(node, index) in page.props.columns" :key="index">{{
-                                    node.label }}</th>
-                        </template>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
-                        <td>{{ index + 1 }}</td>
-                        <td>{{ nodeRow.label }}</td>
-                        <template v-for="(nodeTurtahun, index) in page.props.turtahuns" :key="index">
-                            <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                                <input type="text" class="form-control" :value="getData(nodeRow, nodeColumn)"
-                                    @input="(event) => { handleInput(event, nodeRow, nodeColumn) }">
-                            </td>
-                        </template>
-                    </tr>
-                </tbody>
-            </table> -->
+      <div class="overflow-x-scroll mb-2">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th class="text-center align-middle fixed-thead" rowspan="2">
+                {{ page.props.row_label }}
+              </th>
+              <th
+                class="text-center"
+                :colspan="page.props.columns.length"
+                v-for="(node, index) in page.props.turtahuns"
+                :key="index"
+              >
+                {{ HeaderColumn(node.label) }}
+              </th>
+            </tr>
+            <tr>
+              <template v-for="(node, index) in page.props.turtahuns" :key="index">
+                <th
+                  class="text-center align-middle not-fixed"
+                  v-for="(node, index) in page.props.columns"
+                  :key="index"
+                >
+                  {{ node.label }}
+                </th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
+              <td class="fixed-column">{{ nodeRow.label }}</td>
+              <template
+                v-for="(nodeTurtahun, index) in page.props.turtahuns"
+                :key="index"
+              >
+                <td
+                  class="not-fixed"
+                  v-for="(nodeColumn, index) in page.props.columns"
+                  :key="index"
+                >
+                  <input
+                    type="text"
+                    class="w-100 text-center"
+                    :id="setId(nodeRow, nodeColumn, nodeTurtahun)"
+                    :value="getData(nodeRow, nodeColumn, nodeTurtahun)"
+                    :disabled="inputDisabled"
+                    @paste="
+                      (event) => {
+                        handlePaste(event, nodeRow, nodeColumn, nodeTurtahun);
+                      }
+                    "
+                    @input="
+                      (event) => {
+                        handleInput(event, nodeRow, nodeColumn, nodeTurtahun);
+                      }
+                    "
+                  />
+                </td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="card">
         <div class="card-header">CATATAN</div>
         <div class="card-body">
@@ -612,9 +648,7 @@ const triggerConfirmation = (value) => {
   left: 50%;
   transform: translateX(-50%);
   width: 50%;
-  /* Adjust as needed */
   z-index: 1000;
-  /* Ensures it stays on top of other elements */
 }
 
 .card-float {
@@ -647,9 +681,6 @@ const triggerConfirmation = (value) => {
   background: #f9fafc;
   border-right: 1px solid #e6eaf0;
   vertical-align: top;
-  /* white-space: nowrap; */
-  /* text-overflow: ellipsis; */
-  /* overflow: hidden; */
 }
 
 #imaginer {
@@ -662,36 +693,26 @@ const triggerConfirmation = (value) => {
 
 #RowTabel thead,
 #ColumnTabel thead {
-  /* min-height: 200px; */
   height: 120px;
   vertical-align: middle;
   padding: 0.1rem;
-  /* white-space: nowrap; */
   text-overflow: ellipsis;
   overflow: auto;
 }
 
 #ColumnTabel tbody tr td {
-  /* padding-right: 1rem; */
   min-width: 180px;
 }
 
 #RowTabel tbody tr td,
 #ColumnTabel tbody tr td {
-  /* height: 20px; */
   height: 50px;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  /* padding: 0; */
-  /* text-align: left; */
-  /* display: flex; */
-  /* align-content: center; */
-  /* align-items: center; */
 }
 
 .table-data-wrapper {
-  /* display: inline-block; */
   overflow-x: auto;
   vertical-align: top;
   width: calc(100% - 400px);
@@ -715,5 +736,34 @@ tbody {
   color: whitesmoke;
   border-radius: 1rem;
   cursor: auto;
+}
+thead {
+  background-color: #3d3b8e;
+  color: whitesmoke;
+}
+.fixed-column {
+  position: sticky;
+  min-width: 400px;
+  left: 0;
+  background-color: white;
+  color: black;
+  z-index: 1;
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+.fixed-thead {
+  position: sticky;
+  min-width: 400px;
+  left: 0;
+  background-color: #3d3b8e;
+  color: whitesmoke;
+  z-index: 1;
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+.not-fixed {
+  min-width: 300px;
 }
 </style>
