@@ -1,0 +1,131 @@
+<!-- <div class="table-container">
+        <div class="row mb-3">
+          <div class="overflow-x-scroll p-0" id="imaginer">
+            <table class="table table-bordered" id="RowTabel">
+              <thead ref="Rowee">
+                <tr>
+                  <th class="text-center align-middle tabel-width-15" rowspan="2">#</th>
+                  <th class="text-center align-middle" rowspan="2">
+                    {{ page.props.row_label }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ nodeRow.label }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-data-wrapper">
+            <table class="table table-bordered" id="ColumnTabel">
+              <thead ref="Columnee">
+                <tr>
+                  <th
+                    class="text-center"
+                    :colspan="page.props.columns.length"
+                    v-for="(node, index) in page.props.turtahuns"
+                    :key="index"
+                  >
+                    {{ HeaderColumn(node.label) }}
+                  </th>
+                  <template v-if="statusFetch">
+                    <template
+                      v-for="(fetchNode, fetchIndex) in fetchedData"
+                      :key="fetchIndex"
+                    >
+                      <th
+                        class="text-center"
+                        :colspan="fetchNode.columns.length"
+                        v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
+                        :key="turtahunIndex"
+                      >
+                        {{ HeaderColumn(turtahun.label, fetchNode.tahun) }}
+                      </th>
+                    </template>
+                  </template>
+                </tr>
+                <tr>
+                  <template v-for="(node, index) in page.props.turtahuns" :key="index">
+                    <th
+                      class="text-center align-middle"
+                      v-for="(node, index) in page.props.columns"
+                      :key="index"
+                    >
+                      <template v-if="indexExpanded[index]">{{ node.label }} </template>
+                      <template v-else>{{ hiddenLabel(node.label, index) }} </template>
+                      <span
+                        v-if="!indexExpanded[index] || node.label.length > 30"
+                        class="badge badge-info ml-1"
+                        @click="toggleLabel(index)"
+                        >...</span
+                      >
+                    </th>
+                  </template>
+                  <template v-if="statusFetch">
+                    <template v-for="(fetchNode, fetchIndex) in fetchedData">
+                      <template
+                        v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
+                        :key="turtahunIndex"
+                      >
+                        <th
+                          class="text-center align-middle"
+                          v-for="(columns, columnsIndex) in fetchNode.columns"
+                          :key="columnsIndex"
+                        >
+                          <template v-if="indexExpanded[columnsIndex]"
+                            >{{ columns.label }}
+                          </template>
+                          <template v-else
+                            >{{ hiddenLabel(columns.label, columnsIndex) }}
+                          </template>
+                          <span
+                            v-if="
+                              !indexExpanded[columnsIndex] || columns.label.length > 30
+                            "
+                            class="badge badge-info ml-1"
+                            @click="toggleLabel(columnsIndex)"
+                            >...</span
+                          >
+                        </th>
+                      </template>
+                    </template>
+                  </template>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  class="text-center align-middle"
+                  v-for="(nodeRow, index) in page.props.rows"
+                  :key="index"
+                >
+                  <template
+                    v-for="(nodeTurtahun, index) in page.props.turtahuns"
+                    :key="index"
+                  >
+                    <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
+                      {{ getData(nodeRow, nodeColumn, nodeTurtahun) }}
+                    </td>
+                  </template>
+                  <template v-if="statusFetch">
+                    <template v-for="(fetchNode, fetchIndex) in fetchedData">
+                      <template
+                        v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
+                        :key="turtahunIndex"
+                      >
+                        <td
+                          v-for="(column, columnIndex) in fetchNode.columns"
+                          :key="columnIndex"
+                        >
+                          {{ getData(nodeRow, column, turtahun, fetchNode.data) }}
+                        </td>
+                      </template>
+                    </template>
+                  </template>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div> -->

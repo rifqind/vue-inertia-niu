@@ -3,7 +3,7 @@ import HomeLayout from "@/Layouts/HomeLayout.vue";
 import { usePage, useForm, Link, Head } from "@inertiajs/vue3";
 import { clickSortProperties } from "@/sortAttribute";
 import ModalBs from "@/Components/ModalBs.vue";
-import { downloadTabel } from "@/download";
+import { downloadTabel, newDownload } from "@/download";
 import { onMounted, ref, defineComponent, computed } from "vue";
 import Multiselect from "@vueform/multiselect";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
@@ -42,8 +42,8 @@ const downloadModalStatus = ref(false);
 const triggerSpinner = ref(false);
 const check = ref(false);
 const downloadTitle = ref(null);
-const Rowee = ref(null);
-const Columnee = ref(null);
+// const Rowee = ref(null);
+// const Columnee = ref(null);
 var columnComponents, rowComponents, turtahunComponents;
 const form = useForm({
   id: "",
@@ -112,15 +112,15 @@ const yearDrop = ref({
   value: [],
   options: page.props.tahuns,
 });
-onMounted(() => {
-  let RowTheadHeight = Rowee.value.offsetHeight;
-  let DatasTheadHeight = Columnee.value.offsetHeight;
-  if (RowTheadHeight > DatasTheadHeight) {
-    Columnee.value.style.height = `${RowTheadHeight}px`;
-  } else {
-    Rowee.value.style.height = `${DatasTheadHeight}px`;
-  }
-});
+// onMounted(() => {
+//   let RowTheadHeight = Rowee.value.offsetHeight;
+//   let DatasTheadHeight = Columnee.value.offsetHeight;
+//   if (RowTheadHeight > DatasTheadHeight) {
+//     Columnee.value.style.height = `${RowTheadHeight}px`;
+//   } else {
+//     Rowee.value.style.height = `${DatasTheadHeight}px`;
+//   }
+// });
 const getData = function (row, column, turtahun, fetchdata) {
   columnComponents = column.id;
   turtahunComponents = turtahun.id;
@@ -177,16 +177,16 @@ const download = (titles) => {
   window.location.href = `/export-view/${page.props.tabel.id_tabel}/${titles}`;
   downloadModalStatus.value = false;
 };
-const hiddenLabel = (value, index) => {
-  if (value.length > 30) {
-    indexExpanded.value[index] = false;
-    return value.substring(0, 30) + " ";
-  }
-  return value;
-};
-const toggleLabel = (index) => {
-  indexExpanded.value[index] = !indexExpanded.value[index];
-};
+// const hiddenLabel = (value, index) => {
+//   if (value.length > 30) {
+//     indexExpanded.value[index] = false;
+//     return value.substring(0, 30) + " ";
+//   }
+//   return value;
+// };
+// const toggleLabel = (index) => {
+//   indexExpanded.value[index] = !indexExpanded.value[index];
+// };
 const indexExpanded = ref(Array(page.props.columns.length).fill(true));
 page.props.columns.forEach((column, index) => {
   if (column.label.length > 30) indexExpanded.value[index] = false;
@@ -207,7 +207,7 @@ const fetchData = async () => {
         current: page.props.tahun,
         tahun: yearDrop.value.value,
         id_tabel: page.props.tabel.id_tabel,
-        id_statustabel: page.props.tabel.id_statustabel,
+        id_statustabel: page.props.tabel.id_statustables,
       },
     });
     // console.log(response.data);
@@ -246,138 +246,99 @@ const reset = () => {
           </h4>
         </div>
       </div>
-      <div class="table-container">
-        <div class="row mb-3">
-          <!-- fix table -->
-          <div class="overflow-x-scroll p-0" id="imaginer">
-            <table class="table table-bordered" id="RowTabel">
-              <thead ref="Rowee">
-                <tr>
-                  <th class="text-center align-middle tabel-width-15" rowspan="2">#</th>
-                  <th class="text-center align-middle" rowspan="2">
-                    {{ page.props.row_label }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ nodeRow.label }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <!-- compound -->
-          <div class="table-data-wrapper">
-            <table class="table table-bordered" id="ColumnTabel">
-              <thead ref="Columnee">
-                <tr>
+      <div class="overflow-x-scroll mb-2">
+        <table class="table table-bordered" id="tabel-entry">
+          <thead>
+            <tr>
+              <th class="text-center align-middle fixed-thead" rowspan="2">
+                {{ page.props.row_label }}
+              </th>
+              <th
+                class="text-center"
+                :colspan="page.props.columns.length"
+                v-for="(node, index) in page.props.turtahuns"
+                :key="index"
+              >
+                {{ HeaderColumn(node.label) }}
+              </th>
+              <template v-if="statusFetch">
+                <template
+                  v-for="(fetchNode, fetchIndex) in fetchedData"
+                  :key="fetchIndex"
+                >
                   <th
                     class="text-center"
-                    :colspan="page.props.columns.length"
-                    v-for="(node, index) in page.props.turtahuns"
-                    :key="index"
+                    :colspan="fetchNode.columns.length"
+                    v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
+                    :key="turtahunIndex"
                   >
-                    {{ HeaderColumn(node.label) }}
+                    {{ HeaderColumn(turtahun.label, fetchNode.tahun) }}
                   </th>
-                  <template v-if="statusFetch">
-                    <template
-                      v-for="(fetchNode, fetchIndex) in fetchedData"
-                      :key="fetchIndex"
-                    >
-                      <th
-                        class="text-center"
-                        :colspan="fetchNode.columns.length"
-                        v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
-                        :key="turtahunIndex"
-                      >
-                        {{ HeaderColumn(turtahun.label, fetchNode.tahun) }}
-                      </th>
-                    </template>
-                  </template>
-                </tr>
-                <tr>
-                  <template v-for="(node, index) in page.props.turtahuns" :key="index">
-                    <th
-                      class="text-center align-middle"
-                      v-for="(node, index) in page.props.columns"
-                      :key="index"
-                    >
-                      <template v-if="indexExpanded[index]">{{ node.label }} </template>
-                      <template v-else>{{ hiddenLabel(node.label, index) }} </template>
-                      <span
-                        v-if="!indexExpanded[index] || node.label.length > 30"
-                        class="badge badge-info ml-1"
-                        @click="toggleLabel(index)"
-                        >...</span
-                      >
-                    </th>
-                  </template>
-                  <template v-if="statusFetch">
-                    <template v-for="(fetchNode, fetchIndex) in fetchedData">
-                      <template
-                        v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
-                        :key="turtahunIndex"
-                      >
-                        <th
-                          class="text-center align-middle"
-                          v-for="(columns, columnsIndex) in fetchNode.columns"
-                          :key="columnsIndex"
-                        >
-                          <template v-if="indexExpanded[columnsIndex]"
-                            >{{ columns.label }}
-                          </template>
-                          <template v-else
-                            >{{ hiddenLabel(columns.label, columnsIndex) }}
-                          </template>
-                          <span
-                            v-if="
-                              !indexExpanded[columnsIndex] || columns.label.length > 30
-                            "
-                            class="badge badge-info ml-1"
-                            @click="toggleLabel(columnsIndex)"
-                            >...</span
-                          >
-                        </th>
-                      </template>
-                    </template>
-                  </template>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  class="text-center align-middle"
-                  v-for="(nodeRow, index) in page.props.rows"
+                </template>
+              </template>
+            </tr>
+            <tr>
+              <template v-for="(node, index) in page.props.turtahuns" :key="index">
+                <th
+                  class="text-center align-middle not-fixed"
+                  v-for="(node, index) in page.props.columns"
                   :key="index"
                 >
+                  {{ node.label }}
+                </th>
+              </template>
+              <template v-if="statusFetch">
+                <template v-for="(fetchNode, fetchIndex) in fetchedData">
                   <template
-                    v-for="(nodeTurtahun, index) in page.props.turtahuns"
-                    :key="index"
+                    v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
+                    :key="turtahunIndex"
                   >
-                    <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                      {{ getData(nodeRow, nodeColumn, nodeTurtahun) }}
+                    <th
+                      class="text-center align-middle not-fixed"
+                      v-for="(columns, columnsIndex) in fetchNode.columns"
+                      :key="columnsIndex"
+                    >
+                      {{ columns.label }}
+                    </th>
+                  </template>
+                </template>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
+              <td class="fixed-column">{{ nodeRow.label }}</td>
+              <template
+                v-for="(nodeTurtahun, index) in page.props.turtahuns"
+                :key="index"
+              >
+                <td
+                  class="not-fixed text-center"
+                  v-for="(nodeColumn, index) in page.props.columns"
+                  :key="index"
+                >
+                  {{ getData(nodeRow, nodeColumn, nodeTurtahun) }}
+                </td>
+              </template>
+              <template v-if="statusFetch">
+                <template v-for="(fetchNode, fetchIndex) in fetchedData">
+                  <template
+                    v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
+                    :key="turtahunIndex"
+                  >
+                    <td
+                      class="not-fixed text-center"
+                      v-for="(column, columnIndex) in fetchNode.columns"
+                      :key="columnIndex"
+                    >
+                      {{ getData(nodeRow, column, turtahun, fetchNode.data) }}
                     </td>
                   </template>
-                  <template v-if="statusFetch">
-                    <template v-for="(fetchNode, fetchIndex) in fetchedData">
-                      <template
-                        v-for="(turtahun, turtahunIndex) in fetchNode.turtahun"
-                        :key="turtahunIndex"
-                      >
-                        <td
-                          v-for="(column, columnIndex) in fetchNode.columns"
-                          :key="columnIndex"
-                        >
-                          {{ getData(nodeRow, column, turtahun, fetchNode.data) }}
-                        </td>
-                      </template>
-                    </template>
-                  </template>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+                </template>
+              </template>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="mb-2 d-flex">
         <div class="flex-grow-1"></div>
@@ -534,10 +495,18 @@ const reset = () => {
               v-if="check"
               type="button"
               class="btn btn-sm bg-success-fordone"
-              @click.prevent="downloadTabel(downloadTitle)"
+              @click.prevent="newDownload('tabel-entry', downloadTitle)"
             >
               Simpan
             </button>
+            <!-- <button
+              v-if="check"
+              type="button"
+              class="btn btn-sm bg-success-fordone"
+              @click.prevent="downloadTabel(downloadTitle)"
+            >
+              Simpan
+            </button> -->
             <button
               v-else
               type="button"
@@ -800,36 +769,25 @@ const reset = () => {
 
 #RowTabel thead,
 #ColumnTabel thead {
-  /* min-height: 200px; */
   height: 120px;
   vertical-align: middle;
   padding: 0.1rem;
-  /* white-space: nowrap; */
-  /* text-overflow: ellipsis; */
   overflow: auto;
 }
 
 #ColumnTabel tbody tr td {
-  /* padding-right: 1rem; */
   min-width: 180px;
 }
 
 #RowTabel tbody tr td,
 #ColumnTabel tbody tr td {
-  /* height: 20px; */
   height: 50px;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  /* padding: 0; */
-  /* text-align: left; */
-  /* display: flex; */
-  /* align-content: center; */
-  /* align-items: center; */
 }
 
 .table-data-wrapper {
-  /* display: inline-block; */
   overflow-x: auto;
   vertical-align: top;
   width: calc(100% - 400px);
@@ -854,5 +812,30 @@ tbody {
   color: whitesmoke;
   border-radius: 1rem;
   cursor: auto;
+}
+.fixed-column {
+  position: sticky;
+  min-width: 400px;
+  left: 0;
+  background-color: white;
+  color: black;
+  z-index: 1;
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+.fixed-thead {
+  position: sticky;
+  min-width: 400px;
+  left: 0;
+  background-color: #3d3b8e;
+  color: whitesmoke;
+  z-index: 1;
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+.not-fixed {
+  min-width: 250px;
 }
 </style>

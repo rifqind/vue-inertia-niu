@@ -5,7 +5,7 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { usePage, useForm, Head, Link } from "@inertiajs/vue3";
 import { onMounted, ref, onUpdated } from "vue";
 import ModalBs from "@/Components/ModalBs.vue";
-import { downloadTabel } from "@/download";
+import { downloadTabel, newDownload } from "@/download";
 import { watch } from "vue";
 
 const page = usePage();
@@ -376,95 +376,9 @@ const triggerConfirmation = (value) => {
         @close="flashHandle"
         :flashObject="flashObject"
       />
-      <!-- format two table  -->
-      <!-- <div class="table-container">
-        <div class="row mb-3">
-          <div class="overflow-x-scroll p-0" id="imaginer">
-            <table class="table table-bordered" id="RowTabel" ref="RowTabel">
-              <thead ref="Rowee">
-                <tr>
-                  <th class="text-center align-middle tabel-width-15" rowspan="2">#</th>
-                  <th class="text-center align-middle" rowspan="2">
-                    {{ page.props.row_label }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody ref="RowTbody">
-                <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ nodeRow.label }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="table-data-wrapper" ref="TabelData" id="TabelData">
-            <table class="table table-bordered" id="ColumnTabel">
-              <thead ref="Columnee">
-                <tr>
-                  <th
-                    class="text-center"
-                    :colspan="page.props.columns.length"
-                    v-for="(node, index) in page.props.turtahuns"
-                    :key="index"
-                  >
-                    {{ HeaderColumn(node.label) }}
-                  </th>
-                </tr>
-                <tr>
-                  <template v-for="(node, index) in page.props.turtahuns" :key="index">
-                    <th
-                      class="text-center align-middle"
-                      v-for="(node, index) in page.props.columns"
-                      :key="index"
-                    >
-                      <template v-if="indexExpanded[index]">{{ node.label }} </template>
-                      <template v-else>{{ hiddenLabel(node.label, index) }} </template>
-                      <span
-                        v-if="!indexExpanded[index] || node.label.length > 30"
-                        class="badge badge-info ml-1"
-                        @click="toggleLabel(index)"
-                        >...</span
-                      >
-                    </th>
-                  </template>
-                </tr>
-              </thead>
-              <tbody ref="ColumnTbody">
-                <tr v-for="(nodeRow, index) in page.props.rows" :key="index">
-                  <template
-                    v-for="(nodeTurtahun, index) in page.props.turtahuns"
-                    :key="index"
-                  >
-                    <td v-for="(nodeColumn, index) in page.props.columns" :key="index">
-                      <input
-                        type="text"
-                        class="w-100 text-center"
-                        :id="setId(nodeRow, nodeColumn, nodeTurtahun)"
-                        :value="getData(nodeRow, nodeColumn, nodeTurtahun)"
-                        :disabled="inputDisabled"
-                        @paste="
-                          (event) => {
-                            handlePaste(event, nodeRow, nodeColumn, nodeTurtahun);
-                          }
-                        "
-                        @input="
-                          (event) => {
-                            handleInput(event, nodeRow, nodeColumn, nodeTurtahun);
-                          }
-                        "
-                      />
-                    </td>
-                  </template>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div> -->
       <!-- format single table -->
       <div class="overflow-x-scroll mb-2">
-        <table class="table table-bordered">
+        <table class="table table-bordered" id="tabel-entry">
           <thead>
             <tr>
               <th class="text-center align-middle fixed-thead" rowspan="2">
@@ -610,10 +524,17 @@ const triggerConfirmation = (value) => {
             <button
               type="button"
               class="btn btn-sm bg-success-fordone"
-              @click.prevent="downloadTabel(downloadTitle)"
+              @click.prevent="newDownload('tabel-entry', downloadTitle)"
             >
               Simpan
             </button>
+            <!-- <button
+              type="button"
+              class="btn btn-sm bg-success-fordone"
+              @click.prevent="downloadTabel(downloadTitle)"
+            >
+              Simpan
+            </button> -->
           </template>
         </ModalBs>
         <ModalBs
@@ -764,6 +685,6 @@ thead {
   border-left: 1px solid #ccc;
 }
 .not-fixed {
-  min-width: 300px;
+  min-width: 250px;
 }
 </style>

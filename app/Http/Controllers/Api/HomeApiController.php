@@ -18,6 +18,7 @@ use App\Models\Subject;
 use App\Models\Tabel;
 use App\Models\Turtahun;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -459,8 +460,46 @@ class HomeApiController extends Controller
         $id_tabel = $request->id;
         $tahun = $request->tahun;
 
-        $datacontents = Datacontent::where('id_tabel', $id_tabel)
-            ->where('tahun', $tahun)
+        //old content
+        // $datacontents = Datacontent::where('id_tabel', $id_tabel)
+        //     ->where('tahun', $tahun)
+        //     ->get([
+        //         'value',
+        //         'id_row',
+        //         'id_column',
+        //         'id_turtahun',
+        //         'tahun',
+        //         'wilayah_fullcode'
+        //     ]);
+        // $columnList = Datacontent::where('id_tabel', $id_tabel)
+        //     ->where('tahun', $tahun)
+        //     ->pluck('id_column');
+        // $rowList = Datacontent::where('id_tabel', $id_tabel)
+        //     ->where('tahun', $tahun)
+        //     ->pluck('id_row');
+        // $turtahunList = Datacontent::where('id_tabel', $id_tabel)
+        //     ->where('tahun', $tahun)
+        //     ->pluck('id_turtahun');
+        // $wilayah_label = Datacontent::where('id_tabel', $id_tabel)
+        //     ->where('tahun', $tahun)
+        //     ->pluck('wilayah_fullcode');
+
+        // $columns = Column::whereIn('id', $columnList)->get(
+        //     ['id', 'label']
+        // );
+        // $rows = Row::whereIn('id', $rowList)->get(
+        //     ['id', 'label']
+        // );
+        // $turtahuns = Turtahun::whereIn('id', $turtahunList)->get(
+        //     ['id', 'label']
+        // );
+        // $wilayah_label = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_label)->get(
+        //     ['wilayah_fullcode', 'label']
+        // );
+        $used_rowlabel = DB::table('rowlabel')->where('id_tabel', $id_tabel)->first();
+        if ($used_rowlabel)
+            $used_rowlabel = $used_rowlabel->row_label;
+        $datacontents = Datacontent::where('id_tabel', $id_tabel)->where('tahun', $tahun)
             ->get([
                 'value',
                 'id_row',
@@ -469,37 +508,186 @@ class HomeApiController extends Controller
                 'tahun',
                 'wilayah_fullcode'
             ]);
-        $columnList = Datacontent::where('id_tabel', $id_tabel)
-            ->where('tahun', $tahun)
-            ->pluck('id_column');
-        $rowList = Datacontent::where('id_tabel', $id_tabel)
-            ->where('tahun', $tahun)
-            ->pluck('id_row');
-        $turtahunList = Datacontent::where('id_tabel', $id_tabel)
-            ->where('tahun', $tahun)
-            ->pluck('id_turtahun');
-        $wilayah_label = Datacontent::where('id_tabel', $id_tabel)
-            ->where('tahun', $tahun)
-            ->pluck('wilayah_fullcode');
+        $wilayah_fullcodes = [];
+        $id_columns = [];
+        $turTahunKeys = [];
+        $id_rows = collect([]);
+        foreach ($datacontents as $datacontent) {
+            // array_push($id_rows, $datacontent->id_row);
+            array_push($id_columns, $datacontent->id_column);
+            array_push($turTahunKeys, $datacontent->id_turtahun);
+            array_push($wilayah_fullcodes, $datacontent->wilayah_fullcode);
+            if ($datacontent->id_row == 0) {
+                $temp = MasterWilayah::where('wilayah_fullcode', $datacontent->wilayah_fullcode)
+                    ->first();
+            } else
+                $temp = Row::where('id', $datacontent->id_row)->first();
+            if ($temp) {
+                // Check if the collection already contains an item with the same 'wilayah_fullcode' or 'id'
+                $alreadyExists = $id_rows->contains(function ($item) use ($temp) {
+                    return ($temp->wilayah_fullcode && $item->wilayah_fullcode == $temp->wilayah_fullcode) ||
+                        ($temp->id && $item->id == $temp->id);
+                });
 
-        $columns = Column::whereIn('id', $columnList)->get(
-            ['id', 'label']
-        );
-        $rows = Row::whereIn('id', $rowList)->get(
-            ['id', 'label']
-        );
-        $turtahuns = Turtahun::whereIn('id', $turtahunList)->get(
-            ['id', 'label']
-        );
-        $wilayah_label = MasterWilayah::whereIn('wilayah_fullcode', $wilayah_label)->get(
-            ['wilayah_fullcode', 'label']
-        );
+                // Push $temp only if it doesn't already exist in the collection
+                if (!$alreadyExists) {
+                    $id_rows->push($temp);
+                }
+            }
+        }
+        // Sort the collection by 'wilayah_fullcode', placing null or empty values at the end
+        $id_rows = $id_rows->sortBy(function ($item) {
+            $wilayah_fullcode = $item->wilayah_fullcode;
+            if (!$wilayah_fullcode)
+                return [5, ''];
+            // Break down wilayah_fullcode into different levels: provinsi, kabupaten, kecamatan, desa
+            $prov = substr($wilayah_fullcode, 0, 2);   // First 2 digits (provinsi level)
+            $kab = substr($wilayah_fullcode, 2, 2);    // Next 2 digits (kabupaten level)
+            $kec = substr($wilayah_fullcode, 4, 3);    // Next 3 digits (kecamatan level)
+            $desa = substr($wilayah_fullcode, 7, 3);   // Last 3 digits (desa level)
+
+            // Determine the level: more trailing zeros = higher level
+            $level = 0;
+            if ($kab == '00' && $kec == '000' && $desa == '000') {
+                $level = 4;   // Provinsi level (Highest, ordered last)
+            } elseif ($kec == '000' && $desa == '000') {
+                $level = 3;   // Kabupaten level
+            } elseif ($desa == '000') {
+                $level = 2;   // Kecamatan level
+            } else {
+                $level = 1;   // Desa level (Lowest, ordered first)
+            }
+            return [$level, $wilayah_fullcode];
+        });
+
+        $rows = $id_rows->values();
+        $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->get();
+        $RowOrders = RowOrder::where('id_statustabel', $request->id)->value('orders');
+        try {
+            //code...
+            if ($rows[0]->id == 0) {
+                $wilayah_parent_code = '';
+                $jenis = "DAFTAR ";
+                $desa = substr($wilayah_fullcodes[0], 7, 3);
+                $kec = substr($wilayah_fullcodes[0], 4, 3);
+                $kab = substr($wilayah_fullcodes[0], 2, 2);
+                if ($desa != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 7) . '000';
+                    $jenis = $jenis . "DESA DI ";
+                } else if ($kec != '000') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 4) . '000' . '000';
+                    $jenis = $jenis . "KECAMATAN DI ";
+                } else if ($kab != '00') {
+                    $wilayah_parent_code = substr($wilayah_fullcodes[0], 0, 2) . '00' . '000' . '000';
+                    $jenis = $jenis . "KABUPATEN DI ";
+                }
+                if ($wilayah_parent_code == '') {
+                    $rowLabel = 'PROVINSI SULAWESI UTARA';
+                } else {
+                    $rowLabel = $jenis . MasterWilayah::where('wilayah_fullcode', $wilayah_parent_code)->pluck('label')[0];
+                    $rowLabel = strtolower($rowLabel);
+                    $rowLabel = ucwords($rowLabel);
+                }
+            } else {
+                $listRowGroups = [];
+                foreach ($rows as $key => $value) {
+                    # code...
+                    array_push($listRowGroups, $value->id_row_groups);
+                }
+                $isUnique = count(array_unique($listRowGroups));
+                if ($isUnique > 1) {
+                    $tempt = RowGroup::whereIn('id', $listRowGroups)->pluck('label');
+                    $text = 'Gabungan Kelompok Baris dari : ';
+                    foreach ($tempt as $key => $value) {
+                        # code...
+                        if ($key == sizeof($tempt) - 1)
+                            $text .= $value;
+                        else
+                            $text .= $value . ' - ';
+                    }
+                    $rowLabel = $text;
+                } else
+                    $rowLabel = RowGroup::where('id', $rows[0]->id_row_groups)->pluck('label')[0];
+            }
+        } catch (\Exception $e) {
+            return response()->json(array('error' => $e->getMessage(), 'rows' => $rows));
+        }
+        //call the orders
+        $ColumnOrders = ColumnOrder::where('id_statustabel', $request->id)->value('orders');
+        if ($ColumnOrders) {
+            $columns = Column::whereIn('id', $id_columns)->orderByRaw("FIELD(id," . $ColumnOrders . ")")->get();
+        } else {
+            $columns = Column::whereIn('id', $id_columns)->get();
+        }
+        if (!$rows[0]->id == 0 && $RowOrders)
+            $rows = Row::whereIn('id', $rows->pluck('id'))->orderByRaw("FIELD(id," . $RowOrders . ")")->get();
+        $turtahuns = Turtahun::whereIn('id', $turTahunKeys)->get();
+        $aoa = [];
+        $header = [];
+        array_push($header, $rowLabel);
+        foreach ($turtahuns as $key => $value) {
+            # code...
+            foreach ($columns as $keyCol => $valCol) {
+                # code...
+                if ($value->label == 'Tahun')
+                    $text = $tahun;
+                else
+                    $text = $value->label;
+                array_push($header, $text . '(' . $keyCol . ')');
+            }
+        }
+        $headerLvl2 = [];
+        array_push($headerLvl2, '');
+        foreach ($turtahuns as $key => $value) {
+            # code...
+            foreach ($columns as $keyCol => $valCol) {
+                # code...
+                array_push($headerLvl2, $valCol->label);
+            }
+        }
+        array_push($aoa, $header, $headerLvl2);
+        foreach ($rows as $key => $value) {
+            $current = [];
+            array_push($current, $value->label);
+            foreach ($turtahuns as $keyTur => $valTur) {
+                foreach ($columns as $keyCol => $valCol) {
+                    # code...
+                    // how to get $datacontents where id_row is from $value->id and id column from $valCol->id 
+                    if ($value->id) {
+                        $data = $datacontents->where('id_row', $value->id)
+                            ->where('id_column', $valCol->id)
+                            ->where('id_turtahun', $valTur->id)
+                            ->first();
+                        array_push($current, $data->value);
+                    } else {
+                        $data = $datacontents->where('wilayah_fullcode', $value->wilayah_fullcode)
+                            ->where('id_column', $valCol->id)
+                            ->where('id_turtahun', $valTur->id)
+                            ->first();
+                        array_push($current, $data->value);
+                    }
+                }
+            }
+            array_push($aoa, $current);
+        }
+        $BigHeaders = $aoa[0];
+        $BigData = array_slice($aoa, 1);
+        $jsonData = array_map(function ($row) use ($BigHeaders) {
+            $obj = [];
+            foreach ($row as $index => $cell) {
+                // Map each cell to the corresponding header
+                $obj[$BigHeaders[$index]] = $cell;
+            }
+            return $obj;
+        }, $BigData);
         return response()->json([
             'data' => $datacontents,
             'columns' => $columns,
             'rows' => $rows,
             'turtahuns' => $turtahuns,
-            'wilayah_label' => $wilayah_label,
+            'row_label' => $rowLabel,
+            'json_data' => $jsonData,
+            // 'wilayah_label' => $wilayah_label,
         ]);
     }
 
