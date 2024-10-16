@@ -21,27 +21,27 @@ const toggleMenuOpen = function (x) {
   if (x === "master") menuOpenMaster.value = !menuOpenMaster.value;
   // menuOpen.value = !menuOpen.value;
 };
-const isMobile = ref(false);
-const isTablet = ref(false);
-const updateDeviceType = () => {
-  isMobile.value = window.matchMedia("(max-width: 767px)").matches;
-  isTablet.value = window.matchMedia(
-    "(min-width: 768px) and (max-width: 1024px)"
-  ).matches;
-};
-onMounted(() => {
-  updateDeviceType();
-  window.addEventListener("resize", updateDeviceType);
-});
+// const isMobile = ref(false);
+// const isTablet = ref(false);
+// const updateDeviceType = () => {
+//   isMobile.value = window.matchMedia("(max-width: 767px)").matches;
+//   isTablet.value = window.matchMedia(
+//     "(min-width: 768px) and (max-width: 1024px)"
+//   ).matches;
+// };
+// onMounted(() => {
+//   updateDeviceType();
+//   window.addEventListener("resize", updateDeviceType);
+// });
 
-onUnmounted(() => {
-  window.removeEventListener("resize", updateDeviceType);
-});
-const deviceType = computed(() => {
-  if (isMobile.value) return "Mobile";
-  if (isTablet.value) return "Tablet";
-  return "Desktop";
-});
+// onUnmounted(() => {
+//   window.removeEventListener("resize", updateDeviceType);
+// });
+// const deviceType = computed(() => {
+//   if (isMobile.value) return "Mobile";
+//   if (isTablet.value) return "Tablet";
+//   return "Desktop";
+// });
 </script>
 
 <template>
@@ -299,15 +299,14 @@ const deviceType = computed(() => {
           >
             Kembali ke Beranda
           </NavLinkSidebar>
-          <template v-if="deviceType == 'Mobile'">
-            <br />
-            <hr />
-            <font-awesome-icon
-              data-widget="pushmenu"
-              icon="fa-solid fa-circle-chevron-left"
-              class="edit-pen back-pen"
-            />
-          </template>
+
+          <br />
+          <hr />
+          <font-awesome-icon
+            data-widget="pushmenu"
+            icon="fa-solid fa-circle-chevron-left"
+            class="edit-pen back-pen"
+          />
         </ul>
       </nav>
       <!-- /.sidebar-menu -->

@@ -446,9 +446,11 @@ const forceDelete = async () => {
             <td class="align-middle">{{ table.number }}</td>
             <td class="align-middle">
               {{ table.label }}
-              <span class="badge badge-info kategori" :title="table.label_kategori">{{
-                table.kategori
-              }}</span>
+              <template v-for="(kat, katIndex) in table.kategori">
+                <span class="badge badge-info kategori mr-1" :title="kat.label">
+                  {{ kat["id_category"] }}</span
+                >
+              </template>
             </td>
             <td class="align-middle">{{ table.nama_dinas }}</td>
             <td class="align-middle">

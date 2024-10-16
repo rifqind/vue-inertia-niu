@@ -44,6 +44,9 @@ yearDrop.value.options = years.map((year) => ({
   value: year.toString(),
 }));
 
+const toggleCheck = function (index, object) {
+  object[index] = !object[index];
+};
 const flashObject = ref(page.props.flash);
 watch(
   () => page.props.flash,
@@ -97,7 +100,7 @@ const rowListFetched = ref([]);
 const rowsCheckBox = ref([]);
 const kategoriOptions = ref({
   value: null,
-  options: null,
+  options: [{ value: 0, label: "Tidak terkategori" }],
 });
 const toggleKategoriModal = async (value, id) => {
   kategoriModal.value = true;
@@ -109,10 +112,11 @@ const toggleKategoriModal = async (value, id) => {
       },
     });
     kategoriOptions.value.options = [
-      { label: "Tidak terkategori", value: 0 },
+      { value: 0, label: "Tidak terkategori" },
       ...response.data,
     ];
-    kategoriOptions.value.value = value;
+    // console.log(kategoriOptions.value.value);
+    kategoriOptions.value.value = [value];
   } catch (error) {}
 };
 const ArrayBigObjects = [
@@ -141,14 +145,19 @@ const isWilayahFullcodes = ref(null);
 const patchTabel = async (id_tabel) => {
   duplicateModalStatus.value = true;
   const response = await axios.get(route("fetchMaster", { id: id_tabel }));
-  // console.log(response.data)
   duplicateForm.id = id_tabel;
   duplicateForm.produsen = response.data.tabel.id_dinas;
   duplicateForm.judul = response.data.tabel.label;
   ProdusenFetched.value = response.data.dinas;
   isWilayahFullcodes.value = response.data.isWilayahFullcodes;
+  // if (page.props.auth.user.dinas.wilayah_fullcode == "7100000000") {
   kabsDrop.value.options =
-    response.data.kab.length > 1 ? response.data.kab.slice(1) : response.data.kab;
+    page.props.auth.user.dinas.wilayah_fullcode == "7100000000"
+      ? response.data.kab.slice(1)
+      : response.data.kab;
+  // } else {
+  //   kabsDrop.value.options = response.data.kab;
+  // }
   tingkatanDrop.value = {
     value: null,
     options: [
@@ -157,8 +166,8 @@ const patchTabel = async (id_tabel) => {
     ],
   };
   let kabkot = [{ label: "Kabupaten/Kota", value: 1 }];
-  if (page.props.auth.user.dinas.wilayah_fullcode == "7100000000")
-    tingkatanDrop.value.options = [...kabkot, ...tingkatanDrop.value.options];
+  // if (page.props.auth.user.dinas.wilayah_fullcode == "7100000000")
+  tingkatanDrop.value.options = [...kabkot, ...tingkatanDrop.value.options];
 };
 const loadKecamatans = async (valueKabs) => {
   if (valueKabs) {
@@ -214,10 +223,11 @@ const assignRowListWilayah = function (options, parents) {
   switch (options) {
     case 1:
       rowListFetched.value = kabsDrop.value.options;
-      rowListFetched.value.push({
-        label: "PROVINSI SULAWESI UTARA",
-        value: "7100000000",
-      });
+      if (page.props.auth.user.dinas.wilayah_fullcode == "7100000000")
+        rowListFetched.value.push({
+          label: "PROVINSI SULAWESI UTARA",
+          value: "7100000000",
+        });
       break;
     case 2:
       let kecLists = kecsDrop.value.options;
@@ -237,6 +247,7 @@ const assignRowListWilayah = function (options, parents) {
       break;
 
     default:
+      rowListFetched.value = [];
       break;
   }
   rowsCheckBox.value = Array(rowListFetched.value.length).fill(false);
@@ -571,9 +582,11 @@ const downloadRoute = () => {
             <td class="align-middle">{{ table.number }}</td>
             <td class="align-middle">
               {{ table.label }}
-              <span class="badge badge-info kategori" :title="table.label_kategori">{{
-                table.kategori
-              }}</span>
+              <template v-for="(kat, katIndex) in table.kategori">
+                <span class="badge badge-info kategori mr-1" :title="kat.label">{{
+                  kat["id_category"]
+                }}</span>
+              </template>
             </td>
             <td class="align-middle">{{ table.nama_dinas }}</td>
             <td class="align-middle">
@@ -947,6 +960,7 @@ const downloadRoute = () => {
                 :options="kategoriOptions.options"
                 placeholder="-- Pilih Kategori Data --"
                 :searchable="true"
+                mode="tags"
               />
             </div>
           </form>

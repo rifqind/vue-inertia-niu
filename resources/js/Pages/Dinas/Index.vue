@@ -42,12 +42,19 @@ const kecs = ref([]);
 const desa = ref([]);
 const tingkatan = ref({
   value: null,
-  options: [
-    { label: "Provinsi", value: 0 },
-    { label: "Kabupaten/Kota", value: 1 },
-    { label: "Kecamatan", value: 2 },
-    { label: "Desa/Kelurahan", value: 3 },
-  ],
+  options:
+    page.props.auth.user.dinas.wilayah_fullcode == "7100000000"
+      ? [
+          { label: "Provinsi", value: 0 },
+          { label: "Kabupaten/Kota", value: 1 },
+          { label: "Kecamatan", value: 2 },
+          { label: "Desa/Kelurahan", value: 3 },
+        ]
+      : [
+          { label: "Kabupaten/Kota", value: 1 },
+          { label: "Kecamatan", value: 2 },
+          { label: "Desa/Kelurahan", value: 3 },
+        ],
 });
 var dObject = page.props.dinas.data;
 var d = ref(dObject);
@@ -114,7 +121,10 @@ const fetchProdusen = async function (id) {
         form.kab = produsenFetched.value.data.wilayah_fullcode;
       }
     }
-    kabsDrop.value.options = produsenFetched.value.kabs.slice(1);
+    kabsDrop.value.options =
+      page.props.auth.user.dinas.wilayah_fullcode == "7100000000"
+        ? produsenFetched.value.kabs.slice(1)
+        : produsenFetched.value.kabs;
   } catch (error) {
     console.error("Error fetching produsen: ", error);
   }

@@ -26,17 +26,42 @@ class MasterWilayah extends Model
                 ->where('desa', 'not like', '000')
                 ->get(['label', 'wilayah_fullcode as value']);
         } else {
-            $kabs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
-                ->where('kec', 'like', '000')
-                ->get(['label', 'wilayah_fullcode as value']);
-            $kecs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
-                ->where('kec', 'not like', '000')
-                ->where('desa', 'like', '000')
-                ->get(['label', 'wilayah_fullcode as value']);
-            $desa = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
-                ->where('kec', 'not like', '000')
-                ->where('desa', 'not like', '000')
-                ->get(['label', 'wilayah_fullcode as value']);
+            if (auth()->user()->dinas->wilayah_fullcode == "7101000000") {
+                $kabs = MasterWilayah::whereIn('kab', ['01', '10'])
+                    ->where('kec', 'like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+                $kecs = MasterWilayah::whereIn('kab', ['01', '10'])
+                    ->where('kec', 'not like', '000')
+                    ->where('desa', 'like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+                $desa = MasterWilayah::whereIn('kab', ['01', '10'])
+                    ->where('kec', 'not like', '000')
+                    ->where('desa', 'not like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+            } else if (auth()->user()->dinas->wilayah_fullcode == "7105000000") {
+                $kabs = MasterWilayah::whereIn('kab', ['05', '09'])
+                    ->where('kec', 'like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+                $kecs = MasterWilayah::whereIn('kab', ['05', '09'])
+                    ->where('kec', 'not like', '000')
+                    ->where('desa', 'like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+                $desa = MasterWilayah::whereIn('kab', ['05', '09'])
+                    ->where('kec', 'not like', '000')
+                    ->where('desa', 'not like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+            } else {
+                $kabs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
+                    ->where('kec', 'like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+                $kecs = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
+                    ->where('kec', 'not like', '000')
+                    ->where('desa', 'like', '000')
+                    ->get(['label', 'wilayah_fullcode as value']);
+                $desa = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)
+                    ->where('kec', 'not like', '000')
+                    ->where('desa', 'not like', '000');
+            }
         }
         $wilayah = [
             'kabs' => $kabs,
@@ -46,7 +71,8 @@ class MasterWilayah extends Model
         return $wilayah;
     }
 
-    public static function getDinasWilayah() {
+    public static function getDinasWilayah()
+    {
         if (auth()->user()->dinas->wilayah_fullcode == "7100000000") {
             # code...
             $lists = MasterWilayah::pluck('wilayah_fullcode');
@@ -55,9 +81,9 @@ class MasterWilayah extends Model
                 # code...
                 if (auth()->user()->dinas->wilayah_fullcode == "7101000000") {
                     # code...
-                    $lists = MasterWilayah::whereIn('kab', ['01','10'])->pluck('wilayah_fullcode');
+                    $lists = MasterWilayah::whereIn('kab', ['01', '10'])->pluck('wilayah_fullcode');
                 } else if (auth()->user()->dinas->wilayah_fullcode == "7105000000") {
-                    $lists = MasterWilayah::whereIn('kab', ['05','09'])->pluck('wilayah_fullcode');
+                    $lists = MasterWilayah::whereIn('kab', ['05', '09'])->pluck('wilayah_fullcode');
                 } else {
                     $lists = MasterWilayah::where('kab', auth()->user()->dinas->wilayah->kab)->pluck('wilayah_fullcode');
                 }

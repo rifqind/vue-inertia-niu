@@ -91,10 +91,7 @@ yearDrop.value.options = years.map((year) => ({
   label: year.toString(),
   value: year.toString(),
 }));
-const kabs = page.props.kabupatens.map((kab) => ({
-  label: kab.label,
-  value: kab.wilayah_fullcode,
-}));
+const kabs = page.props.kabupatens;
 // onMounted(() => {
 // })
 // onUnmounted(()=>{
@@ -142,12 +139,19 @@ const rowTypeDrop = ref({
 
 const tingkatanDrop = ref({
   value: null,
-  options: [
-    { label: "Provinsi", value: 0 },
-    { label: "Kabupaten/Kota", value: 1 },
-    { label: "Kecamatan", value: 2 },
-    { label: "Desa/Kelurahan", value: 3 },
-  ],
+  options:
+    page.props.auth.user.dinas.wilayah_fullcode == "7100000000"
+      ? [
+          { label: "Provinsi", value: 0 },
+          { label: "Kabupaten/Kota", value: 1 },
+          { label: "Kecamatan", value: 2 },
+          { label: "Desa/Kelurahan", value: 3 },
+        ]
+      : [
+          { label: "Kabupaten/Kota", value: 1 },
+          { label: "Kecamatan", value: 2 },
+          { label: "Desa/Kelurahan", value: 3 },
+        ],
 });
 
 const toggleCheck = function (index, object) {
@@ -176,13 +180,16 @@ const assignRowListWilayah = function (options, parents) {
       ];
       break;
     case 1:
-      kabLists = kabupatens.map((obj) => ({
-        label: obj.label,
-        value: obj.wilayah_fullcode,
-      }));
-      kabLists.push(provinsi);
+      kabLists = kabupatens;
+      if (page.props.auth.user.dinas.wilayah_fullcode == "7100000000") {
+        kabLists.push(provinsi);
+      }
       kabLists.map((item, key, array) => {
-        item.tipe = key === array.length - 1 ? "PROVINSI" : "KABUPATEN/KOTA";
+        if (key === array.length - 1) {
+          page.props.auth.user.dinas.wilayah_fullcode == "7100000000"
+            ? (item.tipe = "PROVINSI")
+            : (item.tipe = "KABUPATEN/KOTA");
+        } else item.tipe = "KABUPATEN/KOTA";
       });
       rowListFetched.value = kabLists;
       break;
@@ -204,6 +211,7 @@ const assignRowListWilayah = function (options, parents) {
       break;
 
     default:
+      rowListFetched.value = [];
       break;
   }
   rowsCheckBox.value = Array(rowListFetched.value.length).fill(false);
@@ -828,6 +836,7 @@ const searchRow = (input) => {
                   ]"
                   placeholder="-- Pilih Kategori Data --"
                   :searchable="true"
+                  mode="tags"
                 />
                 <div class="text-danger text-left" v-if="true" id="error-kategori"></div>
               </div>

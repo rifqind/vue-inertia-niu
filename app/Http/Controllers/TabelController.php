@@ -103,7 +103,6 @@ class TabelController extends Controller
         $dataToCounted = $query->join('tabels', 'statustables.id_tabel', '=', 'tabels.id')
             ->join('status_desc as sdesc', 'sdesc.id', '=', 'statustables.status')
             ->join('dinas', 'tabels.id_dinas', '=', 'dinas.id')
-            ->leftJoin('klasifikasi_tabel', 'tabels.id', '=', 'klasifikasi_tabel.id_tabel')
             ->select(
                 [
                     'tabels.*',
@@ -114,7 +113,6 @@ class TabelController extends Controller
                     'statustables.id as id_statustables',
                     'statustables.updated_at as status_updated',
                     'statustables.edited_by as edited_by',
-                    'klasifikasi_tabel.id_category as kategori'
                 ]
             );
         if ($request->orderAttribute) {
@@ -169,13 +167,21 @@ class TabelController extends Controller
             }
             if (!empty($filter['category'])) {
                 if (!in_array(0, $filter['category'], true)) {
-                    $query->whereIn('klasifikasi_tabel.id_category', $filter['category']);
+                    // $query->whereIn('klasifikasi_tabel.id_category', $filter['category']);
+                    // dd($filter['category']);
+                    // dd($filter['category']);
+                    $targetTabels = DB::table('klasifikasi_tabel')->whereIn('klasifikasi_tabel.id_category', $filter['category'])->pluck('id_tabel');
+                //    dd($targetTabels);
+                    $query->whereIn('tabels.id', $targetTabels);
                 }
             }
         }
         $countData = $dataToCounted->count();
         $cloneQuery = clone $query;
-        $checkCat = $cloneQuery->whereNot('id_category', null)->select([
+        $checkCat = $cloneQuery
+        // ->whereNot('id_category', null)
+        ->join('klasifikasi_tabel', 'klasifikasi_tabel.id_tabel', '=', 'tabels.id')
+        ->select([
             'tabels.*',
             'tabels.id as tabelUuid',
             'dinas.nama as nama_dinas',
@@ -214,6 +220,9 @@ class TabelController extends Controller
                     }
                 } else $rowInputs = Row::whereIn('id', $id_rows)->get();
                 $columns = Column::whereIn('id', $id_columns)->get('label');
+                $category = DB::table('klasifikasi_tabel')
+                ->join('data_category as dc', 'dc.id', '=', 'klasifikasi_tabel.id_category')
+                ->where('id_tabel', $table->id)->get();
             } else {
                 $rowLabel = 'Tidak ada data';
                 $columns = [[
@@ -234,6 +243,7 @@ class TabelController extends Controller
             array_push($table_objects, [
                 'number' => $number++,
                 'label' => $NumberAndLabel,
+                'kategori' => $category,
                 'nama_dinas' => $table->nama_dinas,
                 'id' => $table->tabelUuid,
                 'row_label' => $rowLabel,
@@ -244,8 +254,8 @@ class TabelController extends Controller
                 'status_updated' => $when_updated,
                 'who_updated' => $who_updated,
                 'rowInputs' => $rowInputs,
-                'kategori' => $table->kategori,
-                'label_kategori' => $labelkategori
+                // 'kategori' => $table->kategori,
+                // 'label_kategori' => $labelkategori
             ]);
         }
         if ($request->routeName) {
@@ -254,6 +264,7 @@ class TabelController extends Controller
                 'tables' => $table_objects,
                 'countData' => $countData,
                 'data' => $listOfUuid,
+                'cat' => $cat,
                 // 'test' => $countQuery->get(),
             ]);
         }
@@ -276,14 +287,12 @@ class TabelController extends Controller
         else $currentPage = 1;
         $query = Tabel::query();
         $dataToCounted = $query->join('dinas', 'dinas.id', '=', 'tabels.id_dinas')
-            ->leftJoin('klasifikasi_tabel', 'tabels.id', '=', 'klasifikasi_tabel.id_tabel')
             ->whereIn('dinas.wilayah_fullcode', MasterWilayah::getDinasWilayah())
             ->select([
                 'tabels.*',
                 'tabels.id as tabelUuid',
                 'tabels.edited_by as edited_by',
                 'tabels.updated_at as status_updated',
-                'klasifikasi_tabel.id_category as kategori'
             ]);
         if ($request->orderAttribute) {
             $order = $request->orderAttribute;
@@ -346,13 +355,20 @@ class TabelController extends Controller
             }
             if (!empty($filter['category'])) {
                 if (!in_array(0, $filter['category'], true)) {
-                    $query->whereIn('klasifikasi_tabel.id_category', $filter['category']);
+                    // $query->whereIn('klasifikasi_tabel.id_category', $filter['category']);
+                    // dd($filter['category']);
+                    // dd($filter['category']);
+                    $targetTabels = DB::table('klasifikasi_tabel')->whereIn('klasifikasi_tabel.id_category', $filter['category'])->pluck('id_tabel');
+                //    dd($targetTabels);
+                    $query->whereIn('tabels.id', $targetTabels);
                 }
             }
         }
         $countData = $dataToCounted->count();
         $cloneQuery = clone $query;
-        $checkCat = $cloneQuery->whereNot('id_category', null)
+        $checkCat = $cloneQuery
+        ->join('klasifikasi_tabel', 'klasifikasi_tabel.id_tabel', '=', 'tabels.id')
+        // ->where('id_category', null)
             ->select([
                 'tabels.*',
                 'tabels.id as tabelUuid',
@@ -390,6 +406,9 @@ class TabelController extends Controller
                 } else $rowInputs = Row::whereIn('id', $id_rows)->get();
                 $rowLabel = $this->generateRowLabel($rows, $wilayah_fullcodes, $table->id);
                 $columns = Column::whereIn('id', $id_columns)->get();
+                $category = DB::table('klasifikasi_tabel')
+                    ->join('data_category as dc', 'dc.id', '=', 'klasifikasi_tabel.id_category')
+                    ->where('id_tabel', $table->id)->get();
             } else {
                 $rowLabel = 'Tidak ada data';
                 $columns = [[
@@ -409,6 +428,7 @@ class TabelController extends Controller
             array_push($table_objects, [
                 'number' => $number++,
                 'label' => $NumberAndLabel,
+                'kategori' => $category,
                 'id' => $table->tabelUuid,
                 'nama_dinas' => $table->dinas->nama,
                 // 'rows' => $rows,
@@ -420,8 +440,8 @@ class TabelController extends Controller
                 'status_updated' => $when_updated,
                 'who_updated' => $who_updated,
                 'rowInputs' => $rowInputs,
-                'kategori' => $table->kategori,
-                'label_kategori' => $labelkategori
+                // 'kategori' => $table->kategori,
+                // 'label_kategori' => $labelkategori
             ]);
         }
         if ($request->routeName) {
@@ -429,6 +449,7 @@ class TabelController extends Controller
             return response()->json([
                 'tables' => $table_objects,
                 'countData' => $countData,
+                'cat' => $cat,
                 // 'data' => $listOfUuid,
                 // 'test' => $countQuery->get(),
             ]);
@@ -452,7 +473,7 @@ class TabelController extends Controller
         $kolom_grup = ColumnGroup::get(['column_groups.id as value', 'column_groups.label as label']);
         $subjects = Subject::get(['subjects.id as value', 'subjects.label as label']);
         $turtahun_groups = TurTahunGroup::get(['turtahun_groups.id as value', 'turtahun_groups.label as label']);
-        $kabupatens = MasterWilayah::where('desa', 'like', '000')->where('kec', 'like', '000')->where('kab', 'not like', '00')->select(['wilayah_fullcode', 'label'])->get();
+        $kabupatens =MasterWilayah::getMyWilayah();
         $category = DataCategory::get(['id as value', 'label as label']);
         return Inertia::render('Tabel/Create', [
             'tabels' => $tabel,
@@ -462,7 +483,7 @@ class TabelController extends Controller
             'turtahun_groups' => $turtahun_groups,
             'column_groups' => $kolom_grup,
             'subjects' => $subjects,
-            'kabupatens' => $kabupatens,
+            'kabupatens' => $kabupatens['kabs'],
             'category' => $category,
         ]);
     }
@@ -503,10 +524,14 @@ class TabelController extends Controller
             //tabel create
             // dd($request->orderRow, $request->orderColumn);
             $new_tabel = Tabel::create($request->tabel);
-            if ($optional['kategori'] != 0) DB::table('klasifikasi_tabel')->insert([
-                'id_tabel' => $new_tabel->id,
-                'id_category' => $optional['kategori']
-            ]);
+            if (!in_array(0, $optional['kategori'])) {
+                foreach ($optional['kategori'] as $kategori) {
+                    DB::table('klasifikasi_tabel')->insert([
+                        'id_tabel' => $new_tabel->id,
+                        'id_category' => $kategori
+                    ]);
+                }
+            }
             if ($optional['rowlabel']) DB::table('rowlabel')->insert([
                 'id_tabel' => $new_tabel->id,
                 'row_label' => $optional['rowlabel']
@@ -1645,21 +1670,25 @@ class TabelController extends Controller
                 DB::beginTransaction();
                 if ($request->has('klasifikasi')) {
                     // Check if id_category is 0, which implies deletion
-                    if ($request->id_category == 0) {
-                        // dd($request->id_tabel);
-                        // Find the record by id_tabel and delete it if it exists
+                    if (in_array(0, $request->id_category)) {
+                        // If the array contains 0, delete the record by id_tabel
                         DB::table('klasifikasi_tabel')
                             ->where('id_tabel', $request->id_tabel)
                             ->delete();
-                        DB::commit();
-                        return redirect()->route('tabel.master')->with('message', 'Berhasil ganti kategori');
+                            DB::commit();
+                            return redirect()->route('tabel.master')->with('message', 'Berhasil ganti kategori');
+                        }
+                        
+                        // If there is no 0, update or insert each category from the array
+                    DB::table('klasifikasi_tabel')
+                        ->where('id_tabel', $request->id_tabel)
+                        ->delete();
+                    foreach ($request->id_category as $category) {
+                        DB::table('klasifikasi_tabel')->insert([
+                            'id_tabel' => $request->id_tabel,   // Table ID
+                            'id_category' => $category          // Insert each category
+                        ]);
                     }
-
-                    // Otherwise, insert or update the classification
-                    DB::table('klasifikasi_tabel')->updateOrInsert(
-                        ['id_tabel' => $request->id_tabel], // Condition for upsert
-                        ['id_category' => $request->id_category] // Data to insert/update
-                    );
                     DB::commit();
                     return redirect()->route('tabel.master')->with('message', 'Berhasil ganti kategori');
                 }
