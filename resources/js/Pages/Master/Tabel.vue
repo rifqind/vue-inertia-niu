@@ -18,6 +18,7 @@ const page = usePage();
 var tGroup = page.props.tables;
 var tables = ref(tGroup);
 const kategoriModal = ref(false);
+const isCatExist = ref(page.props.cat);
 const form = useForm({
   id: null,
   tahun: null,
@@ -53,6 +54,10 @@ watch(
   (value) => {
     flashObject.value = value;
   }
+);
+watch(
+  () => page.props.cat,
+  (value) => (isCatExist.value = value)
 );
 const flashHandle = () => {
   toggleFlash.value = false;
@@ -470,7 +475,7 @@ const downloadRoute = () => {
         >
           <font-awesome-icon icon="fa-solid fa-circle-down" />
         </button>
-        <div v-if="page.props.cat" class="mr-2 category mb-2 mb-md-0">
+        <div v-if="isCatExist" class="mr-2 category mb-2 mb-md-0">
           <Multiselect
             v-model="searchCategory"
             :options="page.props.catList"

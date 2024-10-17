@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dinas;
 use App\Models\MasterWilayah;
+use App\Models\Notifikasi;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -258,6 +259,7 @@ class UserController extends Controller
         // dd($id);
         try {
             //code...
+            $delete_notif = Notifikasi::where('id_user', $request->id)->delete();
             User::destroy($id);
             // return response()->json('Berhasil Hapus');
             return redirect()->route('users.index')->with('message', 'Berhasil menghapus akun pengguna tersebut');
