@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Catatan;
 use App\Models\Column;
 use App\Models\ColumnOrder;
 use App\Models\DataCategory;
@@ -471,6 +472,7 @@ class HomeController extends Controller
                 'message' => 'Data status tabel ini belum dalam status Final',
             ], 403);
         }
+        $catatans = Catatan::where('id_statustabel', $statusTabel->id)->value('catatan');
         $id_tabel = $statusTabel->id_tabel;
         $tahun = $statusTabel->tahun;
         $used_rowlabel = DB::table('rowlabel')->where('id_tabel', $id_tabel)->first();
@@ -638,6 +640,7 @@ class HomeController extends Controller
             'turtahuns' => $turtahuns,
             'tabel' => $statusTabel,
             'metavars' => $this_metavar,
+            'catatans' => $catatans,
         ]);
     }
 

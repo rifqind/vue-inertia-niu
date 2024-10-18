@@ -362,6 +362,14 @@ const reset = () => {
           <font-awesome-icon icon="fa-solid fa-rotate-right" />
         </button>
       </div>
+      <div class="card mb-2" v-if="page.props.catatans">
+        <div class="card-header">
+          <h5 class="mb-0 text-bold">CATATAN</h5>
+        </div>
+        <div class="card-body">
+          {{ page.props.catatans }}
+        </div>
+      </div>
       <Teleport to="body">
         <ModalBs
           :ModalStatus="createModalStatus"
